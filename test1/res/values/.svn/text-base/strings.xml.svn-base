@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tablet App</string>
+    <string name="title_item_detail">Item Detail</string>
+    <string name="expectedReceiptDate">入荷予定日：</string>
+    <string name="actualReceiptDate">入荷日　　：</string>
+    <string name="expectedReceiptQTY">予定数量：</string>
+    <string name="actualReceiptQTY">入荷数量：</string>
+    <string name="supplierName">入荷元：</string>    
+    <string name="calendar_title">日付選択画面</string>    
+    <string name="calendar_message">取得したいデータの日付を指定してください</string>    
+    <string name="calendar_btnpositive">OK</string>    
+    <string name="calendar_btnnegative">Cancel</string>    
+    <string name="search_hint">ExternReceiptKey Search</string>    
+    <string name="pageName_Receipt">入荷情報</string>    
+    <string name="pageName_DashBoard">ダッシュボード</string>    
+    <string name="pageName_Shipment">出荷情報</string>    
+    <string name="pageName_Inventory">在庫情報</string>    
+    <string name="pageName_Setting">設定</string>    
+    <string name="before_shipment">未入荷</string>    
+    <string name="after_shipment">入荷済</string>    
+    <string name="all">すべて</string>    
+</resources>

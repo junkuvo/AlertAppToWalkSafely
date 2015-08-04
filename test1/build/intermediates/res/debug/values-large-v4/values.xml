@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- From: file:/C:/workspace_beancube/AndroidStudio/test1/res/values-large/refs.xml -->
+    <eat-comment/>
+    <item name="activity_item_list" type="layout">@layout/activity_item_twopane</item>
+    <item name="activity_shipment_item_list" type="layout">@layout/activity_shipment_item_twopane</item>
+    <!-- From: file:/C:/workspace_beancube/AndroidStudio/test1/res/values-large/styles.xml -->
+    <eat-comment/>
+    <style name="LoginFormContainer">
+        <item name="android:layout_width">400dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:padding">16dp</item>
+    </style>
+</resources>
