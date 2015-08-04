@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tablet App</string>
+    <string name="title_item_detail">Item Detail</string>
+    <string name="expectedReceiptDate">ExpReceiptDate</string>
+    <string name="expectedReceiptDate_jp">入荷予定日</string>
+    <string name="actualReceiptDate">"ReceiptDate"</string>
+    <string name="actualReceiptDate_jp">入荷日　　</string>
+    <string name="expectedReceiptQTY">ExpReceiptQTY</string>
+    <string name="expectedReceiptQTY_jp">予定数量</string>
+    <string name="actualReceiptQTY">ReceiptQTY</string>
+    <string name="actualReceiptQTY_jp">入荷数量</string>
+    <string name="supplierName">Supplier：</string>    
+    <string name="supplierName_jp">入荷元：</string>    
+    <string name="calendar_title">Calendar</string>    
+    <string name="calendar_title_jp">日付選択画面</string>    
+    <string name="calendar_message">Please Select Date</string>    
+    <string name="calendar_message_jp">取得したいデータの日付を指定してください</string>    
+    <string name="calendar_btnpositive">OK</string>    
+    <string name="calendar_btnnegative">Cancel</string>    
+    <string name="search_hint">ExternReceiptKey Search</string>
+    <string name="search_hint_ship">ExternOrderKey Search</string>
+    <string name="pageName_Receipt">Receipt</string>
+    <string name="pageName_Receipt_jp">入荷情報</string>    
+    <string name="pageName_DashBoard">Dashboard</string>    
+    <string name="pageName_DashBoard_jp">ダッシュボード</string>    
+    <string name="pageName_Shipment">Shipment</string>    
+    <string name="pageName_Shipment_jp">出荷情報</string>    
+    <string name="pageName_Inventory">Inventory</string>    
+    <string name="pageName_Inventory_jp">在庫情報</string>    
+    <string name="pageName_Setting">Setting</string>    
+    <string name="pageName_Setting_jp">設定</string>    
+    <string name="before_receipt">Unreceived</string>    
+    <string name="before_receipt_jp">未入荷</string>    
+    <string name="after_receipt">Received</string>    
+    <string name="after_receipt_jp">入荷済</string>    
+    <string name="all">All</string>    
+    <string name="all_jp">すべて</string>    
+</resources>

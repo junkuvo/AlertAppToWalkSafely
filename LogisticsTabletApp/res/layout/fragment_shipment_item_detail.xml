@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_marginTop="15dp" 
+    >
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/icon_awaiting" />
+
+    <TextView
+        android:id="@+id/item_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/imageView1"
+        android:text="Medium Text"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/supplierTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/item_detail"
+        android:layout_below="@+id/item_detail"
+        android:text="@string/supplierName" />
+
+<!--     <View -->
+<!--         android:id="@+id/Separator" -->
+<!--         android:layout_width="wrap_content" -->
+<!--         android:layout_height="1dp" -->
+<!--         android:layout_alignParentLeft="false" -->
+<!--         android:layout_below="@+id/textView2" -->
+<!--         android:layout_centerHorizontal="true" -->
+<!--         android:background="#DDFFFFFF" /> -->
+
+    <TextView
+        android:id="@+id/ShipmentDateValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ShipmentDate"
+        android:layout_alignBottom="@+id/ShipmentDate"
+        android:layout_alignLeft="@+id/ExpShipmentDateValue"
+        android:ems="6"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/ShipmentQTYValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ShipmentQTY"
+        android:layout_alignBottom="@+id/ShipmentQTY"
+        android:layout_alignLeft="@+id/ExpShipmentQTYValue"
+        android:text="TextView" />
+
+    <ListView
+        android:id="@+id/listView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/supplierValue"
+        android:layout_marginTop="25dp" >
+
+    </ListView>
+
+    <TextView
+        android:id="@+id/ShipmentQTY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ShipmentDate"
+        android:layout_alignBottom="@+id/ShipmentDate"
+        android:layout_alignLeft="@+id/ExpShipmentQTY"
+        android:text="@string/actualShipQTY" />
+
+    <TextView
+        android:id="@+id/ExpShipmentDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/supplierTitle"
+        android:layout_toRightOf="@+id/supplierValue"
+        android:layout_marginLeft="15dp"
+        android:text="@string/expectedShipDate" />
+
+    <TextView
+        android:id="@+id/ExpShipmentDateValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ExpShipmentDate"
+        android:layout_alignBottom="@+id/ExpShipmentDate"
+        android:layout_toRightOf="@+id/ExpShipmentDate"
+        android:ems="6"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/ExpShipmentQTY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ExpShipmentDateValue"
+        android:layout_alignBottom="@+id/ExpShipmentDateValue"
+        android:layout_marginLeft="15dp"
+        android:layout_toRightOf="@+id/ExpShipmentDateValue"
+        android:text="@string/expectedShipQTY" />
+
+    <TextView
+        android:id="@+id/ExpShipmentQTYValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/ExpShipmentQTY"
+        android:layout_alignBottom="@+id/ExpShipmentQTY"
+        android:layout_toRightOf="@+id/ExpShipmentQTY"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/supplierValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/supplierTitle"
+        android:layout_alignBottom="@+id/supplierTitle"
+        android:layout_toRightOf="@+id/supplierTitle"
+        android:ems="10"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/ShipmentDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/supplierValue"
+        android:layout_alignLeft="@+id/ExpShipmentDate"
+        android:layout_marginTop="2dp"
+        android:text="@string/actualShipDate" />
+    
+</RelativeLayout>
