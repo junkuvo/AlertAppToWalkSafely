@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="protocol">https</string>
+    <string name="domain">api.github.com</string>
+    <string name="URI">users/mralexgray/repos</string>
+
+</resources>
