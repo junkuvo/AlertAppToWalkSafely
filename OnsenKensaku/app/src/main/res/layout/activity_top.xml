@@ -1,0 +1,110 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:paddingBottom="@dimen/activity_vertical_margin"
+                tools:context=".Top">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="■都道府県別検索"
+        android:id="@+id/lblPreSearch"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="（指定した都道府県内の施設を検索します。）"
+        android:id="@+id/txtNotePre"
+        android:layout_below="@+id/lblPreSearch"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="都道府県情報取得中"
+        android:id="@+id/lblPreState"
+        android:layout_below="@+id/txtNotePre"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ddrPreSearch"
+        android:layout_below="@+id/lblPreState"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignRight="@+id/lblPreState"
+        android:layout_alignEnd="@+id/lblPreState"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="都道府県別検索"
+        android:id="@+id/btnPreSearch"
+        android:enabled="false"
+        android:layout_alignBottom="@+id/ddrPreSearch"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="■現在地周辺施設検索"
+        android:id="@+id/lblLocSearchTitle"
+        android:layout_marginTop="50dp"
+        android:layout_below="@+id/ddrPreSearch"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="（現在地周辺の施設を検索します。）"
+        android:id="@+id/txtNoteLoc"
+        android:layout_below="@+id/lblLocSearchTitle"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="周辺施設検索"
+        android:id="@+id/btnLocSearch"
+        android:enabled="false"
+        android:layout_below="@+id/lblLocSearch"
+        android:layout_alignRight="@+id/btnPreSearch"
+        android:layout_alignEnd="@+id/btnPreSearch"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="位置情報取得中です"
+        android:id="@+id/lblLocSearch"
+        android:layout_below="@+id/txtNoteLoc"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <ListView
+        android:descendantFocusability="blocksDescendants"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnLocSearch"
+        android:id="@+id/listView_home"
+        />
+
+</RelativeLayout>
