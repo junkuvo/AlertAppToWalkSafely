@@ -8,17 +8,14 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class HttpRequestExecution extends AsyncTask<Builder, Void, JSONArray> {
+public class HttpRequestExecution extends AsyncTask<Builder, Void, String> {
     public interface AsyncCallback {
         void preExecute();
-        void postExecute(JSONArray result);
+        void postExecute(String result);
         void cancel();
     }
 
@@ -35,13 +32,13 @@ public class HttpRequestExecution extends AsyncTask<Builder, Void, JSONArray> {
     }
 
     @Override
-    protected void onPostExecute(JSONArray result) {
+    protected void onPostExecute(String result) {
         super.onPostExecute(result);
         mAsyncCallback.postExecute(result);
     }
 
     @Override
-    protected JSONArray doInBackground(Builder... params) {
+    protected String doInBackground(Builder... params) {
         HttpGet request = new HttpGet(params[0].build().toString());
         Log.d("test", params[0].build().toString());
 //        HttpParams httpParameters = new BasicHttpParams();
@@ -64,7 +61,7 @@ public class HttpRequestExecution extends AsyncTask<Builder, Void, JSONArray> {
                     }
                     Log.d("test", outputStream.toString());
 
-                return parseIntoJSONArray(outputStream.toString());
+                return outputStream.toString();
                 case HttpStatus.SC_REQUEST_TIMEOUT:
                 default:
                     response.getEntity().getContent().close();
@@ -87,24 +84,5 @@ public class HttpRequestExecution extends AsyncTask<Builder, Void, JSONArray> {
     protected void onCancelled() {
         super.onCancelled();
         mAsyncCallback.cancel();
-    }
-
-
-    public JSONArray parseIntoJSONArray(String outputStream){
-        JSONObject jsonObject = null;
-        JSONArray eventArray = null;
-        try {
-            if(outputStream.trim().substring(0,1).equals("[")){
-                jsonObject = new JSONObject("{id:" + outputStream.toString() + "}");
-            }else{
-                jsonObject = new JSONObject( outputStream.toString() );
-            }
-            eventArray = jsonObject.getJSONArray("id");
-
-        }catch (JSONException ex){
-            ex.printStackTrace();
-        }
-
-        return eventArray;
     }
 }

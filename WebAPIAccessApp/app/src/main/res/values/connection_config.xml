@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--https://api.github.com/users/mralexgray/repos-->
     <string name="protocol">https</string>
     <string name="domain">api.github.com</string>
     <string name="URI">users/mralexgray/repos</string>
 
+    <!--http://jsonplaceholder.typicode.com/posts/1-->
+    <!--<string name="protocol">http</string>-->
+    <!--<string name="domain">jsonplaceholder.typicode.com</string>-->
+    <!--<string name="URI">posts/1</string>-->
 </resources>
