@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="protocol">http</string>
+    <string name="domain">exam-s9imvrxn.spacemarket.jp</string>
+    <string name="URISpace">api/v1/spaces</string>
+    <string name="URIRoom">api/v1/rooms/303</string>
+
+</resources>
