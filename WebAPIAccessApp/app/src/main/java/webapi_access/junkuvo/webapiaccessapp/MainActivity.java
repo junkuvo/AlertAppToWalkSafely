@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
             }
 
             public void postExecute(String jsonData) {
-                registerDataToList(jsonData);
+                registerJsonStringToList(jsonData);
                 mProgressDialog.dismiss();
             }
 
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
         mHttpConnectionSetting.startHttpRequestSpaceData(mHttpRequestExecution);
     }
 
-    public void registerDataToList(String jsonData){
+    public void registerJsonStringToList(String jsonData){
         try{
             if (jsonData != null) {
 
