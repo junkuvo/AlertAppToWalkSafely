@@ -21,6 +21,7 @@ public class MainActivity extends Activity {
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
+    private boolean mAppRunningFlag = false;
 
     private class AlertReceiver extends BroadcastReceiver {
         @Override
@@ -64,14 +65,23 @@ public class MainActivity extends Activity {
         Button startButton = (Button)findViewById(R.id.button);
         startButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // サービスを開始
-                Intent intent = new Intent(MainActivity.this, AlertService.class);
-                startService(intent);
-                IntentFilter filter = new IntentFilter(AlertService.ACTION);
+                if(mAppRunningFlag){
+                    killAlertService();
+                    ((Button)v).setText("開始");
+                    ((Button)v).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                    mAppRunningFlag = false;
+                }else {
+                    // サービスを開始
+                    Intent intent = new Intent(MainActivity.this, AlertService.class);
+                    startService(intent);
+                    IntentFilter filter = new IntentFilter(AlertService.ACTION);
+                    registerReceiver(mAlertReceiver, filter);
 
-                registerReceiver(mAlertReceiver, filter);
-
-                bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+                    bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+                    ((Button)v).setText("停止");
+                    ((Button)v).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+                    mAppRunningFlag = true;
+                }
             }
         });
     }
@@ -85,6 +95,12 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(mAppRunningFlag) {
+            killAlertService();
+        }
+    }
+
+    public void killAlertService(){
         unbindService(mServiceConnection); // バインド解除
         unregisterReceiver(mAlertReceiver); // 登録解除
         mAlertService.stopSelf(); // サービスは必要ないので終了させる。
@@ -101,5 +117,4 @@ public class MainActivity extends Activity {
         }
         return super.onKeyDown(keyCode, event);
     }
-
 }

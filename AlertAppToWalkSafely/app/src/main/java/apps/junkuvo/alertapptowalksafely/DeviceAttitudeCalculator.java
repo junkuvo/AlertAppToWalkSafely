@@ -41,6 +41,7 @@ public class DeviceAttitudeCalculator {
 //            return  -(int) (attitude[1] * RAD2DEG);
 //        }
 
+        // ★修正必要
         return 90;
     }
 

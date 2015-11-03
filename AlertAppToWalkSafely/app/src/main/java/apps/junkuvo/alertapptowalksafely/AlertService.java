@@ -9,7 +9,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.IBinder;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -40,13 +39,11 @@ public class AlertService extends Service implements SensorEventListener{
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // センサーのオブジェクトリストを取得する
         List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        // イベントリスナーを登録する
         if (sensors.size() > 0) {
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
         sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
-        // イベントリスナーを登録する
         if (sensors.size() > 0) {
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
@@ -79,8 +76,8 @@ public class AlertService extends Service implements SensorEventListener{
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Toast toast = Toast.makeText(getApplicationContext(), "onUnbind()", Toast.LENGTH_SHORT);
-        toast.show();
+//        Toast toast = Toast.makeText(getApplicationContext(), "onUnbind()", Toast.LENGTH_SHORT);
+//        toast.show();
         return true; // 再度クライアントから接続された際に onRebind を呼び出させる場合は true を返す
     }
     class AlertBinder extends Binder {
@@ -99,12 +96,16 @@ public class AlertService extends Service implements SensorEventListener{
     @Override
     public void onSensorChanged(SensorEvent event) {
         mTendencyCheckCount++;
+        // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
+        //　5回カウントして1秒ごとに下記を実行する
         if(mTendencyCheckCount == 5){
             int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
+            //　下向きかどうかの判定
             // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
             // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
             if (tendency < 45 && tendency > 3) {
                 mTendencyOutCount++;
+                //  下向きと判定されるのが連続5回の場合、Alertを表示させる
                 if(mTendencyOutCount == 5) {
                     Intent intent = new Intent(ACTION);
                     intent.putExtra("tendency", tendency);
