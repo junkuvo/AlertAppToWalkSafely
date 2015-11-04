@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
                     ((Button)v).setText("開始");
                     ((Button)v).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
                     mAppRunningFlag = false;
+                    MainActivity.sAlertShowFlag = false;
                 }else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
