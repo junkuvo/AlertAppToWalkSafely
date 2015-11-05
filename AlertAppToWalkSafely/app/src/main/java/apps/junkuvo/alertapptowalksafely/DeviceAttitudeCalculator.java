@@ -61,7 +61,6 @@ public class DeviceAttitudeCalculator {
         double x;// 上下として定義（軸は向きによってx or z）
         double y;// 前後方向
 
-        // スマホ縦　=　タブレット横
         boolean isTabletNotPhone = mUtility.isTabletNotPhone();
         int orientation = mUtility.getOrientation();
 
