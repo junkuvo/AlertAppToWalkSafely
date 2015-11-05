@@ -89,6 +89,8 @@ public class MainActivity extends Activity {
             }
         });
         mUtility = new Utility(this);
+        // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
+        // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
         if(!mUtility.isTabletNotPhone()){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
