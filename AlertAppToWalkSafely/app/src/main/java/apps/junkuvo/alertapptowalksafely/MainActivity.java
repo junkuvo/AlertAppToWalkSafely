@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -22,6 +23,8 @@ public class MainActivity extends Activity {
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
     private boolean mAppRunningFlag = false;
+
+    private Utility mUtility;
 
     private class AlertReceiver extends BroadcastReceiver {
         @Override
@@ -65,13 +68,13 @@ public class MainActivity extends Activity {
         Button startButton = (Button)findViewById(R.id.button);
         startButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if(mAppRunningFlag){
+                if (mAppRunningFlag) {
                     killAlertService();
-                    ((Button)v).setText("開始");
-                    ((Button)v).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                    ((Button) v).setText("開始");
+                    ((Button) v).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
                     mAppRunningFlag = false;
                     MainActivity.sAlertShowFlag = false;
-                }else {
+                } else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
                     startService(intent);
@@ -79,12 +82,16 @@ public class MainActivity extends Activity {
                     registerReceiver(mAlertReceiver, filter);
 
                     bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-                    ((Button)v).setText("停止");
-                    ((Button)v).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+                    ((Button) v).setText("停止");
+                    ((Button) v).setBackgroundColor(getResources().getColor(R.color.colorAccent));
                     mAppRunningFlag = true;
                 }
             }
         });
+        mUtility = new Utility(this);
+        if(!mUtility.isTabletNotPhone()){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
     }
 
     // イベントリスナーの登録を解除

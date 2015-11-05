@@ -22,12 +22,14 @@ public class AlertService extends Service implements SensorEventListener{
     private int mTendencyCheckCount = 0;
     private int mTendencyOutCount = 0;
 
+    private Utility mUtility;
+
     @Override
     public void onCreate() {
         super.onCreate();
 //        Toast toast = Toast.makeText(getApplicationContext(), "onCreate()", Toast.LENGTH_SHORT);
 //        toast.show();
-        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator();
+        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(getApplicationContext());
     }
 
     @Override
@@ -103,7 +105,7 @@ public class AlertService extends Service implements SensorEventListener{
             //　下向きかどうかの判定
             // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
             // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
-            if (tendency < 45 && tendency > 3) {
+            if ((tendency > 135 || tendency < 45) && tendency > 3) {
                 mTendencyOutCount++;
                 //  下向きと判定されるのが連続5回の場合、Alertを表示させる
                 if(mTendencyOutCount == 5) {

@@ -1,5 +1,7 @@
 package apps.junkuvo.alertapptowalksafely;
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 
@@ -13,6 +15,12 @@ public class DeviceAttitudeCalculator {
 //    float[] rotationMatrix = new float[9];
 //    float[] rotationMatrixOut = new float[9];
 //    float[] attitude = new float[3];
+
+    public Utility mUtility;
+
+    DeviceAttitudeCalculator(Context context){
+        mUtility = new Utility(context);
+    }
 
     public int calculateDeviceAttitude(SensorEvent event){
         // 値が変化したセンサーが照度センサーだった場合
@@ -45,15 +53,33 @@ public class DeviceAttitudeCalculator {
         return 90;
     }
 
+    // ★端末によって軸の向きが異なるようなので、対応が必要
     public int calculateDeviceTendency(float[] gravity){
-        double tendencyDegree = 0;
-        double x = (double)gravity[1];
-        double y = (double)gravity[2];
+        double tendencyDegree;
+        double x;// 上下として定義（軸は向きによってx or z）
+        double y;// 前後方向
 
-        double radian = Math.atan2(x, y);
+        // スマホ縦　=　タブレット横
+        boolean isTabletNotPhone = mUtility.isTabletNotPhone();
+        int orientation = mUtility.getOrientation();
+
+        if((isTabletNotPhone && orientation == Configuration.ORIENTATION_PORTRAIT)
+                || (!isTabletNotPhone && orientation == Configuration.ORIENTATION_LANDSCAPE)){
+            x = (double)gravity[0];
+            y = (double)gravity[2];
+        }else if((isTabletNotPhone && orientation == Configuration.ORIENTATION_LANDSCAPE)
+                || (!isTabletNotPhone && orientation == Configuration.ORIENTATION_PORTRAIT)){
+            x = (double)gravity[1];
+            y = (double)gravity[2];
+        }else{
+            x = 9;
+            y = 0;
+        }
+
+        double radian = Math.abs(Math.atan2(x, y));
         tendencyDegree = radian * RAD2DEG;
+//        Log.d("test",Arrays.toString(gravity) + String.valueOf(tendencyDegree));
 
         return (int)tendencyDegree;
     }
-
 }

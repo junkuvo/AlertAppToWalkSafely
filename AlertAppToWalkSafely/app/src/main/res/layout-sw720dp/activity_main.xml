@@ -20,24 +20,15 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="開始"
-        android:id="@+id/button"
-        android:textColor="@android:color/white"
-        android:background="@color/colorPrimary"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:gravity="center"
-        android:text="歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、「開始」ボタンを押してください。"
+        android:text="歩きスマホ中に下を向くとメッセージを表示します。\n表示したいメッセージを入力し、「開始」ボタンを押してください。"
         android:id="@+id/txtTendency"
-        android:layout_above="@+id/txtAlertMessage"
+        android:layout_marginTop="100dp"
+        android:layout_below="@+id/txtTitle"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"/>
 
@@ -46,8 +37,28 @@
         android:layout_height="wrap_content"
         android:id="@+id/txtAlertMessage"
         android:text="前方に注意して下さい"
-        android:layout_above="@+id/button"
+        android:layout_below="@+id/txtTendency"
         android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="開始"
+        android:id="@+id/button"
+        android:textColor="@android:color/white"
+        android:background="@color/colorPrimary"
+        android:layout_below="@+id/txtAlertMessage"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="画面の向きを変更する際は、利用する向きでアプリを起動しなおしてください。"
+        android:id="@+id/txtTabletNotice"
+        android:layout_below="@+id/button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -57,12 +68,12 @@
 \n- ホーム画面に常にON/OFFスイッチを表示
 \n- メッセージ出力の有無設定機能
 \n- バイブレーションの有無設定機能
-\n- 横画面対応
 \n    その他、ご要望等はお手数ですがレビューにてご連絡お願い致します。
 \n    なお、当アプリのご利用は自己責任にてお願い致します。"
         android:id="@+id/textView"
-        android:layout_below="@+id/button"
+        android:layout_below="@+id/txtTabletNotice"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginTop="44dp"/>
+
 </RelativeLayout>

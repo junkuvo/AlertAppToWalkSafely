@@ -11,7 +11,6 @@ import android.widget.TextView;
 public class MainActivity extends Activity
         implements SensorEventListener {
 
-    public final static String TAG = "SensorTest2";
     protected final static double RAD2DEG = 180/Math.PI;
 
     SensorManager sensorManager;
@@ -47,11 +46,11 @@ public class MainActivity extends Activity
         sensorManager.registerListener(
                 this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_GAME);
+                SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(
                 this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-                SensorManager.SENSOR_DELAY_GAME);
+                SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     public void onPause(){
