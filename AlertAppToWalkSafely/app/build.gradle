@@ -1,9 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        config {
+            keyAlias 'junkuvo'
+            keyPassword 'Hello12345'
+            storeFile file('C:/Users/Okubo/Documents/AppKeys/junkuvo.keystore')
+            storePassword 'Hello12345'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion "22.0.1"
-
     defaultConfig {
         applicationId "apps.junkuvo.alertapptowalksafely"
         minSdkVersion 15
@@ -15,10 +22,14 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+            versionNameSuffix 'r'
         }
         debug {
-            versionNameSuffix 'debug'
+            versionNameSuffix 'd'
         }
+    }
+    productFlavors {
     }
 }
 

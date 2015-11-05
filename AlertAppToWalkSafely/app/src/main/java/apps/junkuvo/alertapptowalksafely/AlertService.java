@@ -22,8 +22,6 @@ public class AlertService extends Service implements SensorEventListener{
     private int mTendencyCheckCount = 0;
     private int mTendencyOutCount = 0;
 
-    private Utility mUtility;
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -55,7 +53,7 @@ public class AlertService extends Service implements SensorEventListener{
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        Toast toast = Toast.makeText(getApplicationContext(), "onDestroy()", Toast.LENGTH_SHORT);
+//        Toast toast = Toast.makeText(getApplicationContext(), "onsDestroy()", Toast.LENGTH_SHORT);
 //        toast.show();
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);

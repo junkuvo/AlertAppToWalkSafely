@@ -64,6 +64,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toast toast = Toast.makeText(getApplicationContext(), "onCreate()", Toast.LENGTH_SHORT);
+        toast.show();
 
         Button startButton = (Button)findViewById(R.id.button);
         startButton.setOnClickListener(new View.OnClickListener() {
@@ -105,6 +107,8 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Toast toast = Toast.makeText(getApplicationContext(), "onDestroy()", Toast.LENGTH_SHORT);
+        toast.show();
         if(mAppRunningFlag) {
             killAlertService();
         }
@@ -122,6 +126,7 @@ public class MainActivity extends Activity {
             case KeyEvent.KEYCODE_HOME:
             case KeyEvent.KEYCODE_BACK:
 //                finish();
+//                端末のホーム画面に戻る
 //                moveTaskToBack(false);
                 return false;
         }
