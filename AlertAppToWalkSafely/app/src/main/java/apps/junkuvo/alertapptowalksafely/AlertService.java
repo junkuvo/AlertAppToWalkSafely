@@ -113,8 +113,6 @@ public class AlertService extends Service implements SensorEventListener{
                     intent.putExtra("tendency", tendency);
                     sendBroadcast(intent);
 
-//                String str = "加速度センサー値:Y軸:" + Integer.toString(tendency);
-//                Log.d("test", str);
                     mTendencyOutCount = 0;
                 }
             } else {

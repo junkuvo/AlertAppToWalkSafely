@@ -54,6 +54,8 @@ public class DeviceAttitudeCalculator {
     }
 
     // ★端末によって軸の向きが異なるようなので、対応が必要
+    // 前提１：端末の前後方向はgravity[2]である
+    // 前提２：タブレット横方向の軸　＝　スマホ縦方向の軸
     public int calculateDeviceTendency(float[] gravity){
         double tendencyDegree;
         double x;// 上下として定義（軸は向きによってx or z）
