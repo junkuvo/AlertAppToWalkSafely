@@ -20,6 +20,35 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"/>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:gravity="center"
+        android:text="歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\n「開始」ボタンを押してください。"
+        android:id="@+id/txtTendency"
+        android:layout_below="@+id/txtTitle"
+        android:layout_marginTop="20dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <SeekBar
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:progress="30"
+        android:max="60"
+        android:id="@+id/skbSensitivity"
+        android:layout_above="@+id/txtAlertMessage"
+        android:layout_centerHorizontal="true"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtAlertMessage"
+        android:text="前方に注意して下さい"
+        android:layout_above="@+id/button"
+        android:layout_centerHorizontal="true"/>
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -28,25 +57,6 @@
         android:textColor="@android:color/white"
         android:background="@color/colorPrimary"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:gravity="center"
-        android:text="歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、「開始」ボタンを押してください。"
-        android:id="@+id/txtTendency"
-        android:layout_above="@+id/txtAlertMessage"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"/>
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/txtAlertMessage"
-        android:text="前方に注意して下さい"
-        android:layout_above="@+id/button"
         android:layout_centerHorizontal="true"/>
 
     <TextView
@@ -64,4 +74,24 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_marginTop="44dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="弱"
+        android:id="@+id/txtWeak"
+        android:layout_alignTop="@+id/skbSensitivity"
+        android:layout_toLeftOf="@+id/skbSensitivity"
+        android:layout_toStartOf="@+id/skbSensitivity"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="強"
+        android:id="@+id/txtStrong"
+        android:layout_alignTop="@+id/skbSensitivity"
+        android:layout_toRightOf="@+id/skbSensitivity"
+        android:layout_toEndOf="@+id/skbSensitivity"/>
 </RelativeLayout>

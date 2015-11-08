@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity
         implements SensorEventListener {
@@ -36,26 +37,27 @@ public class MainActivity extends Activity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        findViews();
-        initSensor();
+        Toast toast = Toast.makeText(getApplicationContext(), "onCreate()" , Toast.LENGTH_SHORT);
+        toast.show();
+//        findViews();
+//        initSensor();
     }
 
     public void onResume(){
         super.onResume();
-        sensorManager.registerListener(
-                this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(
-                this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-                SensorManager.SENSOR_DELAY_NORMAL);
+//        sensorManager.registerListener(
+//                this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+//                SensorManager.SENSOR_DELAY_NORMAL);
+//        sensorManager.registerListener(
+//                this,
+//                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+//                SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     public void onPause(){
         super.onPause();
-        sensorManager.unregisterListener(this);
+//        sensorManager.unregisterListener(this);
     }
 
     protected void findViews(){

@@ -11,10 +11,12 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -25,6 +27,12 @@ public class MainActivity extends Activity {
     private boolean mAppRunningFlag = false;
 
     private Utility mUtility;
+
+    public int mAlertStartAngle;
+
+    // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
+    private final int ALERT_ANGLE_INITIAL_VALUE = 30;
+    private final int ALERT_ANGLE_INITIAL_OFFSET = 15;
 
     private class AlertReceiver extends BroadcastReceiver {
         @Override
@@ -76,21 +84,17 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 if (mAppRunningFlag) {
                     killAlertService();
-                    ((Button) v).setText("開始");
-                    ((Button) v).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                    mAppRunningFlag = false;
-                    MainActivity.sAlertShowFlag = false;
+                    changeViewState(false, ((Button) v));
                 } else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
+                    intent.putExtra("tendency",mAlertStartAngle);
                     startService(intent);
                     IntentFilter filter = new IntentFilter(AlertService.ACTION);
                     registerReceiver(mAlertReceiver, filter);
 
                     bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-                    ((Button) v).setText("停止");
-                    ((Button) v).setBackgroundColor(getResources().getColor(R.color.colorAccent));
-                    mAppRunningFlag = true;
+                    changeViewState(true,((Button)v));
                 }
             }
         });
@@ -100,6 +104,27 @@ public class MainActivity extends Activity {
         if(!mUtility.isTabletNotPhone()){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
+
+        SeekBar seekBar = (SeekBar)findViewById(R.id.skbSensitivity);
+        mAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
+
+        seekBar.setOnSeekBarChangeListener(
+                new SeekBar.OnSeekBarChangeListener() {
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        // ツマミをドラッグしたときに呼ばれる
+                        Log.d("test","設定値:" + seekBar.getProgress() + ":" + String.valueOf(progress));
+                        mAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
+                    }
+
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                        // ツマミに触れたときに呼ばれる
+                    }
+
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                        // ツマミを離したときに呼ばれる
+                    }
+                }
+        );
     }
 
     // イベントリスナーの登録を解除
@@ -132,5 +157,20 @@ public class MainActivity extends Activity {
                 return false;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    public void changeViewState(boolean isStart,Button button){
+        if(isStart){
+            ((Button) button).setText("停止");
+            ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+            findViewById(R.id.skbSensitivity).setEnabled(false);
+            mAppRunningFlag = true;
+        }else{
+            ((Button) button).setText("開始");
+            ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+            mAppRunningFlag = false;
+            findViewById(R.id.skbSensitivity).setEnabled(true);
+            MainActivity.sAlertShowFlag = false;
+        }
     }
 }
