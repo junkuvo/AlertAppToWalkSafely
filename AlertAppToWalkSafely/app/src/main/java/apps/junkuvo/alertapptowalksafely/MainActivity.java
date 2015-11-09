@@ -1,6 +1,5 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,15 +10,24 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
 
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
@@ -28,7 +36,9 @@ public class MainActivity extends Activity {
 
     private Utility mUtility;
 
-    public int mAlertStartAngle;
+    public static int sAlertStartAngle;
+    public boolean mVibrationOn = true;
+    public boolean mToastOn = true;
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -37,21 +47,19 @@ public class MainActivity extends Activity {
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(!sAlertShowFlag) {
+            if(!sAlertShowFlag && mToastOn) {
                 String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
                 Toast toast = Toast.makeText(getApplicationContext(), alertMessage, Toast.LENGTH_SHORT);
                 toast.show();
                 sAlertShowFlag = true;
             }
 
-            Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if(mVibrationOn) {
+                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 //            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
 //            vibrator.vibrate(pattern, -1);
-            vibrator.vibrate(100);
-
-//            int tendency = intent.getIntExtra("tendency",90);
-//            TextView textview = (TextView)findViewById(R.id.txtTendency);
-//            textview.setText(Integer.toString(tendency));
+                vibrator.vibrate(100);
+            }
         }
     }
 
@@ -71,6 +79,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ActionBar actionbar = getSupportActionBar();
+        actionbar.show();
         // 署名付きAPKではなぜか初期起動後、BGから起動される度にonCreateしてActivityを生み続ける
         // →Intentのフラグの値がおかしいらしいので、下記のコードで対応
         if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
@@ -88,7 +99,6 @@ public class MainActivity extends Activity {
                 } else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
-                    intent.putExtra("tendency",mAlertStartAngle);
                     startService(intent);
                     IntentFilter filter = new IntentFilter(AlertService.ACTION);
                     registerReceiver(mAlertReceiver, filter);
@@ -104,16 +114,61 @@ public class MainActivity extends Activity {
         if(!mUtility.isTabletNotPhone()){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
+        sAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
+    }
 
-        SeekBar seekBar = (SeekBar)findViewById(R.id.skbSensitivity);
-        mAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // メニューの要素を追加
+        MenuItem actionItem = menu.add("設定");
+        // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        // アイコンを設定
+        actionItem.setIcon(android.R.drawable.ic_menu_manage);
+
+//        // メニューの要素を追加して取得
+          //  ★FBやTwitter連携
+//        MenuItem actionItem = menu.add("Action Button");
+//        // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
+//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+//        // アイコンを設定
+//        actionItem.setIcon(android.R.drawable.ic_menu_share);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        // リスト表示用のアラートダイアログ
+        LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+        View layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        alertDialog.setTitle("各種設定");
+        alertDialog.setIcon(android.R.drawable.ic_menu_manage);
+        alertDialog.setView(layout);
+
+        setSeekBarInLayout(layout);
+        setSwitchInLayout(layout);
+        alertDialog.create().show();
+        return true;
+    }
+
+    public void setSeekBarInLayout(View layout){
+        SeekBar seekBar = (SeekBar)layout.findViewById(R.id.skbSensitivity);
+        seekBar.setProgress(sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         // ツマミをドラッグしたときに呼ばれる
-                        Log.d("test","設定値:" + seekBar.getProgress() + ":" + String.valueOf(progress));
-                        mAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
+                        Log.d("test", "設定値:" + seekBar.getProgress() + ":" + String.valueOf(progress));
+                        sAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
                     }
 
                     public void onStartTrackingTouch(SeekBar seekBar) {
@@ -122,6 +177,27 @@ public class MainActivity extends Activity {
 
                     public void onStopTrackingTouch(SeekBar seekBar) {
                         // ツマミを離したときに呼ばれる
+                    }
+                }
+        );
+    }
+
+    public void setSwitchInLayout(View layout){
+        Switch swh = (Switch)layout.findViewById(R.id.swhToastOnOff);
+        swh.setChecked(mToastOn);
+        swh.setOnCheckedChangeListener(
+                new Switch.OnCheckedChangeListener() {
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        mToastOn = isChecked;
+                    }
+                }
+        );
+        swh = (Switch)layout.findViewById(R.id.swhVibrationOnOff);
+        swh.setChecked(mVibrationOn);
+        swh.setOnCheckedChangeListener(
+                new Switch.OnCheckedChangeListener() {
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        mVibrationOn = isChecked;
                     }
                 }
         );
@@ -163,13 +239,11 @@ public class MainActivity extends Activity {
         if(isStart){
             ((Button) button).setText("停止");
             ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorAccent));
-            findViewById(R.id.skbSensitivity).setEnabled(false);
             mAppRunningFlag = true;
         }else{
             ((Button) button).setText("開始");
             ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
             mAppRunningFlag = false;
-            findViewById(R.id.skbSensitivity).setEnabled(true);
             MainActivity.sAlertShowFlag = false;
         }
     }

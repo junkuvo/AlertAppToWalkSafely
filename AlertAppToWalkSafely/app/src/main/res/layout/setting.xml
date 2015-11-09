@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/layout_root"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+    <SeekBar
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:progress="30"
+        android:max="60"
+        android:id="@+id/skbSensitivity"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_above="@+id/txtAlertMessage"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="感度：弱"
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/txtWeak"
+        android:layout_alignTop="@+id/skbSensitivity"
+        android:layout_toLeftOf="@+id/skbSensitivity"
+        android:layout_toStartOf="@+id/skbSensitivity"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="強"
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/txtStrong"
+        android:layout_alignTop="@+id/skbSensitivity"
+        android:layout_toRightOf="@+id/skbSensitivity"
+        android:layout_toEndOf="@+id/skbSensitivity"/>
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="メッセージ通知："
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/swhToastOnOff"
+        android:checked="true"
+        android:layout_marginBottom="20dp"
+        android:layout_below="@+id/skbSensitivity"
+        android:layout_centerHorizontal="true"/>
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="振動通知："
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/swhVibrationOnOff"
+        android:checked="true"
+        android:layout_below="@+id/swhToastOnOff"
+        android:layout_marginBottom="20dp"
+        android:layout_alignRight="@+id/swhToastOnOff"
+        android:layout_alignEnd="@+id/swhToastOnOff"/>
+</RelativeLayout>

@@ -32,21 +32,13 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"/>
 
-    <SeekBar
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:progress="30"
-        android:max="60"
-        android:id="@+id/skbSensitivity"
-        android:layout_above="@+id/txtAlertMessage"
-        android:layout_centerHorizontal="true"/>
-
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/txtAlertMessage"
         android:text="前方に注意して下さい"
         android:layout_above="@+id/button"
+        android:layout_marginBottom="20dp"
         android:layout_centerHorizontal="true"/>
 
     <Button
@@ -63,11 +55,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="※下記の機能追加を検討しています。
-\n- ホーム画面に常にON/OFFスイッチを表示
-\n- メッセージ出力の有無設定機能
-\n- バイブレーションの有無設定機能
-\n    その他、ご要望等はお手数ですがレビューにてご連絡お願い致します。
+        android:text="※随時機能追加を検討しています。
+\n    ご要望等はお手数ですがレビューにてご連絡お願い致します。
 \n    なお、当アプリのご利用は自己責任にてお願い致します。"
         android:id="@+id/textView"
         android:layout_below="@+id/button"
@@ -75,23 +64,4 @@
         android:layout_alignParentStart="true"
         android:layout_marginTop="44dp"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="弱"
-        android:id="@+id/txtWeak"
-        android:layout_alignTop="@+id/skbSensitivity"
-        android:layout_toLeftOf="@+id/skbSensitivity"
-        android:layout_toStartOf="@+id/skbSensitivity"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="強"
-        android:id="@+id/txtStrong"
-        android:layout_alignTop="@+id/skbSensitivity"
-        android:layout_toRightOf="@+id/skbSensitivity"
-        android:layout_toEndOf="@+id/skbSensitivity"/>
 </RelativeLayout>
