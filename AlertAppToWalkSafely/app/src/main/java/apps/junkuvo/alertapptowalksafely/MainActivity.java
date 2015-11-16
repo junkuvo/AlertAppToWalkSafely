@@ -3,17 +3,19 @@ package apps.junkuvo.alertapptowalksafely;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,6 +28,14 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.Toast;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -44,13 +54,18 @@ public class MainActivity extends ActionBarActivity {
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
     private final int ALERT_ANGLE_INITIAL_OFFSET = 15;
 
+    private static final int MENU_SETTING_ID = 0;
+    private static final int MENU_SHARE_ID = 1;
+
+    private AlertDialog.Builder mAlertDialog;
+    private EditText mTweetText;
+
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(!sAlertShowFlag && mToastOn) {
                 String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                Toast toast = Toast.makeText(getApplicationContext(), alertMessage, Toast.LENGTH_SHORT);
-                toast.show();
+                showToastShort(alertMessage);
                 sAlertShowFlag = true;
             }
 
@@ -115,6 +130,8 @@ public class MainActivity extends ActionBarActivity {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         sAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
+        mTwitter = TwitterUtility.getTwitterInstance(this);
+        mCallbackURL = getString(R.string.twitter_callback_url);
     }
 
     @Override
@@ -126,37 +143,62 @@ public class MainActivity extends ActionBarActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // メニューの要素を追加
-        MenuItem actionItem = menu.add("設定");
+        MenuItem actionItem = menu.add(Menu.NONE,MENU_SETTING_ID,MENU_SETTING_ID,"設定");
         // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         // アイコンを設定
         actionItem.setIcon(android.R.drawable.ic_menu_manage);
 
-//        // メニューの要素を追加して取得
           //  ★FBやTwitter連携
-//        MenuItem actionItem = menu.add("Action Button");
-//        // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
-//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-//        // アイコンを設定
-//        actionItem.setIcon(android.R.drawable.ic_menu_share);
+        actionItem = menu.add(Menu.NONE,MENU_SHARE_ID,MENU_SHARE_ID,"共有");
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(android.R.drawable.ic_menu_share);
 
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
-        // リスト表示用のアラートダイアログ
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
-        View layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
+        final View layout;
+        switch(item.getItemId()){
+            case MENU_SETTING_ID :
+                // リスト表示用のアラートダイアログ
+                layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
 
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        alertDialog.setTitle("各種設定");
-        alertDialog.setIcon(android.R.drawable.ic_menu_manage);
-        alertDialog.setView(layout);
+                mAlertDialog = new AlertDialog.Builder(this);
+                mAlertDialog.setTitle("各種設定");
+                mAlertDialog.setIcon(android.R.drawable.ic_menu_manage);
+                mAlertDialog.setView(layout);
 
-        setSeekBarInLayout(layout);
-        setSwitchInLayout(layout);
-        alertDialog.create().show();
+                setSeekBarInLayout(layout);
+                setSwitchInLayout(layout);
+                mAlertDialog.create().show();
+                break;
+            case MENU_SHARE_ID :
+                if (!TwitterUtility.hasAccessToken(this)) {
+                    startAuthorize();
+                }else{
+                    layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                    mAlertDialog = new AlertDialog.Builder(this);
+                    mAlertDialog.setTitle("つぶやく");
+                    mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
+                    mAlertDialog.setView(layout);
+                    mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
+                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" + getString(R.string.app_googlePlay_url) + "\n" + timeStamp);
+                    mAlertDialog.setPositiveButton("送信", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            tweet(mTweetText.getText().toString());
+                        }
+                    });
+                    mAlertDialog.setCancelable(false);
+                    mAlertDialog.setNegativeButton("キャンセル", null);
+                    mAlertDialog.create().show();
+                }
+                break;
+        }
         return true;
     }
 
@@ -167,7 +209,6 @@ public class MainActivity extends ActionBarActivity {
                 new SeekBar.OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         // ツマミをドラッグしたときに呼ばれる
-                        Log.d("test", "設定値:" + seekBar.getProgress() + ":" + String.valueOf(progress));
                         sAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
                     }
 
@@ -246,5 +287,98 @@ public class MainActivity extends ActionBarActivity {
             mAppRunningFlag = false;
             MainActivity.sAlertShowFlag = false;
         }
+    }
+
+    private String mCallbackURL;
+    private Twitter mTwitter;
+    private RequestToken mRequestToken;
+    /**
+     * OAuth認証（厳密には認可）を開始します。
+     */
+    private void startAuthorize() {
+        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... params) {
+                try {
+                    mTwitter.setOAuthAccessToken(null);// これがないと認証画面に1回しか飛べない
+                    mRequestToken = mTwitter.getOAuthRequestToken(mCallbackURL);
+                    return mRequestToken.getAuthorizationURL();
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String url) {
+                if (url != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                } else {
+                }
+            }
+        };
+        task.execute();
+    }
+
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        if (intent == null || intent.getData() == null || !intent.getData().toString().startsWith(mCallbackURL)) {
+            return;
+        }
+        String verifier = intent.getData().getQueryParameter("oauth_verifier");
+
+        AsyncTask<String, Void, AccessToken> task = new AsyncTask<String, Void, AccessToken>() {
+            @Override
+            protected AccessToken doInBackground(String... params) {
+                try {
+                    return mTwitter.getOAuthAccessToken(mRequestToken, params[0]);
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(AccessToken accessToken) {
+                if (accessToken != null) {
+                    showToastShort("Twitter認証が完了しました！");
+                    TwitterUtility.storeAccessToken(getApplicationContext(), accessToken);
+                } else {
+                    showToastShort("Twitter認証に失敗しました。。。");
+                }
+            }
+        };
+        task.execute(verifier);
+    }
+
+    private void tweet(String tweetString) {
+        AsyncTask<String, Void, Boolean> task = new AsyncTask<String, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(String... params) {
+                try {
+                    mTwitter.updateStatus(params[0]);
+                    return true;
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Boolean result) {
+                if (result) {
+                    showToastShort("ツイートが完了しました！");
+                } else {
+                    showToastShort("ツイートに失敗しました。。。");
+                }
+            }
+        };
+        task.execute(tweetString);
+    }
+
+    private void showToastShort(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 }
