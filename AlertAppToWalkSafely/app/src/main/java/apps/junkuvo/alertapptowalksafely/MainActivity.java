@@ -16,6 +16,8 @@ import android.os.Vibrator;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
+import android.text.SpannableString;
+import android.text.style.UnderlineSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,6 +29,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
@@ -132,6 +135,9 @@ public class MainActivity extends ActionBarActivity {
         sAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
         mTwitter = TwitterUtility.getTwitterInstance(this);
         mCallbackURL = getString(R.string.twitter_callback_url);
+
+        //　レビューサイトへのリンク
+        setUrlLinkToReview();
     }
 
     @Override
@@ -186,7 +192,8 @@ public class MainActivity extends ActionBarActivity {
                     mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
-                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" + getString(R.string.app_googlePlay_url) + "\n" + timeStamp);
+                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
+                            String.format(getString(R.string.app_googlePlay_url),getPackageName()) + "\n" + timeStamp);
                     mAlertDialog.setPositiveButton("送信", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -244,6 +251,20 @@ public class MainActivity extends ActionBarActivity {
         );
     }
 
+    public void setUrlLinkToReview(){
+        SpannableString content = new SpannableString(getString(R.string.review_url_title));
+        content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
+        TextView tv = (TextView) findViewById(R.id.home);
+        tv.setText(content);
+        tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url),getApplicationContext().getPackageName()));
+                Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(i);
+            }
+        });
+    }
     // イベントリスナーの登録を解除
     @Override
     protected void onPause() {

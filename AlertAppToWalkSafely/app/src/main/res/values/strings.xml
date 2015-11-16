@@ -1,11 +1,14 @@
 <resources>
     <string name="app_name">歩きスマホ注意アプリ</string>
-    <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=apps.junkuvo.alertapptowalksafely</string>
+    <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=%s</string>
 
     <string name="twitter_consumer_key">4JPOwJiuv5jokHILCET44I8ah</string>
     <string name="twitter_consumer_secret">RxpuDYygVKFx5hkdXQiR3FEXxAnTqYxw1VR9dhcFQoOxU3w7uD</string>
     <string name="twitter_callback_url">junkuvo://twitter</string>
 
     <string name="twitter_tweetText">危険や事故を回避♪歩きスマホ・ながらスマホ防止注意アプリ</string>
+
+    <string name="review_url">market://details?id=%s</string>
+    <string name="review_url_title">レビューサイトへ</string>
 
 </resources>
