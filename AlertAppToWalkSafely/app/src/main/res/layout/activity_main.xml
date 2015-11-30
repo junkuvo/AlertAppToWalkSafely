@@ -47,7 +47,7 @@
         android:text="開始"
         android:id="@+id/button"
         android:textColor="@android:color/white"
-        android:background="@color/colorPrimary"
+        android:background="@drawable/shape_rounded_corners_blue_5dp"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"/>
 

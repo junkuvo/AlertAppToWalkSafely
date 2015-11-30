@@ -300,11 +300,11 @@ public class MainActivity extends ActionBarActivity {
     public void changeViewState(boolean isStart,Button button){
         if(isStart){
             ((Button) button).setText("停止");
-            ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorAccent));
+            ((Button) button).setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
         }else{
             ((Button) button).setText("開始");
-            ((Button) button).setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+            ((Button) button).setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
             mAppRunningFlag = false;
             MainActivity.sAlertShowFlag = false;
         }
