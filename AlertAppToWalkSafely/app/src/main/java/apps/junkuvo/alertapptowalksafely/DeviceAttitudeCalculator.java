@@ -9,14 +9,14 @@ public class DeviceAttitudeCalculator {
 
     private final static double RAD2DEG = 180d/Math.PI;
 
-    float[] gravity = new float[3];
-    float[] geomagnetic = new float[3];
+    private  float[] gravity = new float[3];
+    private float[] geomagnetic = new float[3];
 
 //    float[] rotationMatrix = new float[9];
 //    float[] rotationMatrixOut = new float[9];
 //    float[] attitude = new float[3];
 
-    public Utility mUtility;
+    private Utility mUtility;
 
     DeviceAttitudeCalculator(Context context){
         mUtility = new Utility(context);
@@ -56,7 +56,7 @@ public class DeviceAttitudeCalculator {
     // ★端末によって軸の向きが異なるようなので、対応が必要
     // 前提１：端末の前後方向はgravity[2]である
     // 前提２：タブレット横方向の軸　＝　スマホ縦方向の軸
-    public int calculateDeviceTendency(float[] gravity){
+    private int calculateDeviceTendency(float[] gravity){
         double tendencyDegree;
         double x;// 上下として定義（軸は向きによってx or z）
         double y;// 前後方向

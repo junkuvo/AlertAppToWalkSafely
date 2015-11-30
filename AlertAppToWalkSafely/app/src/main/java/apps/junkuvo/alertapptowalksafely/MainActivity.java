@@ -99,7 +99,10 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         ActionBar actionbar = getSupportActionBar();
-        actionbar.show();
+        if(actionbar != null) {
+            actionbar.show();
+        }
+
         // 署名付きAPKではなぜか初期起動後、BGから起動される度にonCreateしてActivityを生み続ける
         // →Intentのフラグの値がおかしいらしいので、下記のコードで対応
         if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
@@ -299,12 +302,12 @@ public class MainActivity extends ActionBarActivity {
 
     public void changeViewState(boolean isStart,Button button){
         if(isStart){
-            ((Button) button).setText("停止");
-            ((Button) button).setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
+            button.setText("停止");
+            button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
         }else{
-            ((Button) button).setText("開始");
-            ((Button) button).setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
+            button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
+            button.setText("開始");
             mAppRunningFlag = false;
             MainActivity.sAlertShowFlag = false;
         }
@@ -335,8 +338,7 @@ public class MainActivity extends ActionBarActivity {
                 if (url != null) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
-                } else {
-                }
+                } 
             }
         };
         task.execute();

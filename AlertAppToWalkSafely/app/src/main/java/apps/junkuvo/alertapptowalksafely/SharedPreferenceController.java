@@ -14,12 +14,12 @@ public class SharedPreferenceController {
 
     public void setIntValue(String key, int value) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        sp.edit().putInt(key, value).commit();
+        sp.edit().putInt(key, value).apply();
     }
 
     public void setIsBootedValue(boolean value) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        sp.edit().putBoolean("Booted", value).commit();
+        sp.edit().putBoolean("Booted", value).apply();
     }
 
     public int getIntValue(String key) {
