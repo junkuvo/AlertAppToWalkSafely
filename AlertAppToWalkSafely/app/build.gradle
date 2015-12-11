@@ -2,11 +2,9 @@ apply plugin: 'com.android.application'
 
 android {
     signingConfigs {
-        config {
-            keyAlias 'junkuvo'
-            keyPassword 'Hello12345'
-            storeFile file('C:/Users/Okubo/Documents/AppKeys/junkuvo.keystore')
-            storePassword 'Hello12345'
+        def releaseSettingGradleFile = new File("${project.rootDir}/release.gradle")
+        if (releaseSettingGradleFile.exists()) {
+            apply from: releaseSettingGradleFile, to: android
         }
     }
     compileSdkVersion 23
