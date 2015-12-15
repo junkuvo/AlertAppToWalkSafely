@@ -24,9 +24,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -40,7 +42,7 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements View.OnClickListener{
 
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
@@ -146,6 +148,20 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        RelativeLayout relativeLayout = (RelativeLayout)findViewById(R.id.rtlMain);
+        relativeLayout.setOnClickListener(this);
+
+        // カーソルを最後尾に移動
+        EditText editText = (EditText)findViewById(R.id.txtAlertMessage);
+        editText.setSelection(editText.getText().length());
+    }
+
+    @Override
+    public void onClick(View v) {
+        // キーボードを隠す
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     @Override
