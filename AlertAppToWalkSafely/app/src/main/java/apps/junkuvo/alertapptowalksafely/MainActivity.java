@@ -168,14 +168,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // メニューの要素を追加
-        MenuItem actionItem = menu.add(Menu.NONE,MENU_SETTING_ID,MENU_SETTING_ID,"設定");
+        MenuItem actionItem = menu.add(Menu.NONE,MENU_SETTING_ID,MENU_SETTING_ID,this.getString(R.string.menu_title_setting));
         // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         // アイコンを設定
         actionItem.setIcon(android.R.drawable.ic_menu_manage);
 
-          //  ★FBやTwitter連携
-        actionItem = menu.add(Menu.NONE,MENU_SHARE_ID,MENU_SHARE_ID,"共有");
+        //  ★Twitter連携
+        actionItem = menu.add(Menu.NONE,MENU_SHARE_ID,MENU_SHARE_ID,this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(android.R.drawable.ic_menu_share);
 
@@ -192,7 +192,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
 
                 mAlertDialog = new AlertDialog.Builder(this);
-                mAlertDialog.setTitle("各種設定");
+                mAlertDialog.setTitle(this.getString(R.string.dialog_title_setting));
                 mAlertDialog.setIcon(android.R.drawable.ic_menu_manage);
                 mAlertDialog.setView(layout);
 
@@ -207,20 +207,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
-                    mAlertDialog.setTitle("つぶやく");
+                    mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
                     mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
                     mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
                             String.format(getString(R.string.app_googlePlay_url),getPackageName()) + "\n" + timeStamp);
-                    mAlertDialog.setPositiveButton("送信", new DialogInterface.OnClickListener() {
+                    mAlertDialog.setPositiveButton(this.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             tweet(mTweetText.getText().toString());
                         }
                     });
                     mAlertDialog.setCancelable(false);
-                    mAlertDialog.setNegativeButton("キャンセル", null);
+                    mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_cancel), null);
                     mAlertDialog.create().show();
                 }
                 break;
@@ -318,12 +318,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     public void changeViewState(boolean isStart,Button button){
         if(isStart){
-            button.setText("停止");
+            button.setText(this.getString(R.string.home_button_stop));
             button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
         }else{
             button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
-            button.setText("開始");
+            button.setText(this.getString(R.string.home_button_start));
             mAppRunningFlag = false;
             MainActivity.sAlertShowFlag = false;
         }
@@ -382,10 +382,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(AccessToken accessToken) {
                 if (accessToken != null) {
-                    showToastShort("Twitter認証が完了しました！");
+                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed));
                     TwitterUtility.storeAccessToken(getApplicationContext(), accessToken);
                 } else {
-                    showToastShort("Twitter認証に失敗しました。。。");
+                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_fail));
                 }
             }
         };
@@ -408,9 +408,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(Boolean result) {
                 if (result) {
-                    showToastShort("ツイートが完了しました！");
+                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed));
                 } else {
-                    showToastShort("ツイートに失敗しました。。。");
+                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail));
                 }
             }
         };
