@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,11 +29,13 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -47,13 +50,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
+    public static boolean sPedometerFlag = true;
     private boolean mAppRunningFlag = false;
 
     private Utility mUtility;
 
     public static int sAlertStartAngle;
-    public boolean mVibrationOn = true;
-    public boolean mToastOn = true;
+    private boolean mVibrationOn = true;
+    private boolean mToastOn = true;
+    private int mStepCount = 0;
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -61,6 +66,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     private static final int MENU_SETTING_ID = 0;
     private static final int MENU_SHARE_ID = 1;
+    private static final int MENU_HISTORY_ID = 2;
+    private static final String SETTING_SHAREDPREF_NAME = "setting";
 
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
@@ -68,9 +75,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if(intent.getBooleanExtra("isStepCounter",false)) {
+                if(sPedometerFlag && mAlertService != null){
+                    mStepCount++; // TYPE_STEP_COUNTERのBroadCastをReceiveする回数＝歩数
+                    ((TextView)findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
+                }
+            }else{
             if(!sAlertShowFlag && mToastOn) {
                 String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                showToastShort(alertMessage);
+                showToastShort(alertMessage + "\n" + getString(R.string.pedometer_header_count) + String.valueOf(mAlertService.getStepCount()));
                 sAlertShowFlag = true;
             }
 
@@ -79,6 +92,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 //            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
 //            vibrator.vibrate(pattern, -1);
                 vibrator.vibrate(100);
+            }
             }
         }
     }
@@ -117,6 +131,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         startButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mAppRunningFlag) {
+                    mStepCount = mAlertService.getStepCount();
                     killAlertService();
                     changeViewState(false, ((Button) v));
                 } else {
@@ -127,7 +142,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     registerReceiver(mAlertReceiver, filter);
 
                     bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-                    changeViewState(true,((Button)v));
+                    changeViewState(true, ((Button) v));
+                    mStepCount = 0;
                 }
             }
         });
@@ -143,6 +159,18 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         //　レビューサイトへのリンク
         setUrlLinkToReview();
+
+        // 設定の読み込み
+        SharedPreferences data = getSharedPreferences(SETTING_SHAREDPREF_NAME, Context.MODE_PRIVATE);
+        mToastOn = data.getBoolean("message",true );
+        mVibrationOn = data.getBoolean("vibrate",true );
+        sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;;
+        sPedometerFlag = data.getBoolean("pedometer", true);
+        if(sPedometerFlag){
+            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+        }else{
+            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -179,6 +207,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(android.R.drawable.ic_menu_share);
 
+        //  ★歩数履歴
+        actionItem = menu.add(Menu.NONE,MENU_HISTORY_ID,MENU_HISTORY_ID,this.getString(R.string.menu_title_history));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(android.R.drawable.ic_menu_recent_history);
+
         return true;
     }
 
@@ -195,9 +228,11 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 mAlertDialog.setTitle(this.getString(R.string.dialog_title_setting));
                 mAlertDialog.setIcon(android.R.drawable.ic_menu_manage);
                 mAlertDialog.setView(layout);
+                mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_ok), null);
 
                 setSeekBarInLayout(layout);
                 setSwitchInLayout(layout);
+                setToggleButtonInLayout(layout);
                 mAlertDialog.create().show();
                 break;
             case MENU_SHARE_ID :
@@ -212,7 +247,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
                     mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
-                            String.format(getString(R.string.app_googlePlay_url),getPackageName()) + "\n" + timeStamp);
+                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
                     mAlertDialog.setPositiveButton(this.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -224,8 +259,22 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     mAlertDialog.create().show();
                 }
                 break;
+            case MENU_HISTORY_ID:
+                layout = inflater.inflate(R.layout.history, (ViewGroup) findViewById(R.id.layout_root_history));
+                setStepCountListInLayout(layout);
+                mAlertDialog = new AlertDialog.Builder(this);
+                mAlertDialog.setTitle(this.getString(R.string.dialog_title_history));
+                mAlertDialog.setIcon(android.R.drawable.ic_menu_recent_history);
+                mAlertDialog.setView(layout);
+                mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_cancel), null);
+                mAlertDialog.create().show();
+                break;
         }
         return true;
+    }
+
+    public void setStepCountListInLayout(View layout){
+        ListView listView = (ListView)layout.findViewById(R.id.livStepCountHistory);
     }
 
     public void setSeekBarInLayout(View layout){
@@ -270,6 +319,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         );
     }
 
+    public void setToggleButtonInLayout(View layout){
+        ToggleButton tgbPedometer = (ToggleButton)layout.findViewById(R.id.tgbPedometer);
+        tgbPedometer.setChecked(sPedometerFlag);
+        tgbPedometer.setOnCheckedChangeListener(
+                new Switch.OnCheckedChangeListener() {
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        sPedometerFlag = isChecked;
+                        if(isChecked) {
+                            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+                        }else{
+                            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+                        }
+                    }
+                }
+        );
+    }
+
     public void setUrlLinkToReview(){
         SpannableString content = new SpannableString(getString(R.string.review_url_title));
         content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
@@ -278,7 +344,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url),getApplicationContext().getPackageName()));
+                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url), getApplicationContext().getPackageName()));
                 Intent i = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(i);
             }
@@ -288,6 +354,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
+        SharedPreferences data = getSharedPreferences(SETTING_SHAREDPREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = data.edit();
+        editor.putBoolean("message", mToastOn);
+        editor.putBoolean("vibrate", mVibrationOn);
+        editor.putInt("progress", sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
+        editor.putBoolean("pedometer", sPedometerFlag);
+        editor.apply();
     }
 
     @Override
@@ -321,6 +394,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             button.setText(this.getString(R.string.home_button_stop));
             button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
+            ((TextView)findViewById(R.id.txtStepCount)).setText("0"+ getString(R.string.home_step_count_dimension));
         }else{
             button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
             button.setText(this.getString(R.string.home_button_start));
@@ -359,7 +433,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         };
         task.execute();
     }
-
 
     @Override
     public void onNewIntent(Intent intent) {

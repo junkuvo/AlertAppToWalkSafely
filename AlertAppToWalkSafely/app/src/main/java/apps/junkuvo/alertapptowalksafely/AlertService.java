@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.List;
 
@@ -22,19 +23,24 @@ public class AlertService extends Service implements SensorEventListener{
     private int mTendencyCheckCount = 0;
     private int mTendencyOutCount = 0;
 
+    // 歩数計
+    private Sensor mStepDetectorSensor;
+    private Sensor mStepCounterSensor;
+    private int mStartCount = 0;
+    private int mEndCount = 0;
+
+    private int mCheckCountBefore = 0;
+    private int mCheckCountAfter = 0;
+
     @Override
     public void onCreate() {
         super.onCreate();
-//        Toast toast = Toast.makeText(getApplicationContext(), "onCreate()", Toast.LENGTH_SHORT);
-//        toast.show();
         mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(getApplicationContext());
     }
 
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
-//        Toast toast = Toast.makeText(getApplicationContext(), "onStart()", Toast.LENGTH_SHORT);
-//        toast.show();
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // センサーのオブジェクトリストを取得する
@@ -48,16 +54,22 @@ public class AlertService extends Service implements SensorEventListener{
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
+
+        // 歩数計用のセンサー登録
+        mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+        mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        mSensorManager.registerListener (this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        Toast toast = Toast.makeText(getApplicationContext(), "onsDestroy()", Toast.LENGTH_SHORT);
-//        toast.show();
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
         }
+        mStartCount = 0;
+        mEndCount = 0;
     }
 
     // BindしたServiceをActivityに返す
@@ -96,6 +108,9 @@ public class AlertService extends Service implements SensorEventListener{
     @Override
     public void onSensorChanged(SensorEvent event) {
         mTendencyCheckCount++;
+        if(mCheckCountBefore != 0) {
+            mCheckCountBefore = getStepCount();
+        }
         // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
         //　5回カウントして1秒ごとに下記を実行する
         if(mTendencyCheckCount == 5){
@@ -107,7 +122,9 @@ public class AlertService extends Service implements SensorEventListener{
                 mTendencyOutCount++;
                 //  下向きと判定されるのが連続5回の場合、Alertを表示させる
                 if(mTendencyOutCount == 5) {
+                    // 歩数計センサの利用：
                     Intent intent = new Intent(ACTION);
+                    intent.putExtra("isStepCounter",false);
                     sendBroadcast(intent);
                     mTendencyOutCount = 0;
                 }
@@ -118,7 +135,27 @@ public class AlertService extends Service implements SensorEventListener{
                 }
             }
             mTendencyCheckCount = 0;
+            mCheckCountBefore = 0;
         }
+
+        //　歩数計の値を取得
+        if(MainActivity.sPedometerFlag) {
+            Sensor sensor = event.sensor;
+            float[] values = event.values;
+            long timestamp = event.timestamp;
+            if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+                Intent intent = new Intent(ACTION);
+                intent.putExtra("isStepCounter", true);
+                sendBroadcast(intent);
+                Log.d("type_step_time", String.valueOf(timestamp));
+                Log.d("type_step_counter", String.valueOf(values[0]));
+            }
+        }
+    }
+
+    public int getStepCount(){
+        return mEndCount - mStartCount;
     }
 }
 

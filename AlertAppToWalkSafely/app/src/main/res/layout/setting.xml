@@ -57,4 +57,24 @@
         android:layout_marginBottom="20dp"
         android:layout_alignRight="@+id/swhToastOnOff"
         android:layout_alignEnd="@+id/swhToastOnOff"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/setting_header_pedometer"
+        android:id="@+id/txtPedometer"
+        android:layout_below="@+id/swhVibrationOnOff"
+        android:layout_centerHorizontal="true"
+        android:textStyle="bold"/>
+
+    <ToggleButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tgbPedometer"
+        android:checked="false"
+        android:layout_below="@+id/txtPedometer"
+        android:layout_marginBottom="20dp"
+        android:layout_centerHorizontal="true"/>
+
 </RelativeLayout>

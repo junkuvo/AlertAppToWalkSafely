@@ -17,18 +17,28 @@
 
     <string name="menu_title_setting">Configure</string>
     <string name="menu_title_share">Share</string>
+    <string name="menu_title_history">History</string>
 
     <string name="dialog_title_setting">Configure</string>
     <string name="dialog_title_tweet">Tweet</string>
     <string name="dialog_button_send">Send</string>
     <string name="dialog_button_cancel">Cancel</string>
+    <string name="dialog_button_ok">OK</string>
+    <string name="dialog_title_history">Step Count History</string>
+    <string name="dialog_title_history_nodata">No data found...</string>
 
     <string name="home_button_start">Start</string>
     <string name="home_button_stop">Stop</string>
     <string name="home_edittext_alert">Face Forward!</string>
+    <string name="home_step_count_dimension"> STEP</string>
 
     <string name="setting_header_weak">Sensitivity:W</string>
     <string name="setting_header_strong">S</string>
     <string name="setting_header_alert">Message Alert：</string>
     <string name="setting_header_vibration">Vibration Alert：</string>
+
+    <string name="setting_header_pedometer">Pedometer</string>
+    <string name="pedometer_header_count">Step Count : </string>
+    <string name="title_activity_history">HistoryActivity</string>
+
 </resources>

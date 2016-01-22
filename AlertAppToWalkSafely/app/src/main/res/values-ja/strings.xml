@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">歩きスマホ注意アプリ</string>
+    <string name="app_name">歩きスマホ注意！</string>
     <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=%s</string>
 
     <string name="twitter_consumer_key">4JPOwJiuv5jokHILCET44I8ah</string>
@@ -17,19 +17,28 @@
 
     <string name="menu_title_setting">設定</string>
     <string name="menu_title_share">共有</string>
+    <string name="menu_title_history">履歴</string>
 
     <string name="dialog_title_setting">各種設定</string>
     <string name="dialog_title_tweet">つぶやく</string>
     <string name="dialog_button_send">送信</string>
     <string name="dialog_button_cancel">キャンセル</string>
+    <string name="dialog_button_ok">完了</string>
+
+    <string name="dialog_title_history">歩数記録</string>
+    <string name="dialog_title_history_nodata">歩数記録データがないようです...</string>
 
     <string name="home_button_start">開始</string>
     <string name="home_button_stop">停止</string>
     <string name="home_edittext_alert">前方に注意して下さい</string>
+    <string name="home_step_count_dimension"> 歩</string>
 
     <string name="setting_header_weak">感度：弱</string>
     <string name="setting_header_strong">強</string>
     <string name="setting_header_alert">メッセージ通知：</string>
     <string name="setting_header_vibration">振動通知：</string>
+
+    <string name="setting_header_pedometer">歩数計</string>
+    <string name="pedometer_header_count">アプリ利用中の歩数 : </string>
 
 </resources>
