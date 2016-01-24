@@ -80,19 +80,19 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     mStepCount++; // TYPE_STEP_COUNTERのBroadCastをReceiveする回数＝歩数
                     ((TextView)findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
                 }
-            }else{
-            if(!sAlertShowFlag && mToastOn) {
-                String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                showToastShort(alertMessage + "\n" + getString(R.string.pedometer_header_count) + String.valueOf(mAlertService.getStepCount()));
-                sAlertShowFlag = true;
-            }
+            }else {
+                if (!sAlertShowFlag && mToastOn) {
+                    String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
+                    showToastShort(alertMessage + "\n" + getString(R.string.pedometer_header_count) + String.valueOf(mStepCount));
+                    sAlertShowFlag = true;
+                }
 
-            if(mVibrationOn) {
-                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                if (mVibrationOn) {
+                    Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 //            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
 //            vibrator.vibrate(pattern, -1);
-                vibrator.vibrate(100);
-            }
+                    vibrator.vibrate(100);
+                }
             }
         }
     }
@@ -131,7 +131,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         startButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mAppRunningFlag) {
-                    mStepCount = mAlertService.getStepCount();
+                    // サービス停止
                     killAlertService();
                     changeViewState(false, ((Button) v));
                 } else {

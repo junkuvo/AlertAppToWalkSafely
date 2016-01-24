@@ -39,20 +39,20 @@ public class MainActivity extends Activity
         setContentView(R.layout.activity_main);
         Toast toast = Toast.makeText(getApplicationContext(), "onCreate()" , Toast.LENGTH_SHORT);
         toast.show();
-//        findViews();
-//        initSensor();
+        findViews();
+        initSensor();
     }
 
     public void onResume(){
         super.onResume();
-//        sensorManager.registerListener(
-//                this,
-//                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-//                SensorManager.SENSOR_DELAY_NORMAL);
-//        sensorManager.registerListener(
-//                this,
-//                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-//                SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(
+                this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(
+                this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+                SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     public void onPause(){

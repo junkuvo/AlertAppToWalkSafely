@@ -26,11 +26,6 @@ public class AlertService extends Service implements SensorEventListener{
     // 歩数計
     private Sensor mStepDetectorSensor;
     private Sensor mStepCounterSensor;
-    private int mStartCount = 0;
-    private int mEndCount = 0;
-
-    private int mCheckCountBefore = 0;
-    private int mCheckCountAfter = 0;
 
     @Override
     public void onCreate() {
@@ -60,7 +55,43 @@ public class AlertService extends Service implements SensorEventListener{
         mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         mSensorManager.registerListener (this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+
+
+
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        LocationProvider provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
+        final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                10000,          // 10-second interval.
+                10,             // 10 meters.
+                listener);
+
+        if (!gpsEnabled) {
+            // Build an alert dialog here that requests that the user enable
+            // the location services, then when the user clicks the "OK" button,
+            // call enableLocationSettings()
+        }
     }
+
+    private void enableLocationSettings() {
+        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(settingsIntent);
+    }
+
+    private final LocationListener listener = new LocationListener() {
+
+        @Override
+        public void onLocationChanged(Location location) {
+            // A new location update is received.  Do something useful with it.  In this case,
+            // we're sending the update to a handler which then updates the UI with the new
+            // location.
+            Message.obtain(mHandler,
+                    UPDATE_LATLNG,
+                    location.getLatitude() + ", " +
+                            location.getLongitude()).sendToTarget();
+        }
+    };
 
     @Override
     public void onDestroy() {
@@ -68,8 +99,8 @@ public class AlertService extends Service implements SensorEventListener{
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
         }
-        mStartCount = 0;
-        mEndCount = 0;
+
+        mLocationManager.removeUpdates(listener);
     }
 
     // BindしたServiceをActivityに返す
@@ -108,12 +139,14 @@ public class AlertService extends Service implements SensorEventListener{
     @Override
     public void onSensorChanged(SensorEvent event) {
         mTendencyCheckCount++;
-        if(mCheckCountBefore != 0) {
-            mCheckCountBefore = getStepCount();
-        }
         // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-        //　5回カウントして1秒ごとに下記を実行する
-        if(mTendencyCheckCount == 5){
+        //　10回カウントして2秒ごとに下記を実行する
+        if(mTendencyCheckCount == 10){
+            // GPSで移動しているかどうかを判定
+            // ある期間移動がなくなったらLocaitonManager remove
+            // 再度歩行を検知したらまたLocationManager start
+
+
             int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
             //　下向きかどうかの判定
             // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
@@ -135,27 +168,20 @@ public class AlertService extends Service implements SensorEventListener{
                 }
             }
             mTendencyCheckCount = 0;
-            mCheckCountBefore = 0;
         }
 
         //　歩数計の値を取得
         if(MainActivity.sPedometerFlag) {
             Sensor sensor = event.sensor;
-            float[] values = event.values;
-            long timestamp = event.timestamp;
+//            float[] values = event.values;
+//            long timestamp = event.timestamp;
             if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
             } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
                 sendBroadcast(intent);
-                Log.d("type_step_time", String.valueOf(timestamp));
-                Log.d("type_step_counter", String.valueOf(values[0]));
             }
         }
-    }
-
-    public int getStepCount(){
-        return mEndCount - mStartCount;
     }
 }
 
