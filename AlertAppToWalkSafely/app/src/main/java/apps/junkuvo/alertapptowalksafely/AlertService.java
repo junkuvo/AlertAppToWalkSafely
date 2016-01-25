@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.List;
 
@@ -101,6 +102,7 @@ public class AlertService extends Service implements SensorEventListener {
         // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
         //　10回カウントして2秒ごとに下記を実行する(2秒くらいあれば歩数が変化している前提)
         if(mTendencyCheckCount == 10){
+            // 歩行中であることと判定
             if(isWalking()) {
                 int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
                 //　下向きかどうかの判定
@@ -127,16 +129,16 @@ public class AlertService extends Service implements SensorEventListener {
         }
 
         //　歩数計の値を取得
-        if(MainActivity.sPedometerFlag) {
-            Sensor sensor = event.sensor;
-            float[] values = event.values;
+        Sensor sensor = event.sensor;
+//            float[] values = event.values;
 //            long timestamp = event.timestamp;
-            if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-            } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+        } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+            mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
+            if(MainActivity.sPedometerFlag) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
                 sendBroadcast(intent);
-                mStepCountCurrent = (int)values[0];//Integer.valueOf(String.valueOf(values[0]));
             }
         }
     }
@@ -144,7 +146,6 @@ public class AlertService extends Service implements SensorEventListener {
     private int mStepCountBefore = 0;
     private int mStepCountAfter = 0;
     private int mStepCountCurrent = 0;
-
 
     // 歩数の変化を計算して、変化があれば歩行中と判定
     private boolean isWalking(){
