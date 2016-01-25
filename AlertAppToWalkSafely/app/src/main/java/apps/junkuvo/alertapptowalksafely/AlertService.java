@@ -138,6 +138,7 @@ public class AlertService extends Service implements SensorEventListener {
             if(MainActivity.sPedometerFlag) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
+                intent.putExtra("stepCount",mStepCountCurrent);
                 sendBroadcast(intent);
             }
         }
