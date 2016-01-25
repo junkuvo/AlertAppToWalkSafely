@@ -207,10 +207,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(android.R.drawable.ic_menu_share);
 
-        //  ★歩数履歴
-        actionItem = menu.add(Menu.NONE,MENU_HISTORY_ID,MENU_HISTORY_ID,this.getString(R.string.menu_title_history));
-        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(android.R.drawable.ic_menu_recent_history);
+//        //  ★歩数履歴
+//        actionItem = menu.add(Menu.NONE,MENU_HISTORY_ID,MENU_HISTORY_ID,this.getString(R.string.menu_title_history));
+//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+//        actionItem.setIcon(android.R.drawable.ic_menu_recent_history);
 
         return true;
     }

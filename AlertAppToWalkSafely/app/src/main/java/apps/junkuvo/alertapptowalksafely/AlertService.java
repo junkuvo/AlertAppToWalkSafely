@@ -1,24 +1,14 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.Settings;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
 
 import java.util.List;
 
@@ -35,16 +25,6 @@ public class AlertService extends Service implements SensorEventListener {
     // 歩数計
     private Sensor mStepDetectorSensor;
     private Sensor mStepCounterSensor;
-
-    // Location
-    private  LocationManager mLocationManager;
-    private List<String> mProviders;
-    private static final float MIN_DISTANCE = 1;// メートル
-    private static final int MIN_INTERVAL = 1;// milisec
-
-    // 歩行中かどうかの判定フラグ
-    boolean isWalking = false;
-    private AlertDialog.Builder mAlertDialog;
 
     @Override
     public void onCreate() {
@@ -74,77 +54,13 @@ public class AlertService extends Service implements SensorEventListener {
         mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
-
-
-        mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        final boolean gpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        final boolean netEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        if (!gpsEnabled && !netEnabled) {
-//            // Build an alert dialog here that requests that the user enable
-//            // the location services, then when the user clicks the "OK" button,
-//            // call enableLocationSettings()
-        } else {
-            mProviders =  mLocationManager.getAllProviders();
-            startLocationUpdates();
-        }
     }
-
-    private void startLocationUpdates() {
-        if(mLocationManager!=null)
-        {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, mLocationListener);
-                for(int i = 0 ; i < mProviders.size() ; i++){
-                    mLocationManager.requestLocationUpdates(mProviders.get(i), MIN_INTERVAL, MIN_DISTANCE, mLocationListener);
-                }
-            }
-        }
-    }
-
-    private void enableLocationSettings() {
-        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-        startActivity(settingsIntent);
-    }
-
-    private final LocationListener mLocationListener = new LocationListener() {
-
-        @Override
-        public void onLocationChanged(Location location) {
-            // A new location update is received.  Do something useful with it.  In this case,
-            // we're sending the update to a handler which then updates the UI with the new
-            // location.
-//            Message.obtain(mHandler,
-//                    UPDATE_LATLNG,
-//                    location.getLatitude() + ", " +
-//                            location.getLongitude()).sendToTarget();
-
-            isWalking = true;
-            Log.d("test","test");
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-
-    };
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
-        }
-        if (mLocationManager != null) {
-            if (ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                mLocationManager.removeUpdates(mLocationListener);
-            }
         }
     }
 
@@ -178,13 +94,14 @@ public class AlertService extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         mTendencyCheckCount++;
+        if(mStepCountBefore == 0){
+            mStepCountBefore = mStepCountCurrent;
+        }
+
         // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-        //　10回カウントして2秒ごとに下記を実行する
+        //　10回カウントして2秒ごとに下記を実行する(2秒くらいあれば歩数が変化している前提)
         if(mTendencyCheckCount == 10){
-            // GPSで移動しているかどうかを判定
-            // ある期間移動がなくなったらLocaitonManager remove
-            // 再度歩行を検知したらまたLocationManager start
-            if(isWalking) {
+            if(isWalking()) {
                 int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
                 //　下向きかどうかの判定
                 // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
@@ -205,7 +122,6 @@ public class AlertService extends Service implements SensorEventListener {
                         MainActivity.sAlertShowFlag = false;
                     }
                 }
-                isWalking = false;
             }
             mTendencyCheckCount = 0;
         }
@@ -213,14 +129,31 @@ public class AlertService extends Service implements SensorEventListener {
         //　歩数計の値を取得
         if(MainActivity.sPedometerFlag) {
             Sensor sensor = event.sensor;
-//            float[] values = event.values;
+            float[] values = event.values;
 //            long timestamp = event.timestamp;
             if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
             } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
                 sendBroadcast(intent);
+                mStepCountCurrent = (int)values[0];//Integer.valueOf(String.valueOf(values[0]));
             }
+        }
+    }
+
+    private int mStepCountBefore = 0;
+    private int mStepCountAfter = 0;
+    private int mStepCountCurrent = 0;
+
+
+    // 歩数の変化を計算して、変化があれば歩行中と判定
+    private boolean isWalking(){
+        mStepCountAfter = mStepCountCurrent;
+        if(mStepCountBefore == mStepCountAfter){
+            return false;
+        }else{
+            mStepCountBefore = mStepCountAfter;
+            return true;
         }
     }
 }
