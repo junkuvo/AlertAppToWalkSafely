@@ -9,7 +9,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.util.List;
 
@@ -44,7 +43,7 @@ public class AlertService extends Service implements SensorEventListener {
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
-        sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
+//        sensors = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
         if (sensors.size() > 0) {
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
@@ -100,10 +99,10 @@ public class AlertService extends Service implements SensorEventListener {
         }
 
         // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-        //　10回カウントして2秒ごとに下記を実行する(2秒くらいあれば歩数が変化している前提)
-        if(mTendencyCheckCount == 10){
+        //　5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
+        if(mTendencyCheckCount == 5){
             // 歩行中であることと判定
-            if(isWalking()) {
+//            if(isWalking()) {
                 int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
                 //　下向きかどうかの判定
                 // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
@@ -123,7 +122,7 @@ public class AlertService extends Service implements SensorEventListener {
                         mTendencyOutCount--;
                         MainActivity.sAlertShowFlag = false;
                     }
-                }
+//                }
             }
             mTendencyCheckCount = 0;
         }

@@ -4,13 +4,16 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
+import android.util.Log;
+
+import java.util.Arrays;
 
 public class DeviceAttitudeCalculator {
 
     private final static double RAD2DEG = 180d/Math.PI;
 
     private  float[] gravity = new float[3];
-    private float[] geomagnetic = new float[3];
+//    private float[] geomagnetic = new float[3];
 
 //    float[] rotationMatrix = new float[9];
 //    float[] rotationMatrixOut = new float[9];
@@ -23,11 +26,12 @@ public class DeviceAttitudeCalculator {
     }
 
     public int calculateDeviceAttitude(SensorEvent event){
-        // 値が変化したセンサーが照度センサーだった場合
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            geomagnetic = event.values.clone();
-        }
-        else if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+//        // 値が変化したセンサーが照度センサーだった場合
+//        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+//            geomagnetic = event.values.clone();
+//        }
+//        else
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             gravity = event.values.clone();
         }
 
@@ -79,7 +83,7 @@ public class DeviceAttitudeCalculator {
 
         double radian = Math.abs(Math.atan2(x, y));
         tendencyDegree = radian * RAD2DEG;
-//        Log.d("test",Arrays.toString(gravity) + String.valueOf(tendencyDegree));
+        Log.d("test", Arrays.toString(gravity) + String.valueOf(tendencyDegree));
 
         return (int)tendencyDegree;
     }
