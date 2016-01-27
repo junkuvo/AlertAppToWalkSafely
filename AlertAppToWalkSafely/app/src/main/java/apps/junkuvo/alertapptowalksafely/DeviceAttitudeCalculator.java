@@ -4,9 +4,6 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
-import android.util.Log;
-
-import java.util.Arrays;
 
 public class DeviceAttitudeCalculator {
 
@@ -62,20 +59,21 @@ public class DeviceAttitudeCalculator {
     // 前提２：タブレット横方向の軸　＝　スマホ縦方向の軸
     private int calculateDeviceTendency(float[] gravity){
         double tendencyDegree;
-        double x;// 上下として定義（軸は向きによってx or z）
-        double y;// 前後方向
+        double x = 9;// 上下として定義（軸は向きによってx or z）
+        double y = 0;// 前後方向
 
         boolean isTabletNotPhone = mUtility.isTabletNotPhone();
         int orientation = mUtility.getOrientation();
 
+        // 端末の縦・横で場合分け
         if((isTabletNotPhone && orientation == Configuration.ORIENTATION_PORTRAIT)
                 || (!isTabletNotPhone && orientation == Configuration.ORIENTATION_LANDSCAPE)){
-            x = (double)gravity[0];
-            y = (double)gravity[2];
+            x = (double) gravity[0];
+            y = (double) gravity[2];
         }else if((isTabletNotPhone && orientation == Configuration.ORIENTATION_LANDSCAPE)
                 || (!isTabletNotPhone && orientation == Configuration.ORIENTATION_PORTRAIT)){
-            x = (double)gravity[1];
-            y = (double)gravity[2];
+            x = (double) gravity[1];
+            y = (double) gravity[2];
         }else{
             x = 9;
             y = 0;
@@ -83,7 +81,7 @@ public class DeviceAttitudeCalculator {
 
         double radian = Math.abs(Math.atan2(x, y));
         tendencyDegree = radian * RAD2DEG;
-        Log.d("test", Arrays.toString(gravity) + String.valueOf(tendencyDegree));
+//        Log.d("test", Arrays.toString(gravity) + String.valueOf(tendencyDegree) + "Ori:" + String.valueOf(orientation));
 
         return (int)tendencyDegree;
     }

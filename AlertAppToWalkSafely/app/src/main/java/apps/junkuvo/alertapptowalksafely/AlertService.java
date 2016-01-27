@@ -1,8 +1,10 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -26,10 +28,30 @@ public class AlertService extends Service implements SensorEventListener {
     private Sensor mStepDetectorSensor;
     private Sensor mStepCounterSensor;
 
+    // 画面のON/OFFを検知する
+    private boolean mIsScreenOn = true;
+    private BroadcastReceiver screenStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Receive screen off
+            if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                mIsScreenOn = false;
+            }
+            if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+                mIsScreenOn = true;
+            }
+        }
+    };
+
     @Override
     public void onCreate() {
         super.onCreate();
         mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(getApplicationContext());
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(screenStatusReceiver, filter);
     }
 
     @Override
@@ -62,6 +84,9 @@ public class AlertService extends Service implements SensorEventListener {
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
         }
+        if(screenStatusReceiver != null) {
+            unregisterReceiver(screenStatusReceiver);
+        }
     }
 
     // BindしたServiceをActivityに返す
@@ -93,38 +118,40 @@ public class AlertService extends Service implements SensorEventListener {
     // センサーの値が変化すると呼ばれる
     @Override
     public void onSensorChanged(SensorEvent event) {
-        mTendencyCheckCount++;
-        if(mStepCountBefore == 0){
-            mStepCountBefore = mStepCountCurrent;
-        }
-
-        // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-        //　5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
-        if(mTendencyCheckCount == 5){
-            // 歩行中であることと判定
-//            if(isWalking()) {
-                int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
-                //　下向きかどうかの判定
-                // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
-                // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
-                if ((tendency > 180 - MainActivity.sAlertStartAngle || tendency < MainActivity.sAlertStartAngle) && tendency > 3) {
-                    mTendencyOutCount++;
-                    //  下向きと判定されるのが連続5回の場合、Alertを表示させる
-                    if (mTendencyOutCount == 5) {
-                        // 歩数計センサの利用：
-                        Intent intent = new Intent(ACTION);
-                        intent.putExtra("isStepCounter", false);
-                        sendBroadcast(intent);
-                        mTendencyOutCount = 0;
-                    }
-                } else {
-                    if (mTendencyOutCount > 0) {
-                        mTendencyOutCount--;
-                        MainActivity.sAlertShowFlag = false;
-                    }
-//                }
+        // 画面がONの場合、歩きスマホを検知する
+        if(mIsScreenOn) {
+            mTendencyCheckCount++;
+            if (mStepCountBefore == 0) {
+                mStepCountBefore = mStepCountCurrent;
             }
-            mTendencyCheckCount = 0;
+            // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
+            //　5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
+            if (mTendencyCheckCount == 5) {
+                // 歩行中であることを判定
+                if(isWalking()) {
+                    int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
+                    //　下向きかどうかの判定
+                    // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
+                    // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
+                    if ((tendency > 180 - MainActivity.sAlertStartAngle || tendency < MainActivity.sAlertStartAngle) && tendency > 3) {
+                        mTendencyOutCount++;
+                        //  下向きと判定されるのが連続5回の場合、Alertを表示させる
+                        if (mTendencyOutCount == 5) {
+                            // 歩数計センサの利用：
+                            Intent intent = new Intent(ACTION);
+                            intent.putExtra("isStepCounter", false);
+                            sendBroadcast(intent);
+                            mTendencyOutCount = 0;
+                        }
+                    } else {
+                        if (mTendencyOutCount > 0) {
+                            mTendencyOutCount--;
+                            MainActivity.sAlertShowFlag = false;
+                        }
+                    }
+                }
+                mTendencyCheckCount = 0;
+            }
         }
 
         //　歩数計の値を取得
