@@ -77,13 +77,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         public void onReceive(Context context, Intent intent) {
             if(intent.getBooleanExtra("isStepCounter",false)) {
                 if(sPedometerFlag && mAlertService != null){
-                    mStepCount++; // TYPE_STEP_COUNTERのBroadCastをReceiveする回数＝歩数
+                    mStepCount = intent.getIntExtra("stepCount",mStepCount);
                     ((TextView)findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
                 }
             }else {
                 if (!sAlertShowFlag && mToastOn) {
                     String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                    showToastShort(alertMessage + "\n" + getString(R.string.pedometer_header_count) + String.valueOf(mStepCount));
+                    showToastShort(alertMessage);
                     sAlertShowFlag = true;
                 }
 
