@@ -246,8 +246,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
-                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
-                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                        mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step)+ "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                                String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
                     mAlertDialog.setPositiveButton(this.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -415,6 +415,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             protected String doInBackground(Void... params) {
                 try {
                     mTwitter.setOAuthAccessToken(null);// これがないと認証画面に1回しか飛べない
+                    // OAuth用のURLを作成
                     mRequestToken = mTwitter.getOAuthRequestToken(mCallbackURL);
                     return mRequestToken.getAuthorizationURL();
                 } catch (TwitterException e) {

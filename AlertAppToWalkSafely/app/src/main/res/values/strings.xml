@@ -2,8 +2,6 @@
     <string name="app_name">Alert while Using Mobile Walk♪</string>
     <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=%s</string>
 
-    <string name="twitter_consumer_key">4JPOwJiuv5jokHILCET44I8ah</string>
-    <string name="twitter_consumer_secret">RxpuDYygVKFx5hkdXQiR3FEXxAnTqYxw1VR9dhcFQoOxU3w7uD</string>
     <string name="twitter_callback_url">junkuvo://twitter</string>
 
     <string name="twitter_tweetText">Alert while Using Mobile Walk♪</string>
@@ -11,6 +9,7 @@
     <string name="twitter_auth_fail">Twitter Authentication Failure...</string>
     <string name="twitter_tweet_succeed">Tweet Complete!</string>
     <string name="twitter_tweet_fail">Tweet Failure...</string>
+    <string name="twitter_tweet_step">STEP！</string>
 
     <string name="review_url">market://details?id=%s</string>
     <string name="review_url_title">Review</string>

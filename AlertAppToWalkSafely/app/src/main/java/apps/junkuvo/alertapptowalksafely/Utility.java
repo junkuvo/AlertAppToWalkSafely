@@ -4,6 +4,11 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
+import android.util.Base64;
+import android.util.Log;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Utility {
 
@@ -47,4 +52,20 @@ public class Utility {
             }
         }
     }
+
+    public static String stringEncrypt(SecretKeySpec key, String target) throws Exception{
+        // AESアルゴリズムでCipherオブジェクトを作成
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] encrypted = cipher.doFinal(target.getBytes());
+        return Base64.encodeToString(encrypted, Base64.DEFAULT);
+    }
+
+    public static String stringDecrypt(SecretKeySpec key, byte[] encrypted) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        byte[] decrypted = cipher.doFinal(encrypted);
+        return new String(decrypted);
+    }
+
 }
