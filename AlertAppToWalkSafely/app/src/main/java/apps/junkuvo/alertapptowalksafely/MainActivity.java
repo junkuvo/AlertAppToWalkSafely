@@ -134,7 +134,31 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     // サービス停止
                     killAlertService();
                     changeViewState(false, ((Button) v));
-                } else {
+
+                    if (TwitterUtility.hasAccessToken(getApplicationContext())) {
+                        Context context = MainActivity.this;
+                        LayoutInflater inflater = LayoutInflater.from(context);
+                        View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
+                        mAlertDialog = new AlertDialog.Builder(context);
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                        mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
+                        mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
+                        mAlertDialog.setView(layout);
+                        mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
+                        mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step)+ "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                                String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                        mAlertDialog.setPositiveButton(context.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                tweet(mTweetText.getText().toString());
+                            }
+                        });
+                        mAlertDialog.setCancelable(false);
+                        mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
+                        mAlertDialog.create().show();
+                    }
+
+                    } else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
                     startService(intent);

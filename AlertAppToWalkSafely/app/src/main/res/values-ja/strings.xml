@@ -24,6 +24,9 @@
     <string name="dialog_button_cancel">キャンセル</string>
     <string name="dialog_button_ok">完了</string>
 
+    <string name="dialog_tweet">Twitterで送信しますか？</string>
+
+
     <string name="dialog_title_history">歩数記録</string>
     <string name="dialog_title_history_nodata">歩数記録データがないようです...</string>
 

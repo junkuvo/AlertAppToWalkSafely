@@ -67,5 +67,4 @@ public class Utility {
         byte[] decrypted = cipher.doFinal(encrypted);
         return new String(decrypted);
     }
-
 }
