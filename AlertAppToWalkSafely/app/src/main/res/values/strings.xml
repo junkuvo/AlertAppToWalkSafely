@@ -11,6 +11,8 @@
     <string name="twitter_tweet_fail">Tweet Failure...</string>
     <string name="twitter_tweet_step">STEP！</string>
 
+    <string name="dialog_tweet">Tweet right now？</string>
+
     <string name="review_url">market://details?id=%s</string>
     <string name="review_url_title">Review</string>
 

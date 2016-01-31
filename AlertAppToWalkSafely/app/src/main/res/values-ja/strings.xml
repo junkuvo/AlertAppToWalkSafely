@@ -42,5 +42,6 @@
 
     <string name="setting_header_pedometer">歩数計</string>
     <string name="pedometer_header_count">アプリ利用中の歩数 : </string>
+    <string name="title_activity_history">履歴</string>
 
 </resources>
