@@ -158,7 +158,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         mAlertDialog.create().show();
                     }
 
-                    } else {
+                } else {
                     // サービスを開始
                     Intent intent = new Intent(MainActivity.this, AlertService.class);
                     startService(intent);
