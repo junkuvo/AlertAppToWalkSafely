@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -190,12 +191,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mVibrationOn = data.getBoolean("vibrate",true );
         sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;;
         sPedometerFlag = data.getBoolean("pedometer", true);
-        if(sPedometerFlag){
-            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
-        }else{
-            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
-        }
     }
+
+    private boolean mHasStepFeature = false;
 
     @Override
     protected void onStart() {
@@ -207,6 +205,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         // カーソルを最後尾に移動
         EditText editText = (EditText)findViewById(R.id.txtAlertMessage);
         editText.setSelection(editText.getText().length());
+
+        PackageManager packageManager = this.getPackageManager();
+        if(packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR)){
+            mHasStepFeature = true;
+            if(sPedometerFlag){
+                ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+            }else{
+                ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+            }
+        }else{
+            mHasStepFeature = false;
+        }
+
     }
 
     @Override
@@ -256,7 +268,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                 setSeekBarInLayout(layout);
                 setSwitchInLayout(layout);
-                setToggleButtonInLayout(layout);
+                if(mHasStepFeature) {
+                    setToggleButtonInLayout(layout);
+                }
                 mAlertDialog.create().show();
                 break;
             case MENU_SHARE_ID :
@@ -298,7 +312,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     public void setStepCountListInLayout(View layout){
-        ListView listView = (ListView)layout.findViewById(R.id.livStepCountHistory);
+//        ListView listView = (ListView)layout.findViewById(R.id.livStepCountHistory);
     }
 
     public void setSeekBarInLayout(View layout){
