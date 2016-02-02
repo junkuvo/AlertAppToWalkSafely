@@ -35,6 +35,9 @@
             android:name=".AlertService"
             android:enabled="true" />
 
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="e96c27ec5a15ec99185fe13f2dfe59a3ce18a8c8" />
     </application>
 
 </manifest>

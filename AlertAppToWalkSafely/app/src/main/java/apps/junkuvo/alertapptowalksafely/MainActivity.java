@@ -37,6 +37,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -113,7 +115,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Fabric.with(this, new Crashlytics());
         ActionBar actionbar = getSupportActionBar();
         if(actionbar != null) {
             actionbar.show();
