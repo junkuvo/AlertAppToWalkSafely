@@ -128,7 +128,7 @@ public class AlertService extends Service implements SensorEventListener {
             //　5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
             if (mTendencyCheckCount == 5) {
                 // 歩行中であることを判定
-                if(isWalking()) {
+                if(isWalking()) {// ★歩行センサーがない端末に対応する必要がある（mHasStepFeature利用）
                     int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
                     //　下向きかどうかの判定
                     // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする

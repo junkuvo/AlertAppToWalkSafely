@@ -30,7 +30,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -39,10 +38,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
-import io.fabric.sdk.android.Fabric;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import io.fabric.sdk.android.Fabric;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
@@ -272,6 +272,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                 setSwitchInLayout(layout);
                 if(mHasStepFeature) {
                     setToggleButtonInLayout(layout);
+                }else{
+                    layout.findViewById(R.id.tgbPedometer).setVisibility(View.GONE);
+                    layout.findViewById(R.id.txtPedometer).setVisibility(View.GONE);
                 }
                 mAlertDialog.create().show();
                 break;
