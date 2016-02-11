@@ -437,7 +437,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             button.setText(this.getString(R.string.home_button_stop));
             button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
-            ((TextView)findViewById(R.id.txtStepCount)).setText("0"+ getString(R.string.home_step_count_dimension));
+            if(mHasStepFeature) {
+                ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+            }
         }else{
             button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
             button.setText(this.getString(R.string.home_button_start));

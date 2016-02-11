@@ -54,6 +54,18 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="0 歩"
+        android:id="@+id/txtStepCount"
+        android:visibility="invisible"
+        android:layout_below="@+id/button"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:textSize="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/home"
         android:textSize="15sp"
         android:text="@string/review_url_title"
@@ -62,15 +74,5 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="0 STEP"
-        android:visibility="invisible"
-        android:layout_marginTop="10dp"
-        android:id="@+id/txtStepCount"
-        android:layout_below="@+id/button"
-        android:layout_centerHorizontal="true"
-        android:textSize="40dp" />
+
 </RelativeLayout>
