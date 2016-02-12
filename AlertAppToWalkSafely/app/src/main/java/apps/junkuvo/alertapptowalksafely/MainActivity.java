@@ -62,6 +62,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private boolean mVibrationOn = true;
     private boolean mToastOn = true;
     private int mStepCount = 0;
+    public static boolean mHasStepFeature = false;
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -194,8 +195,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;;
         sPedometerFlag = data.getBoolean("pedometer", true);
     }
-
-    private boolean mHasStepFeature = false;
 
     @Override
     protected void onStart() {
@@ -437,9 +436,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             button.setText(this.getString(R.string.home_button_stop));
             button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
-            if(mHasStepFeature) {
-                ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
-            }
+            ((TextView)findViewById(R.id.txtStepCount)).setText("0"+ getString(R.string.home_step_count_dimension));
         }else{
             button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
             button.setText(this.getString(R.string.home_button_start));
