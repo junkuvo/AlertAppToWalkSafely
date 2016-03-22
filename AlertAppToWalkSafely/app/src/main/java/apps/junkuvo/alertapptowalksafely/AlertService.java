@@ -58,23 +58,13 @@ public class AlertService extends Service implements SensorEventListener {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        // センサーのオブジェクトリストを取得する
-        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
+        handleOnStart(intent,startId);
+    }
 
-        // 歩数計用のセンサー登録
-        mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    public int onStartCommand(Intent intent, int flags, int startId){
+        onStart(intent, startId);
+        handleOnStart(intent,startId);
+        return START_STICKY;
     }
 
     @Override
@@ -112,6 +102,26 @@ public class AlertService extends Service implements SensorEventListener {
     // センサーの精度が変更されると呼ばれる
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    private void handleOnStart(Intent intent, int startId){
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        // センサーのオブジェクトリストを取得する
+        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+        if (sensors.size() > 0) {
+            Sensor s = sensors.get(0);
+            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if (sensors.size() > 0) {
+            Sensor s = sensors.get(0);
+            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+        // 歩数計用のセンサー登録
+        mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+        mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     // センサーの値が変化すると呼ばれる

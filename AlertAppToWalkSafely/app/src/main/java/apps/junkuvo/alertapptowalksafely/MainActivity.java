@@ -1,5 +1,6 @@
 package apps.junkuvo.alertapptowalksafely;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -16,8 +17,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.view.KeyEvent;
@@ -38,6 +39,8 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
+import com.github.stkent.amplify.tracking.Amplify;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -48,7 +51,8 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener{
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
@@ -130,6 +134,9 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             return;
         }
         setContentView(R.layout.activity_main);
+
+        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
+        Amplify.get(MainActivity.this).promptIfReady(this, promptView);
 
         Button startButton = (Button)findViewById(R.id.button);
         startButton.setOnClickListener(new View.OnClickListener() {
