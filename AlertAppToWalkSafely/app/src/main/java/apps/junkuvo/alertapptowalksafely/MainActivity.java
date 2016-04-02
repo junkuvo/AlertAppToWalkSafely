@@ -11,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -39,7 +40,9 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
+import com.github.stkent.amplify.prompt.DefaultLayoutPromptViewConfig;
 import com.github.stkent.amplify.tracking.Amplify;
 
 import java.text.SimpleDateFormat;
@@ -135,7 +138,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         setContentView(R.layout.activity_main);
 
+
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
+
+        final BasePromptViewConfig basePromptViewConfig
+                = new BasePromptViewConfig.Builder()
+                .setUserOpinionQuestionTitle(getString(R.string.prompt_title))
+                .setUserOpinionQuestionPositiveButtonLabel(getString(R.string.prompt_btn_yes))
+                .setUserOpinionQuestionNegativeButtonLabel(getString(R.string.prompt_btn_no))
+                .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
+                .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                .build();
+
+//        final DefaultLayoutPromptViewConfig defaultLayoutPromptViewConfig
+//                = new DefaultLayoutPromptViewConfig.Builder()
+//                .setForegroundColor(Color.parseColor("#FF0000"))
+//                .setBackgroundColor(Color.parseColor("#FF9900"))
+//                .setTitleTextColor(Color.parseColor("#33FF00"))
+//                .setSubtitleTextColor(Color.parseColor("#00FFFF"))
+//                .setPositiveButtonTextColor(Color.parseColor("#CC00FF"))
+//                .setPositiveButtonBackgroundColor(Color.parseColor("#3300FF"))
+//                .setPositiveButtonBorderColor(Color.parseColor("#0066FF"))
+//                .setNegativeButtonTextColor(Color.parseColor("#FFFF00"))
+//                .setNegativeButtonBackgroundColor(Color.parseColor("#FF0000"))
+//                .setNegativeButtonBorderColor(Color.parseColor("#999999"))
+//                .build();
+
+        promptView.applyBaseConfig(basePromptViewConfig);
+//        promptView.applyConfig(defaultLayoutPromptViewConfig);
+
+
+//        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         Amplify.get(MainActivity.this).promptIfReady(this, promptView);
 
         Button startButton = (Button)findViewById(R.id.button);

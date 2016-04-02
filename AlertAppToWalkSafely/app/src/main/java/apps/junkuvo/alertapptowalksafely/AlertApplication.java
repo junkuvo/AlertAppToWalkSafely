@@ -21,13 +21,13 @@ public class AlertApplication extends Application{
 //        Amplify.get(this)
 //                .setFeedbackEmailAddress("0825elle@gmail.com")
 //                .applyAllDefaultRules();
+
         Amplify.get(this)
                 .setFeedbackEmailAddress("0825elle@gmail.com")
-                .setInstallTimeCooldownDays(14) // Prompt not shown within two weeks of initial install.
-                .setLastUpdateTimeCooldownDays(7) // Prompt not shown within one week of most recent update.
-                .setLastCrashTimeCooldownDays(7) // Prompt not shown within one week of most recent crash.
+                .setInstallTimeCooldownDays(3) // Prompt not shown input days of initial install.
+                .setLastUpdateTimeCooldownDays(3) // Prompt not shown within input days of most recent update.
+                .setLastCrashTimeCooldownDays(3) // Prompt not shown within input days of most recent crash.
                 .addTotalEventCountRule(PromptViewEvent.USER_GAVE_POSITIVE_FEEDBACK,
                         new MaximumCountRule(1)); // Never ask the user for feedback again if they already responded positively.
-
     }
 }

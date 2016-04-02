@@ -43,5 +43,11 @@
     <string name="setting_header_pedometer">歩数計</string>
     <string name="pedometer_header_count">アプリ利用中の歩数 : </string>
     <string name="title_activity_history">履歴</string>
+    <string name="prompt_title">アプリを評価していただけますか？</string>
+    <string name="prompt_title_feedback">Play Store にてレビューいただきますか？</string>
+    <string name="prompt_btn_yes">はい！</string>
+    <string name="prompt_btn_sure">レビュー</string>
+    <string name="prompt_btn_notnow">あとで</string>
+    <string name="prompt_btn_no">いいえ</string>
 
 </resources>

@@ -41,5 +41,11 @@
     <string name="setting_header_pedometer">Pedometer</string>
     <string name="pedometer_header_count">Step Count : </string>
     <string name="title_activity_history">HistoryActivity</string>
+    <string name="prompt_title">Enjoying this app?</string>
+    <string name="prompt_btn_no">No</string>
+    <string name="prompt_btn_yes">Yes!</string>
+    <string name="prompt_title_feedback">Awesome! We\'d love a Play Store review...</string>
+    <string name="prompt_btn_notnow">Not right now</string>
+    <string name="prompt_btn_sure">Sure thing!</string>
 
 </resources>
