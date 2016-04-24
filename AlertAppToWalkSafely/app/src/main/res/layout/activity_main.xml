@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
@@ -11,46 +11,28 @@
     android:id="@+id/rtlMain"
     tools:context=".MainActivity">
 
-    <TextView
-        android:text="How to Use"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@android:color/darker_gray"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/txtTitle"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:gravity="center"
-        android:text="When you walk using mobile devices,\nThis app gives you Alert.\nPlease input a message and\nPush the「START」button"
-        android:id="@+id/txtTendency"
-        android:layout_below="@+id/txtTitle"
-        android:layout_marginTop="20dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"/>
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/txtAlertMessage"
         android:text="@string/home_edittext_alert"
-        android:layout_above="@+id/button"
-        android:layout_marginBottom="20dp"
+        android:layout_above="@+id/fabStart"
         android:layout_centerHorizontal="true"/>
 
-    <Button
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/home_button_start"
-        android:id="@+id/button"
-        android:textColor="@android:color/white"
-        android:background="@drawable/shape_rounded_corners_blue_5dp"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="0 STEP"
+        android:id="@+id/txtStepCount"
+        android:visibility="invisible"
+        android:layout_below="@+id/fabStart"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:textSize="40dp" />
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -63,21 +45,15 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="0 STEP"
-        android:visibility="invisible"
-        android:layout_marginTop="10dp"
-        android:id="@+id/txtStepCount"
-        android:layout_below="@+id/button"
+    <com.software.shell.fab.ActionButton
+        android:id="@+id/fabStart"
+        style="@style/fab_action_button_style"
+        fab:type="BIG"
         android:layout_centerHorizontal="true"
-        android:textSize="40dp" />
+        android:layout_centerVertical="true" />
 
     <com.github.stkent.amplify.prompt.DefaultLayoutPromptView
         android:id="@+id/prompt_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
 </RelativeLayout>

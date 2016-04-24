@@ -1,6 +1,5 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -17,19 +16,23 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -40,14 +43,19 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
-import com.github.stkent.amplify.prompt.DefaultLayoutPromptViewConfig;
 import com.github.stkent.amplify.tracking.Amplify;
+import com.mhk.android.passcodeview.PasscodeView;
+import com.software.shell.fab.ActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import co.mobiwise.materialintro.shape.Focus;
+import co.mobiwise.materialintro.shape.FocusGravity;
+import co.mobiwise.materialintro.view.MaterialIntroView;
 import io.fabric.sdk.android.Fabric;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -55,7 +63,7 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
@@ -67,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public static int sAlertStartAngle;
     private boolean mVibrationOn = true;
+    private boolean mPasscodeOn = false;
     private boolean mToastOn = true;
     private int mStepCount = 0;
     public static boolean mHasStepFeature = false;
@@ -74,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
     private final int ALERT_ANGLE_INITIAL_OFFSET = 15;
+
+    private static final float TOAST_TEXT_SIZE = 32; // sp
 
     private static final int MENU_SETTING_ID = 0;
     private static final int MENU_SHARE_ID = 1;
@@ -83,18 +94,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
 
+    private SharedPreferencesUtil mSharedPreferenceUtil;
+
+    private String mPasscode;
+    private String mPasscodeConfirm;
+
+    private ActionButton mbtnStart;
+    private Animation mAnimationBlink;
+
+
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getBooleanExtra("isStepCounter",false)) {
-                if(sPedometerFlag && mAlertService != null){
-                    mStepCount = intent.getIntExtra("stepCount",mStepCount);
-                    ((TextView)findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
+            if (intent.getBooleanExtra("isStepCounter", false)) {
+                if (sPedometerFlag && mAlertService != null) {
+                    mStepCount = intent.getIntExtra("stepCount", mStepCount);
+                    ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
                 }
-            }else {
+            } else {
                 if (!sAlertShowFlag && mToastOn) {
                     String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                    showToastShort(alertMessage);
+                    showToastShort(alertMessage).show();
                     sAlertShowFlag = true;
                 }
 
@@ -112,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-            mAlertService = ((AlertService.AlertBinder)service).getService();
+            mAlertService = ((AlertService.AlertBinder) service).getService();
         }
 
         @Override
@@ -126,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         ActionBar actionbar = getSupportActionBar();
-        if(actionbar != null) {
+        if (actionbar != null) {
             actionbar.show();
         }
 
@@ -138,7 +158,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         setContentView(R.layout.activity_main);
 
-
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
         final BasePromptViewConfig basePromptViewConfig
@@ -149,6 +168,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
                 .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
                 .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                .setCriticalFeedbackQuestionTitle(getString(R.string.prompt_title_feedback_2))
+                .setCriticalFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                .setCriticalFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                .setThanksTitle(getString(R.string.prompt_thanks))
                 .build();
 
 //        final DefaultLayoutPromptViewConfig defaultLayoutPromptViewConfig
@@ -166,74 +189,112 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                .build();
 
         promptView.applyBaseConfig(basePromptViewConfig);
-//        promptView.applyConfig(defaultLayoutPromptViewConfig);
-
-
-//        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         Amplify.get(MainActivity.this).promptIfReady(this, promptView);
 
-        Button startButton = (Button)findViewById(R.id.button);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if (mAppRunningFlag) {
-                    // サービス停止
-                    killAlertService();
-                    changeViewState(false, ((Button) v));
+        mUtility = new Utility(this);
+        mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
 
-                    if (TwitterUtility.hasAccessToken(getApplicationContext())) {
-                        Context context = MainActivity.this;
-                        LayoutInflater inflater = LayoutInflater.from(context);
-                        View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
-                        mAlertDialog = new AlertDialog.Builder(context);
-                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-                        mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
-                        mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
-                        mAlertDialog.setView(layout);
-                        mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
-                        mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step)+ "\n" + getString(R.string.twitter_tweetText) + "\n" +
-                                String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
-                        mAlertDialog.setPositiveButton(context.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                tweet(mTweetText.getText().toString());
+        int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
+        int buttonPressedColor = ContextCompat.getColor(this,R.color.colorPrimaryDark);
+        mbtnStart = (ActionButton) findViewById(R.id.fabStart);
+        mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
+        mbtnStart.setButtonColor(buttonColor);
+        mbtnStart.setButtonColorPressed(buttonPressedColor);
+//        mbtnStart.setAnimation(mAnimationBlink);
+
+        new MaterialIntroView.Builder(this)
+                .enableDotAnimation(false)
+                .enableIcon(true)
+                .setFocusGravity(FocusGravity.CENTER)
+                .setFocusType(Focus.MINIMUM)
+                .setDelayMillis(500)
+                .enableFadeAnimation(true)
+                .performClick(true)
+                .setInfoText(getString(R.string.intro_description))
+                .setTarget(mbtnStart)
+                .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                .dismissOnTouch(true)
+                .show();
+
+        mbtnStart.setOnClickListener(new View.OnClickListener() {
+            public void onClick(final View v) {
+                if (mPasscodeOn) {
+                    LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+                    final View layout = inflater.inflate(R.layout.passcode, (ViewGroup) findViewById(R.id.layout_root_passcode));
+                    final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog(MainActivity.this)
+                            .setTitle(getString(R.string.dialog_passcode_title))
+                            .setDescription(getString(R.string.dialog_passcode_description))
+                            .setIcon(R.drawable.ic_lock_blue_grey_100_48dp)
+                            .setCustomView(layout).show();
+
+//                    InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+//                    inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+
+                    final PasscodeView passcodeView = (PasscodeView) layout.findViewById(R.id.passcode);
+                    final PasscodeView passcodeViewConfirm = (PasscodeView) layout.findViewById(R.id.passcodeConfirm);
+                    final TextView txtPasscodeConfirm = (TextView) layout.findViewById(R.id.txtPasscodeConfirm);
+                    txtPasscodeConfirm.setText(getString(R.string.dialog_passcode_confirm));
+                    ((TextView) layout.findViewById(R.id.txtPasscode)).setText(getString(R.string.dialog_passcode_passcode));
+                    passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
+                        @Override
+                        public void onPasscodeEntered(String passcode) {
+                            if (mAppRunningFlag) {
+                                if (passcode.equals(mPasscodeConfirm)) {
+                                    setStartButtonFunction(v);
+                                    materialStyledDialog.dismiss();
+                                } else {
+                                    passcodeView.clearText();
+                                    passcodeView.requestFocus();
+                                }
+                            } else {
+                                passcodeViewConfirm.setVisibility(View.VISIBLE);
+                                txtPasscodeConfirm.setVisibility(View.VISIBLE);
+                                passcodeViewConfirm.requestFocus();
+                                mPasscode = passcode;
                             }
-                        });
-                        mAlertDialog.setCancelable(false);
-                        mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
-                        mAlertDialog.create().show();
-                    }
+                        }
+                    });
+
+                    passcodeViewConfirm.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
+                        @Override
+                        public void onPasscodeEntered(String passcode) {
+                            mPasscodeConfirm = passcodeViewConfirm.getText().toString();
+                            if (mPasscode.equals(mPasscodeConfirm)) {
+                                setStartButtonFunction(v);
+                                materialStyledDialog.dismiss();
+                            } else {
+                                passcodeView.clearText();
+                                passcodeViewConfirm.clearText();
+                                passcodeView.requestFocus();
+                                passcodeViewConfirm.setVisibility(View.GONE);
+                                txtPasscodeConfirm.setVisibility(View.GONE);
+                            }
+                        }
+                    });
 
                 } else {
-                    // サービスを開始
-                    Intent intent = new Intent(MainActivity.this, AlertService.class);
-                    startService(intent);
-                    IntentFilter filter = new IntentFilter(AlertService.ACTION);
-                    registerReceiver(mAlertReceiver, filter);
-
-                    bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-                    changeViewState(true, ((Button) v));
-                    mStepCount = 0;
+                    setStartButtonFunction(v);
                 }
             }
         });
-        mUtility = new Utility(this);
         // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
         // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
-        if(!mUtility.isTabletNotPhone()){
+        if (!mUtility.isTabletNotPhone()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         sAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
         mTwitter = TwitterUtility.getTwitterInstance(this);
         mCallbackURL = getString(R.string.twitter_callback_url);
-
+        mSharedPreferenceUtil = new SharedPreferencesUtil();
         //　レビューサイトへのリンク
         setUrlLinkToReview();
 
         // 設定の読み込み
         SharedPreferences data = getSharedPreferences(SETTING_SHAREDPREF_NAME, Context.MODE_PRIVATE);
-        mToastOn = data.getBoolean("message",true );
-        mVibrationOn = data.getBoolean("vibrate",true );
-        sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;;
+        mToastOn = data.getBoolean("message", true);
+        mVibrationOn = data.getBoolean("vibrate", true);
+        mPasscodeOn = data.getBoolean("passcode", false);
+        sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         sPedometerFlag = data.getBoolean("pedometer", true);
     }
 
@@ -241,23 +302,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStart() {
         super.onStart();
 
-        RelativeLayout relativeLayout = (RelativeLayout)findViewById(R.id.rtlMain);
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
         relativeLayout.setOnClickListener(this);
 
         // カーソルを最後尾に移動
-        EditText editText = (EditText)findViewById(R.id.txtAlertMessage);
+        EditText editText = (EditText) findViewById(R.id.txtAlertMessage);
         editText.setSelection(editText.getText().length());
 
         PackageManager packageManager = this.getPackageManager();
-        if(packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR)){
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR)) {
             mHasStepFeature = true;
-            if(sPedometerFlag){
+            if (sPedometerFlag) {
                 ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
-            }else{
+            } else {
                 ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
             }
-        }else{
+        } else {
             mHasStepFeature = false;
         }
 
@@ -266,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         // キーボードを隠す
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
@@ -274,14 +335,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // メニューの要素を追加
-        MenuItem actionItem = menu.add(Menu.NONE,MENU_SETTING_ID,MENU_SETTING_ID,this.getString(R.string.menu_title_setting));
+        MenuItem actionItem = menu.add(Menu.NONE, MENU_SETTING_ID, MENU_SETTING_ID, this.getString(R.string.menu_title_setting));
         // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         // アイコンを設定
         actionItem.setIcon(android.R.drawable.ic_menu_manage);
 
         //  ★Twitter連携
-        actionItem = menu.add(Menu.NONE,MENU_SHARE_ID,MENU_SHARE_ID,this.getString(R.string.menu_title_share));
+        actionItem = menu.add(Menu.NONE, MENU_SHARE_ID, MENU_SHARE_ID, this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(android.R.drawable.ic_menu_share);
 
@@ -294,11 +355,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
+    public boolean onOptionsItemSelected(MenuItem item) {
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         final View layout;
-        switch(item.getItemId()){
-            case MENU_SETTING_ID :
+        switch (item.getItemId()) {
+            case MENU_SETTING_ID:
                 // リスト表示用のアラートダイアログ
                 layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
 
@@ -310,27 +371,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 setSeekBarInLayout(layout);
                 setSwitchInLayout(layout);
-                if(mHasStepFeature) {
+                if (mHasStepFeature) {
                     setToggleButtonInLayout(layout);
-                }else{
+                } else {
                     layout.findViewById(R.id.tgbPedometer).setVisibility(View.GONE);
                     layout.findViewById(R.id.txtPedometer).setVisibility(View.GONE);
                 }
                 mAlertDialog.create().show();
                 break;
-            case MENU_SHARE_ID :
+            case MENU_SHARE_ID:
                 if (!TwitterUtility.hasAccessToken(this)) {
                     startAuthorize();
-                }else{
+                } else {
                     layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
                     mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
                     mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                     mAlertDialog.setView(layout);
-                    mTweetText = (EditText)layout.findViewById(R.id.edtTweet);
-                        mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step)+ "\n" + getString(R.string.twitter_tweetText) + "\n" +
-                                String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                    mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
+                    mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
                     mAlertDialog.setPositiveButton(this.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -356,12 +417,57 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
-    public void setStepCountListInLayout(View layout){
+    public void setStartButtonFunction(View v) {
+        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
+        promptView.setVisibility(View.GONE);
+
+        if (mAppRunningFlag) {
+            // サービス停止
+            killAlertService();
+            changeViewState(false, ((ActionButton) v));
+
+            if (TwitterUtility.hasAccessToken(getApplicationContext())) {
+                Context context = MainActivity.this;
+                LayoutInflater inflater = LayoutInflater.from(context);
+                View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
+                mAlertDialog = new AlertDialog.Builder(context);
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
+                mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
+                mAlertDialog.setView(layout);
+                mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
+                mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                mAlertDialog.setPositiveButton(context.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        tweet(mTweetText.getText().toString());
+                    }
+                });
+                mAlertDialog.setCancelable(false);
+                mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
+                mAlertDialog.create().show();
+            }
+
+        } else {
+            // サービスを開始
+            Intent intent = new Intent(MainActivity.this, AlertService.class);
+            startService(intent);
+            IntentFilter filter = new IntentFilter(AlertService.ACTION);
+            registerReceiver(mAlertReceiver, filter);
+
+            bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+            changeViewState(true, ((ActionButton) v));
+            mStepCount = 0;
+        }
+    }
+
+    public void setStepCountListInLayout(View layout) {
 //        ListView listView = (ListView)layout.findViewById(R.id.livStepCountHistory);
     }
 
-    public void setSeekBarInLayout(View layout){
-        SeekBar seekBar = (SeekBar)layout.findViewById(R.id.skbSensitivity);
+    public void setSeekBarInLayout(View layout) {
+        SeekBar seekBar = (SeekBar) layout.findViewById(R.id.skbSensitivity);
         seekBar.setProgress(sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
@@ -381,8 +487,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         );
     }
 
-    public void setSwitchInLayout(View layout){
-        Switch swh = (Switch)layout.findViewById(R.id.swhToastOnOff);
+    public void setSwitchInLayout(View layout) {
+        Switch swh = (Switch) layout.findViewById(R.id.swhToastOnOff);
         swh.setChecked(mToastOn);
         swh.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
@@ -391,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
         );
-        swh = (Switch)layout.findViewById(R.id.swhVibrationOnOff);
+        swh = (Switch) layout.findViewById(R.id.swhVibrationOnOff);
         swh.setChecked(mVibrationOn);
         swh.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
@@ -400,18 +506,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
         );
+        swh = (Switch) layout.findViewById(R.id.swhPasscodeOnOff);
+        swh.setChecked(mPasscodeOn);
+        swh.setOnCheckedChangeListener(
+                new Switch.OnCheckedChangeListener() {
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        mPasscodeOn = isChecked;
+                    }
+                }
+        );
+
+        if(mAppRunningFlag){
+            swh.setEnabled(false);
+        }else{
+            swh.setEnabled(true);
+        }
     }
 
-    public void setToggleButtonInLayout(View layout){
-        ToggleButton tgbPedometer = (ToggleButton)layout.findViewById(R.id.tgbPedometer);
+    public void setToggleButtonInLayout(View layout) {
+        ToggleButton tgbPedometer = (ToggleButton) layout.findViewById(R.id.tgbPedometer);
         tgbPedometer.setChecked(sPedometerFlag);
         tgbPedometer.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         sPedometerFlag = isChecked;
-                        if(isChecked) {
+                        if (isChecked) {
                             ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
-                        }else{
+                        } else {
                             ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
                         }
                     }
@@ -419,7 +540,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         );
     }
 
-    public void setUrlLinkToReview(){
+    public void setUrlLinkToReview() {
         SpannableString content = new SpannableString(getString(R.string.review_url_title));
         content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
         TextView tv = (TextView) findViewById(R.id.home);
@@ -433,6 +554,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+
     // イベントリスナーの登録を解除
     @Override
     protected void onPause() {
@@ -441,20 +563,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SharedPreferences.Editor editor = data.edit();
         editor.putBoolean("message", mToastOn);
         editor.putBoolean("vibrate", mVibrationOn);
+        editor.putBoolean("passcode", mPasscodeOn);
         editor.putInt("progress", sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         editor.putBoolean("pedometer", sPedometerFlag);
         editor.apply();
+
+        EditText editText = (EditText)findViewById(R.id.txtAlertMessage);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(mAppRunningFlag) {
+        if (mAppRunningFlag) {
             killAlertService();
         }
     }
 
-    public void killAlertService(){
+    public void killAlertService() {
         unbindService(mServiceConnection); // バインド解除
         unregisterReceiver(mAlertReceiver); // 登録解除
         mAlertService.stopSelf(); // サービスは必要ないので終了させる。
@@ -462,7 +587,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch(keyCode){
+        switch (keyCode) {
             case KeyEvent.KEYCODE_BACK:
 //                finish();
                 // 端末のホーム画面に戻る
@@ -472,15 +597,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onKeyDown(keyCode, event);
     }
 
-    public void changeViewState(boolean isStart,Button button){
-        if(isStart){
-            button.setText(this.getString(R.string.home_button_stop));
-            button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
+    public void changeViewState(boolean isStart, ActionButton button) {
+        if (isStart) {
+//            button.setText(this.getString(R.string.home_button_stop));
+            button.setImageResource(R.drawable.ic_done_white_48dp);
+            button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
+            button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
+//            button.setBackgroundResource(R.drawable.shape_rounded_corners_red_5dp);
             mAppRunningFlag = true;
-            ((TextView)findViewById(R.id.txtStepCount)).setText("0"+ getString(R.string.home_step_count_dimension));
-        }else{
-            button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
-            button.setText(this.getString(R.string.home_button_start));
+            ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+        } else {
+//            button.setBackgroundResource(R.drawable.shape_rounded_corners_blue_5dp);
+//            button.setText(this.getString(R.string.home_button_start));
+            button.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
+            button.setButtonColor(ContextCompat.getColor(this, R.color.colorPrimary));
+            button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
             mAppRunningFlag = false;
             MainActivity.sAlertShowFlag = false;
         }
@@ -489,6 +620,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String mCallbackURL;
     private Twitter mTwitter;
     private RequestToken mRequestToken;
+
     /**
      * OAuth認証（厳密には認可）を開始します。
      */
@@ -512,7 +644,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (url != null) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
-                } 
+                }
             }
         };
         task.execute();
@@ -574,7 +706,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         task.execute(tweetString);
     }
 
-    private void showToastShort(String text) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+    private Toast showToastShort(String text) {
+        Toast toast = new Toast(this);
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, TOAST_TEXT_SIZE);
+        toast.setView(tv);
+        toast.setDuration(Toast.LENGTH_SHORT);
+
+        return toast;
     }
+
 }

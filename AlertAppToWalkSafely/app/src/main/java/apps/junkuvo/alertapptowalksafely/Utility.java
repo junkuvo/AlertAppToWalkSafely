@@ -1,6 +1,8 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
@@ -67,4 +69,23 @@ public class Utility {
         byte[] decrypted = cipher.doFinal(encrypted);
         return new String(decrypted);
     }
+
+    /**
+     * バージョンコードを取得する
+     *
+     * @param context
+     * @return
+     */
+    public static int getVersionCode(Context context){
+        PackageManager pm = context.getPackageManager();
+        int versionCode = 0;
+        try{
+            PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            versionCode = packageInfo.versionCode;
+        }catch(PackageManager.NameNotFoundException e){
+            e.printStackTrace();
+        }
+        return versionCode;
+    }
+
 }

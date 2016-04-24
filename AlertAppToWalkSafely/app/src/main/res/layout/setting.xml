@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/layout_root"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    xmlns:passcodeView="http://schemas.android.com/tools"
+    android:id="@+id/layout_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
     <SeekBar
         android:layout_width="150dp"
         android:layout_height="wrap_content"
@@ -58,13 +59,26 @@
         android:layout_alignRight="@+id/swhToastOnOff"
         android:layout_alignEnd="@+id/swhToastOnOff"/>
 
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/setting_header_passcode"
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/swhPasscodeOnOff"
+        android:checked="false"
+        android:layout_below="@+id/swhVibrationOnOff"
+        android:layout_marginBottom="20dp"
+        android:layout_alignRight="@+id/swhVibrationOnOff"
+        android:layout_alignEnd="@+id/swhVibrationOnOff" />
+
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/setting_header_pedometer"
         android:id="@+id/txtPedometer"
-        android:layout_below="@+id/swhVibrationOnOff"
+        android:layout_below="@+id/swhPasscodeOnOff"
         android:layout_centerHorizontal="true"
         android:textStyle="bold"/>
 

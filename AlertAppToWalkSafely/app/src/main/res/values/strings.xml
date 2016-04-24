@@ -47,5 +47,14 @@
     <string name="prompt_title_feedback">Awesome! We\'d love a Play Store review...</string>
     <string name="prompt_btn_notnow">Not right now</string>
     <string name="prompt_btn_sure">Sure thing!</string>
+    <string name="setting_header_passcode">Passcode:</string>
+    <string name="prompt_thanks">Thanks for your feedback!</string>
+    <string name="prompt_title_feedback_2">Bummer. Would you like to send feedback?</string>
+    <string name="intro_title">How to Use</string>
+    <string name="intro_description">When you walk using mobile devices,\nThis app gives you Alert.\nPlease input a message and\nPush the Power button</string>
+    <string name="dialog_passcode_title">Lock this button!</string>
+    <string name="dialog_passcode_description">Input passcode to lock this button.</string>
+    <string name="dialog_passcode_passcode">Passcode</string>
+    <string name="dialog_passcode_confirm">Confirm Passcode</string>
 
 </resources>

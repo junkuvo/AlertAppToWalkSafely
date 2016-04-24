@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_root_passcode"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/txtPasscode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:alpha="0.6"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/primary_text_light"
+        android:textSize="14sp" />
+
+    <com.mhk.android.passcodeview.PasscodeView
+        android:id="@+id/passcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txtPasscode"
+        app:controlColorActivated="@color/colorAccent"
+        app:controlColor="@color/colorPrimaryDark"
+        android:layout_centerHorizontal="true"
+        android:focusable="true">
+        <requestFocus />
+    </com.mhk.android.passcodeview.PasscodeView>
+
+    <TextView
+        android:id="@+id/txtPasscodeConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/passcode"
+        android:layout_centerHorizontal="true"
+        android:alpha="0.6"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/primary_text_light"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+
+    <com.mhk.android.passcodeview.PasscodeView
+        android:id="@+id/passcodeConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txtPasscodeConfirm"
+        android:layout_centerHorizontal="true"
+        app:controlColorActivated="@color/colorAccentDark"
+        app:controlColor="@color/colorPrimaryDark"
+        android:visibility="gone"
+        android:focusable="true"/>
+
+</RelativeLayout>
