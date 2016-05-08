@@ -1,5 +1,6 @@
 package apps.junkuvo.alertapptowalksafely;
 
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -195,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
 
         int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
-        int buttonPressedColor = ContextCompat.getColor(this,R.color.colorPrimaryDark);
+        int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
         mbtnStart = (ActionButton) findViewById(R.id.fabStart);
         mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
         mbtnStart.setButtonColor(buttonColor);
@@ -516,9 +517,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
 
-        if(mAppRunningFlag){
+        if (mAppRunningFlag) {
             swh.setEnabled(false);
-        }else{
+        } else {
             swh.setEnabled(true);
         }
     }
@@ -550,7 +551,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(View v) {
                 Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url), getApplicationContext().getPackageName()));
                 Intent i = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(i);
+                try {
+                    startActivity(i);
+                } catch (ActivityNotFoundException activityNotFound) {
+                    // to handle play store not installed scenario
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("http://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
+                    startActivity(intent);
+                }
             }
         });
     }
@@ -568,7 +576,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editor.putBoolean("pedometer", sPedometerFlag);
         editor.apply();
 
-        EditText editText = (EditText)findViewById(R.id.txtAlertMessage);
+        EditText editText = (EditText) findViewById(R.id.txtAlertMessage);
     }
 
     @Override

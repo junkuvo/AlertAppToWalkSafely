@@ -51,7 +51,6 @@
     <string name="prompt_btn_notnow">あとで</string>
     <string name="prompt_btn_no">いいえ</string>
     <string name="prompt_thanks">ありがとうございます！</string>
-    <string name="prompt_btn_sure_2"></string>
     <string name="prompt_title_feedback_2">フィードバックを送信しますか？</string>
     <string name="intro_title">アプリの使い方</string>
     <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\nボタンを押してください。
