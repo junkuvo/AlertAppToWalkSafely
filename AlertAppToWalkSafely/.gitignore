@@ -3,9 +3,6 @@
 /.idea/workspace.xml
 /.idea/libraries
 /.idea/compiler.xml
-.DS_Store
 /build
-/captures
-
 */*.apk
 release.gradle

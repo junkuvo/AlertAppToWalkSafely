@@ -9,6 +9,10 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.stkent.amplify.tracking.AmplifyStateTracker;
+import com.github.stkent.amplify.views.AmplifyView;
+
+
 public class MainActivity extends Activity
         implements SensorEventListener {
 

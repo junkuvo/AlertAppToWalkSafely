@@ -11,13 +11,11 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -44,10 +42,15 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.flurry.android.FlurryAgent;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.plus.PlusOneButton;
+import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.software.shell.fab.ActionButton;
 
@@ -103,6 +106,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
 
+    private PlusOneButton mPlusOneButton;
+
+    private InterstitialAd mInterstitialAd;
+    private static final String MY_AD_UNIT_ID = "ca-app-pub-1630604043812019/7857872217";
 
     private class AlertReceiver extends BroadcastReceiver {
         @Override
@@ -159,6 +166,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         setContentView(R.layout.activity_main);
 
+        // Create the interstitial.
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId(MY_AD_UNIT_ID);
+
+        // Create ad request.
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID
+                .build();
+
+        // Begin loading your interstitial.
+        mInterstitialAd.loadAd(adRequest);
+
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
         final BasePromptViewConfig basePromptViewConfig
@@ -175,22 +195,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setThanksTitle(getString(R.string.prompt_thanks))
                 .build();
 
-//        final DefaultLayoutPromptViewConfig defaultLayoutPromptViewConfig
-//                = new DefaultLayoutPromptViewConfig.Builder()
-//                .setForegroundColor(Color.parseColor("#FF0000"))
-//                .setBackgroundColor(Color.parseColor("#FF9900"))
-//                .setTitleTextColor(Color.parseColor("#33FF00"))
-//                .setSubtitleTextColor(Color.parseColor("#00FFFF"))
-//                .setPositiveButtonTextColor(Color.parseColor("#CC00FF"))
-//                .setPositiveButtonBackgroundColor(Color.parseColor("#3300FF"))
-//                .setPositiveButtonBorderColor(Color.parseColor("#0066FF"))
-//                .setNegativeButtonTextColor(Color.parseColor("#FFFF00"))
-//                .setNegativeButtonBackgroundColor(Color.parseColor("#FF0000"))
-//                .setNegativeButtonBorderColor(Color.parseColor("#999999"))
-//                .build();
-
         promptView.applyBaseConfig(basePromptViewConfig);
-        Amplify.get(MainActivity.this).promptIfReady(this, promptView);
+        Amplify.getSharedInstance().promptIfReady(promptView);
 
         mUtility = new Utility(this);
         mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
@@ -201,7 +207,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
         mbtnStart.setButtonColor(buttonColor);
         mbtnStart.setButtonColorPressed(buttonPressedColor);
-//        mbtnStart.setAnimation(mAnimationBlink);
 
         new MaterialIntroView.Builder(this)
                 .enableDotAnimation(false)
@@ -241,6 +246,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         public void onPasscodeEntered(String passcode) {
                             if (mAppRunningFlag) {
                                 if (passcode.equals(mPasscodeConfirm)) {
+                                    FlurryAgent.logEvent("Passcode Unlocked");
+
                                     setStartButtonFunction(v);
                                     materialStyledDialog.dismiss();
                                 } else {
@@ -261,6 +268,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         public void onPasscodeEntered(String passcode) {
                             mPasscodeConfirm = passcodeViewConfirm.getText().toString();
                             if (mPasscode.equals(mPasscodeConfirm)) {
+                                FlurryAgent.logEvent("Passcode Lock");
+
                                 setStartButtonFunction(v);
                                 materialStyledDialog.dismiss();
                             } else {
@@ -297,11 +306,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPasscodeOn = data.getBoolean("passcode", false);
         sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         sPedometerFlag = data.getBoolean("pedometer", true);
+
+        mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
+        FlurryAgent.logEvent("onStart");
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
         relativeLayout.setOnClickListener(this);
@@ -325,11 +339,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    private static final int PLUS_ONE_REQUEST_CODE = 0;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh the state of the +1 button each time the activity receives focus.
+        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
+    }
+
     @Override
     public void onClick(View v) {
+        FlurryAgent.logEvent("onClick aside from Start button");
+
         // キーボードを隠す
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+
+        showToastShort(getString(R.string.toast_instruction)).show();
+//        mbtnStart.setAnimation(mAnimationBlink);
+        mbtnStart.startAnimation(mAnimationBlink);
     }
 
     @Override
@@ -361,6 +390,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final View layout;
         switch (item.getItemId()) {
             case MENU_SETTING_ID:
+                FlurryAgent.logEvent("Setting");
                 // リスト表示用のアラートダイアログ
                 layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
 
@@ -381,6 +411,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.create().show();
                 break;
             case MENU_SHARE_ID:
+                FlurryAgent.logEvent("Share twitter");
                 if (!TwitterUtility.hasAccessToken(this)) {
                     startAuthorize();
                 } else {
@@ -450,6 +481,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.create().show();
             }
 
+            displayInterstitial();
         } else {
             // サービスを開始
             Intent intent = new Intent(MainActivity.this, AlertService.class);
@@ -474,6 +506,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new SeekBar.OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         // ツマミをドラッグしたときに呼ばれる
+                        FlurryAgent.logEvent("Setting seekbar");
                         sAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
                     }
 
@@ -556,7 +589,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (ActivityNotFoundException activityNotFound) {
                     // to handle play store not installed scenario
                     Intent intent = new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("http://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
+                            Uri.parse("https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
                     startActivity(intent);
                 }
             }
@@ -575,8 +608,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editor.putInt("progress", sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         editor.putBoolean("pedometer", sPedometerFlag);
         editor.apply();
+    }
 
-        EditText editText = (EditText) findViewById(R.id.txtAlertMessage);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        FlurryAgent.onEndSession(this);
     }
 
     @Override
@@ -585,6 +622,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mAppRunningFlag) {
             killAlertService();
         }
+
+        Growthbeat.getInstance().stop();
     }
 
     public void killAlertService() {
@@ -705,6 +744,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(Boolean result) {
                 if (result) {
+                    FlurryAgent.logEvent(getApplicationContext().getString(R.string.twitter_tweet_succeed));
                     showToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed));
                 } else {
                     showToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail));
@@ -718,6 +758,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Toast toast = new Toast(this);
         TextView tv = new TextView(this);
         tv.setText(text);
+        tv.setTextColor(ContextCompat.getColor(this, R.color.colorPrimary));
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, TOAST_TEXT_SIZE);
         toast.setView(tv);
         toast.setDuration(Toast.LENGTH_SHORT);
@@ -725,4 +766,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return toast;
     }
 
+    // Invoke displayInterstitial() when you are ready to display an interstitial.
+    public void displayInterstitial() {
+        if (mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        }
+    }
 }

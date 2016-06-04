@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AlertAppToWalkSafely.iml" filepath="$PROJECT_DIR$/AlertAppToWalkSafely.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/growthbeat/growthbeat.iml" filepath="$PROJECT_DIR$/growthbeat/growthbeat.iml" />
     </modules>
   </component>
 </project>

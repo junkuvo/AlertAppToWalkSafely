@@ -7,7 +7,6 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Base64;
-import android.util.Log;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -41,17 +40,9 @@ public class Utility {
         Resources r = mContext.getResources();
         Configuration configuration = r.getConfiguration();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR2) {
-            if ((configuration.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) < Configuration.SCREENLAYOUT_SIZE_LARGE) {
-                return false;
-            } else {
-                return true;
-            }
+            return (configuration.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
         } else {
-            if (configuration.smallestScreenWidthDp < 600) {
-                return false;
-            } else {
-                return true;
-            }
+            return configuration.smallestScreenWidthDp >= 600;
         }
     }
 

@@ -51,8 +51,8 @@ public class TwitterUtility {
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
-        String token = "";
-        String tokenSecret = "";
+        String token;
+        String tokenSecret;
         try {
             token = Utility.stringEncrypt(sKey, accessToken.getToken());
             tokenSecret = Utility.stringEncrypt(sKey, accessToken.getTokenSecret());
@@ -75,8 +75,8 @@ public class TwitterUtility {
         String token = preferences.getString(TOKEN, null);
         String tokenSecret = preferences.getString(TOKEN_SECRET, null);
         if (token != null && tokenSecret != null) {
-            String tokenDecrypt = "";
-            String tokenSecretDecrypt = "";
+            String tokenDecrypt;
+            String tokenSecretDecrypt;
             try {
                 tokenDecrypt = Utility.stringDecrypt(sKey, Base64.decode(token, Base64.DEFAULT));
                 tokenSecretDecrypt = Utility.stringDecrypt(sKey, Base64.decode(tokenSecret, Base64.DEFAULT));

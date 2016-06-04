@@ -5,6 +5,19 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- under API 15 -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+
+    <!-- for Growth Push -->
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="apps.junkuvo.alertapptowalksafely.permission.C2D_MESSAGE" />
+    <permission
+        android:name="apps.junkuvo.alertapptowalksafely.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+
     <uses-sdk tools:overrideLibrary="com.github.stkent.amplify" />
 
     <application
@@ -38,9 +51,48 @@
             android:name=".AlertService"
             android:enabled="true" />
 
+        <!-- for Growth Push -->
+        <activity
+            android:name="com.growthpush.view.AlertActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.Translucent" />
+        <service
+            android:name="com.growthpush.TokenRefreshService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.iid.InstanceID"/>
+            </intent-filter>
+        </service>
+        <service android:name="com.growthpush.RegistrationIntentService"/>
+        <service
+            android:name="com.growthpush.ReceiverService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name="com.google.android.gms.gcm.GcmReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="${applicationId}" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                <category android:name="${applicationId}" />
+            </intent-filter>
+        </receiver>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="e96c27ec5a15ec99185fe13f2dfe59a3ce18a8c8" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>

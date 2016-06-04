@@ -59,8 +59,8 @@ public class DeviceAttitudeCalculator {
     // 前提２：タブレット横方向の軸　＝　スマホ縦方向の軸
     private int calculateDeviceTendency(float[] gravity){
         double tendencyDegree;
-        double x = 9;// 上下として定義（軸は向きによってx or z）
-        double y = 0;// 前後方向
+        double x;// 上下として定義（軸は向きによってx or z）
+        double y;// 前後方向
 
         boolean isTabletNotPhone = mUtility.isTabletNotPhone();
         int orientation = mUtility.getOrientation();

@@ -1,14 +1,15 @@
 <resources>
     <string name="app_name">Alert while Using Mobile Walk♪</string>
     <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=%s</string>
+    <string name="app_googlePlay_url_plusOne">https://market.android.com/details?id=%s</string>
 
     <string name="twitter_callback_url">junkuvo://twitter</string>
 
     <string name="twitter_tweetText">Alert while Using Mobile Walk♪</string>
     <string name="twitter_auth_succeed">Twitter Authentication Success!</string>
-    <string name="twitter_auth_fail">Twitter Authentication Failure...</string>
+    <string name="twitter_auth_fail">Twitter Authentication Failure…</string>
     <string name="twitter_tweet_succeed">Tweet Complete!</string>
-    <string name="twitter_tweet_fail">Tweet Failure...</string>
+    <string name="twitter_tweet_fail">Tweet Failure…</string>
     <string name="twitter_tweet_step">STEP！</string>
 
     <string name="dialog_tweet">Tweet right now？</string>
@@ -26,7 +27,7 @@
     <string name="dialog_button_cancel">Cancel</string>
     <string name="dialog_button_ok">OK</string>
     <string name="dialog_title_history">Step Count History</string>
-    <string name="dialog_title_history_nodata">No data found...</string>
+    <string name="dialog_title_history_nodata">No data found…</string>
 
     <string name="home_button_start">Start</string>
     <string name="home_button_stop">Stop</string>
@@ -44,7 +45,7 @@
     <string name="prompt_title">Enjoying this app?</string>
     <string name="prompt_btn_no">No</string>
     <string name="prompt_btn_yes">Yes!</string>
-    <string name="prompt_title_feedback">Awesome! We\'d love a Play Store review...</string>
+    <string name="prompt_title_feedback">Awesome! We\'d love a Play Store review…</string>
     <string name="prompt_btn_notnow">Not right now</string>
     <string name="prompt_btn_sure">Sure thing!</string>
     <string name="setting_header_passcode">Passcode:</string>
@@ -56,5 +57,6 @@
     <string name="dialog_passcode_description">Input passcode to lock this button.</string>
     <string name="dialog_passcode_passcode">Passcode</string>
     <string name="dialog_passcode_confirm">Confirm Passcode</string>
+    <string name="toast_instruction">Push this button now !</string>
 
 </resources>

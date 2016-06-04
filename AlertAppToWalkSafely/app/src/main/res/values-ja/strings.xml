@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">歩きスマホ注意！</string>
     <string name="app_googlePlay_url">https://play.google.com/store/apps/details?id=%s</string>
+    <string name="app_googlePlay_url_plusOne">https://market.android.com/details?id=%s</string>
 
     <string name="twitter_callback_url">junkuvo://twitter</string>
 
@@ -28,7 +29,7 @@
 
 
     <string name="dialog_title_history">歩数記録</string>
-    <string name="dialog_title_history_nodata">歩数記録データがないようです...</string>
+    <string name="dialog_title_history_nodata">歩数記録データがないようです…</string>
 
     <string name="home_button_start">開始</string>
     <string name="home_button_stop">停止</string>
@@ -44,14 +45,14 @@
     <string name="setting_header_pedometer">歩数計</string>
     <string name="pedometer_header_count">アプリ利用中の歩数 : </string>
     <string name="title_activity_history">履歴</string>
-    <string name="prompt_title">アプリを評価していただけますか？</string>
+    <string name="prompt_title">このアプリを今後もご利用いただけますか？</string>
     <string name="prompt_title_feedback">Play Store にてレビューしていただけますか？</string>
-    <string name="prompt_btn_yes">はい！</string>
+    <string name="prompt_btn_yes">はい</string>
     <string name="prompt_btn_sure">レビュー</string>
     <string name="prompt_btn_notnow">あとで</string>
     <string name="prompt_btn_no">いいえ</string>
     <string name="prompt_thanks">ありがとうございます！</string>
-    <string name="prompt_title_feedback_2">フィードバックを送信しますか？</string>
+    <string name="prompt_title_feedback_2">フィードバックを送信していただけますか？</string>
     <string name="intro_title">アプリの使い方</string>
     <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\nボタンを押してください。
     \n\n- パスコードでボタンをロックできるようになりました。設定メニューからONにしてご利用下さい。</string>
@@ -59,5 +60,6 @@
     <string name="dialog_passcode_description">パスコードを入力するとボタンがロックされます</string>
     <string name="dialog_passcode_passcode">パスコード</string>
     <string name="dialog_passcode_confirm">パスコード確認</string>
+    <string name="toast_instruction">ボタンを押して下さい</string>
 
 </resources>

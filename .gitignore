@@ -241,3 +241,9 @@ AlertAppToWalkSafely/.idea/modules.xml
 AlertAppToWalkSafely/.idea/vcs.xml
 
 AlertAppToWalkSafely/app/app.iml
+
+PryynToU/
+
+AlertAppToWalkSafely/.idea/*
+
+AlertAppToWalkSafely/.idea/gradle.xml
