@@ -422,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
-                    mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
                             String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
                     mAlertDialog.setPositiveButton(this.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                         @Override
@@ -454,6 +454,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         promptView.setVisibility(View.GONE);
 
         if (mAppRunningFlag) {
+            FlurryAgent.logEvent("Service Stop!!");
             // サービス停止
             killAlertService();
             changeViewState(false, ((ActionButton) v));
@@ -468,8 +469,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
-                mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
-                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                if(mHasStepFeature) {
+                    mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                }else{
+                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
+                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                }
                 mAlertDialog.setPositiveButton(context.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -483,6 +489,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             displayInterstitial();
         } else {
+            FlurryAgent.logEvent("Service Start!!");
             // サービスを開始
             Intent intent = new Intent(MainActivity.this, AlertService.class);
             startService(intent);

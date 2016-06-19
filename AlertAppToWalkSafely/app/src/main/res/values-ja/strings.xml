@@ -54,8 +54,7 @@
     <string name="prompt_thanks">ありがとうございます！</string>
     <string name="prompt_title_feedback_2">フィードバックを送信していただけますか？</string>
     <string name="intro_title">アプリの使い方</string>
-    <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\nボタンを押してください。
-    \n\n- パスコードでボタンをロックできるようになりました。設定メニューからONにしてご利用下さい。</string>
+    <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\nボタンを押してください。</string>
     <string name="dialog_passcode_title">ボタンをロックします</string>
     <string name="dialog_passcode_description">パスコードを入力するとボタンがロックされます</string>
     <string name="dialog_passcode_passcode">パスコード</string>
