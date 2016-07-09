@@ -19,7 +19,11 @@ public class AlertService extends Service implements SensorEventListener {
     public static final String ACTION = "Alert Service";
     private SensorManager mSensorManager;
 
+    // 歩きスマホの判定に利用（姿勢の計算）
     private DeviceAttitudeCalculator mDeviceAttitudeCalculator;
+
+    // 歩数カウントに利用（ステップセンサがない場合）
+    private WalkCountCalculator mWalkCountCalculator;
 
     private int mTendencyCheckCount = 0;
     private int mTendencyOutCount = 0;
@@ -47,6 +51,7 @@ public class AlertService extends Service implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(getApplicationContext());
+        mWalkCountCalculator = new WalkCountCalculator();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -112,10 +117,6 @@ public class AlertService extends Service implements SensorEventListener {
             Sensor s = sensors.get(0);
             mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
 
         // 歩数計用のセンサー登録
         mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
@@ -134,13 +135,13 @@ public class AlertService extends Service implements SensorEventListener {
                 mStepCountBefore = mStepCountCurrent;
             }
             // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-            //　5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
+            // 5回カウントして2秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
             if (mTendencyCheckCount == 5) {
                 // 歩行中であることを判定
                 // 歩行センサーがない場合は角度mTendencyCheckCountのみ
-                if((isWalking() && MainActivity.mHasStepFeature) || !MainActivity.mHasStepFeature) {// ★歩行センサーがない端末に対応する必要がある（mHasStepFeature利用）
+                if (isWalking()) {
                     int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
-                    //　下向きかどうかの判定
+                    // 下向きかどうかの判定
                     // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
                     // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
                     if ((tendency > 180 - MainActivity.sAlertStartAngle || tendency < MainActivity.sAlertStartAngle) && tendency > 3) {
@@ -164,17 +165,25 @@ public class AlertService extends Service implements SensorEventListener {
             }
         }
 
-        //　歩数計の値を取得
+        // 歩数計の値を取得
         Sensor sensor = event.sensor;
-//            float[] values = event.values;
-//            long timestamp = event.timestamp;
         if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
         } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+            // 歩行センサがある場合
             mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
             if(MainActivity.sPedometerFlag) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
                 intent.putExtra("stepCount",mStepCountCurrent);
+                sendBroadcast(intent);
+            }
+        }else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+            // 歩行センサがない場合
+            if(!MainActivity.mHasStepFeature) {
+                mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
+                Intent intent = new Intent(ACTION);
+                intent.putExtra("isStepCounter", true);
+                intent.putExtra("stepCount", mStepCountCurrent);
                 sendBroadcast(intent);
             }
         }

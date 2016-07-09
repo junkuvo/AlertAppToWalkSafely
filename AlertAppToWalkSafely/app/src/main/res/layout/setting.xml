@@ -3,14 +3,24 @@
     android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/setting_header"
+        android:textColor="@android:color/secondary_text_light"
+        android:id="@+id/txtSensitivityTitle"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true" />
+
     <SeekBar
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:progress="30"
         android:max="60"
         android:id="@+id/skbSensitivity"
-        android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
+        android:layout_below="@+id/txtSensitivityTitle"
         android:layout_centerHorizontal="true"/>
 
     <TextView
@@ -42,9 +52,38 @@
         android:textColor="@android:color/secondary_text_light"
         android:id="@+id/swhToastOnOff"
         android:checked="true"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="10dp"
         android:layout_below="@+id/skbSensitivity"
         android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/setting_toast_position"
+        android:id="@+id/txtRadioGroupTitle"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/swhToastOnOff"
+        />
+    <RadioGroup android:id="@+id/radiogroup"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:layout_below="@+id/txtRadioGroupTitle">
+        <RadioButton android:id="@+id/radiobutton_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/setting_toast_Top" />
+        <RadioButton android:id="@+id/radiobutton_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/setting_toast_Center" />
+        <RadioButton android:id="@+id/radiobutton_bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/setting_toast_Bottom" />
+    </RadioGroup>
 
     <Switch
         android:layout_width="wrap_content"
@@ -53,8 +92,8 @@
         android:textColor="@android:color/secondary_text_light"
         android:id="@+id/swhVibrationOnOff"
         android:checked="true"
-        android:layout_below="@+id/swhToastOnOff"
-        android:layout_marginBottom="20dp"
+        android:layout_below="@+id/radiogroup"
+        android:layout_marginBottom="10dp"
         android:layout_alignRight="@+id/swhToastOnOff"
         android:layout_alignEnd="@+id/swhToastOnOff"/>
 

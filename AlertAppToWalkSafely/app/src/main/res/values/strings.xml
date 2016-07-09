@@ -32,9 +32,9 @@
     <string name="home_button_start">Start</string>
     <string name="home_button_stop">Stop</string>
     <string name="home_edittext_alert">Face Forward!</string>
-    <string name="home_step_count_dimension"> STEP</string>
+    <string name="home_step_count_dimension">STEP</string>
 
-    <string name="setting_header_weak">Sensitivity:W</string>
+    <string name="setting_header_weak">W</string>
     <string name="setting_header_strong">S</string>
     <string name="setting_header_alert">Message Alert：</string>
     <string name="setting_header_vibration">Vibration Alert：</string>
@@ -58,5 +58,12 @@
     <string name="dialog_passcode_passcode">Passcode</string>
     <string name="dialog_passcode_confirm">Confirm Passcode</string>
     <string name="toast_instruction">Push this button now !</string>
+    <string name="home_step_count_initial">0STEP</string>
+    <string name="setting_toast_Top">Top</string>
+    <string name="setting_header">Sensitivity</string>
+    <string name="setting_toast_Center">Center</string>
+    <string name="setting_toast_Bottom">Bottom</string>
+    <string name="setting_toast_position">Message Position</string>
+    <string name="home_text_watching">watching</string>
 
 </resources>

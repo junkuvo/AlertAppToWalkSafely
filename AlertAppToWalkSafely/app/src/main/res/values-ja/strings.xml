@@ -36,12 +36,16 @@
     <string name="home_edittext_alert">前方に注意して下さい</string>
     <string name="home_step_count_dimension"> 歩</string>
 
-    <string name="setting_header_weak">感度：弱</string>
+    <string name="home_step_count_initial">0歩</string>
+
+    <string name="setting_header">角度センサ感度</string>
+    <string name="setting_header_weak">弱</string>
     <string name="setting_header_strong">強</string>
     <string name="setting_header_alert">メッセージ通知：</string>
     <string name="setting_header_vibration">振動通知：</string>
     <string name="setting_header_passcode">パスコード：</string>
 
+    <string name="setting_toast_position">メッセージ表示位置</string>
     <string name="setting_header_pedometer">歩数計</string>
     <string name="pedometer_header_count">アプリ利用中の歩数 : </string>
     <string name="title_activity_history">履歴</string>
@@ -60,5 +64,9 @@
     <string name="dialog_passcode_passcode">パスコード</string>
     <string name="dialog_passcode_confirm">パスコード確認</string>
     <string name="toast_instruction">ボタンを押して下さい</string>
+    <string name="setting_toast_Top">上部</string>
+    <string name="setting_toast_Center">中央</string>
+    <string name="setting_toast_Bottom">下部</string>
+    <string name="home_text_watching">歩きスマホを監視中</string>
 
 </resources>
