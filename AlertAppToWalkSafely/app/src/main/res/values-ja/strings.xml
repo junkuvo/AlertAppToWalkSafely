@@ -58,7 +58,8 @@
     <string name="prompt_thanks">ありがとうございます！</string>
     <string name="prompt_title_feedback_2">フィードバックを送信していただけますか？</string>
     <string name="intro_title">アプリの使い方</string>
-    <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n表示したいメッセージを入力し、\nボタンを押してください。</string>
+    <string name="intro_description">歩きスマホ中に下を向くと\nメッセージを表示します。\n\n手順は簡単です！\n　1. 表示用メッセージを入力\n　2. ボタンを押してスタート！
+    \n\n歩きながらのゲーム防止!\nお子様のスマホにロックをかけることもできます！</string>
     <string name="dialog_passcode_title">ボタンをロックします</string>
     <string name="dialog_passcode_description">パスコードを入力するとボタンがロックされます</string>
     <string name="dialog_passcode_passcode">パスコード</string>
@@ -68,5 +69,6 @@
     <string name="setting_toast_Center">中央</string>
     <string name="setting_toast_Bottom">下部</string>
     <string name="home_text_watching">歩きスマホを監視中</string>
+    <string name="app_used_thankyou">ご利用ありがとうございます！</string>
 
 </resources>

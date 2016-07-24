@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION"/>
 
     <!-- under API 15 -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
@@ -65,6 +66,7 @@
             </intent-filter>
         </service>
         <service android:name="com.growthpush.RegistrationIntentService"/>
+        <service android:name=".ActivityRecognizedService" />
         <service
             android:name="com.growthpush.ReceiverService"
             android:exported="false" >

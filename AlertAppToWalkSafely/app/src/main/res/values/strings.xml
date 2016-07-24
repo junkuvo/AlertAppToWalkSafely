@@ -65,5 +65,6 @@
     <string name="setting_toast_Bottom">Bottom</string>
     <string name="setting_toast_position">Message Position</string>
     <string name="home_text_watching">watching</string>
+    <string name="app_used_thankyou">Thank you for using this app :)</string>
 
 </resources>

@@ -21,7 +21,7 @@ public class WalkCountCalculator {
     // 重複カウント防止用フラグ
     boolean isCountable = true;
     // 歩数カウンター（蓄積される値）
-    int counter = 0;
+    int counter = -1;
 
     // １つ前のベクトル量
     double oldVectorDeltaSize = 0;
@@ -123,6 +123,10 @@ public class WalkCountCalculator {
         oldy = event.values[1];
         oldz = event.values[2];
 
-        return counter;
+        // 表示に使うため、念のため初期値-1のままであれば0に変更
+        if(counter == -1){
+            counter = 0;
+        }
+        return (counter)/2;
     }
 }

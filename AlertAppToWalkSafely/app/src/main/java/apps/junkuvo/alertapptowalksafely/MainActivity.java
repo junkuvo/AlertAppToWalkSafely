@@ -60,6 +60,7 @@ import com.software.shell.fab.ActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
@@ -138,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 //            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
 //            vibrator.vibrate(pattern, -1);
-                    vibrator.vibrate(100);
+                    vibrator.vibrate(500);
                 }
             }
         }
@@ -231,9 +232,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .performClick(true)
                 .setInfoText(getString(R.string.intro_description))
                 .setTarget(mbtnStart)
-                .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                .setUsageId(String.valueOf(new Date())) //THIS SHOULD BE UNIQUE ID
                 .dismissOnTouch(true)
                 .show();
+//        .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+
 
         mbtnStart.setOnClickListener(new View.OnClickListener() {
             public void onClick(final View v) {
@@ -410,12 +413,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setSeekBarInLayout(layout);
                 setSwitchInLayout(layout);
                 setRadioGroupInLayout(layout);
-//                if (mHasStepFeature) {
-                    setToggleButtonInLayout(layout);
-//                } else {
-//                    layout.findViewById(R.id.tgbPedometer).setVisibility(View.GONE);
-//                    layout.findViewById(R.id.txtPedometer).setVisibility(View.GONE);
-//                }
+                setToggleButtonInLayout(layout);
                 mAlertDialog.create().show();
                 break;
             case MENU_SHARE_ID:
@@ -466,6 +464,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // サービス停止
             killAlertService();
             changeViewState(false, ((ActionButton) v));
+            Toast.makeText(this,getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
             if (TwitterUtility.hasAccessToken(getApplicationContext())) {
                 Context context = MainActivity.this;

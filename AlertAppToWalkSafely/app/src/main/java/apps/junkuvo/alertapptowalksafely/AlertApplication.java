@@ -27,7 +27,6 @@ public class AlertApplication extends MultiDexApplication{
 
         Growthbeat.getInstance().initialize(this, "Pkjf4L4sbDeKDs6I", "zYdJEQjTt5xnP78iQXUSO4zjs7eTX8CN");
         GrowthPush.getInstance().requestRegistrationId("1047305644128", BuildConfig.DEBUG ? Environment.development : Environment.production);
-
         Growthbeat.getInstance().start();
         // Launchイベントの取得
         GrowthPush.getInstance().trackEvent("Launch");
