@@ -1,11 +1,13 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,6 +17,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -29,6 +32,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     public static final String ACTION = "Alert Service";
+
     private SensorManager mSensorManager;
 
     // 歩きスマホの判定に利用（姿勢の計算）
@@ -125,9 +129,45 @@ public class AlertService extends IntentService implements SensorEventListener,
         }
     }
 
+    private PendingIntent getPendingIntentWithBroadcast(String action) {
+        return PendingIntent.getBroadcast(getApplicationContext(), 0 , new Intent(action), 0);
+    }
+
     // BindしたServiceをActivityに返す
     @Override
     public IBinder onBind(Intent intent) {
+
+//        Intent notificationIntent = new Intent(this, MainActivity.class);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this, R.string.app_name, notificationIntent, 0);
+        // サービスを永続化するために、通知を作成する
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+//        builder.setContentIntent(pendingIntent);
+        builder.setTicker("歩きスマホ防止アプリ起動！");
+        builder.setContentTitle(getString(R.string.app_name));
+        builder.setContentText("起動中...");
+        builder.setSubText("アプリを開く際はタップしてください");
+        builder.setSmallIcon(R.drawable.ic_stat_small);
+        // Large icon appears on the left of the notification
+        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
+        builder.addAction(R.drawable.ic_done_white_48dp,getString(R.string.home_button_stop),getPendingIntentWithBroadcast(MainActivity.CLICK_NOTIFICATION));
+
+        builder.setContentIntent( //通知タップ時のPendingIntent
+                getPendingIntentWithBroadcast(MainActivity.CLICK_NOTIFICATION)
+        );
+        builder.setDeleteIntent(  //通知の削除時のPendingIntent
+                getPendingIntentWithBroadcast(MainActivity.DELETE_NOTIFICATION)
+        );
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            NotificationCompat.BigTextStyle notificationBigTextStyle = new NotificationCompat.BigTextStyle(builder);
+            builder.setStyle(notificationBigTextStyle);
+        }
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(R.string.app_name, builder.build());
+        // サービス永続化
+        startForeground(R.string.app_name, builder.build());
+
         return new AlertBinder();
     }
 
@@ -206,7 +246,7 @@ public class AlertService extends IntentService implements SensorEventListener,
             }
             // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
             // 5回カウントして1秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
-            if (mTendencyCheckCount >= 4) {
+            if (mTendencyCheckCount == 5) {
                 // 歩行中であることを判定
                 if (isWalking() || isWalkingStatus) {
                     // 歩いている状態で下記にてデバイス角度計算
@@ -232,8 +272,8 @@ public class AlertService extends IntentService implements SensorEventListener,
                             MainActivity.sAlertShowFlag = false;
                         }
                     }
-                    mTendencyCheckCount = 0;
                 }
+                mTendencyCheckCount = 0;
             }
         }
 
@@ -249,7 +289,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                 sendBroadcast(intent);
             }
         }else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            mTendencyCheckCount++;
+            if(mIsScreenOn) {
+                mTendencyCheckCount++;
+            }
             // 歩行センサがない場合 3軸加速度から計算
             if(!MainActivity.mHasStepFeature) {
                 mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);

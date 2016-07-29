@@ -60,7 +60,6 @@ import com.software.shell.fab.ActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
@@ -102,6 +101,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int MENU_HISTORY_ID = 2;
     private static final String SETTING_SHAREDPREF_NAME = "setting";
 
+    public static final String CLICK_NOTIFICATION = "click_notification";
+    public static final String DELETE_NOTIFICATION = "delete_notification";
+
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
 
@@ -121,6 +123,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(CLICK_NOTIFICATION)){
+                Toast.makeText(context, "通知が削除されました", Toast.LENGTH_SHORT).show();
+                Intent startActivityIntent = new Intent(context, MainActivity.class);
+                startActivity(startActivityIntent);
+                return;
+            }
+            if (intent.getAction().equals(DELETE_NOTIFICATION)) {
+                finish();
+                return;
+            }
+
             if (intent.getBooleanExtra("isStepCounter", false)) {
                 // 歩数表示の更新
                 if (sPedometerFlag && mAlertService != null) {
@@ -232,10 +245,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .performClick(true)
                 .setInfoText(getString(R.string.intro_description))
                 .setTarget(mbtnStart)
-                .setUsageId(String.valueOf(new Date())) //THIS SHOULD BE UNIQUE ID
+                .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
                 .dismissOnTouch(true)
                 .show();
-//        .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
 
 
         mbtnStart.setOnClickListener(new View.OnClickListener() {
@@ -325,13 +337,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mToastPosition = data.getInt("toastPosition", Gravity.CENTER);
 
         mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
+
+        FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
         FlurryAgent.logEvent("onStart");
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
@@ -501,9 +514,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(MainActivity.this, AlertService.class);
             startService(intent);
             IntentFilter filter = new IntentFilter(AlertService.ACTION);
+            filter.addAction(MainActivity.CLICK_NOTIFICATION);
+            filter.addAction(MainActivity.DELETE_NOTIFICATION);
             registerReceiver(mAlertReceiver, filter);
-
+            // bindしないとserviceの変数やメソッドを取得できない
             bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
             changeViewState(true, ((ActionButton) v));
             mStepCount = 0;
         }
@@ -752,6 +768,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (intent == null || intent.getData() == null || !intent.getData().toString().startsWith(mCallbackURL)) {
             return;
         }
+
         String verifier = intent.getData().getQueryParameter("oauth_verifier");
 
         AsyncTask<String, Void, AccessToken> task = new AsyncTask<String, Void, AccessToken>() {
