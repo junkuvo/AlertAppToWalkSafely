@@ -124,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(CLICK_NOTIFICATION)){
-                Toast.makeText(context, "通知が削除されました", Toast.LENGTH_SHORT).show();
                 Intent startActivityIntent = new Intent(context, MainActivity.class);
                 startActivity(startActivityIntent);
                 return;
@@ -152,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 //            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
 //            vibrator.vibrate(pattern, -1);
-                    vibrator.vibrate(500);
+                    vibrator.vibrate(300);
                 }
             }
         }
@@ -335,6 +334,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         sPedometerFlag = data.getBoolean("pedometer", true);
         mToastPosition = data.getInt("toastPosition", Gravity.CENTER);
+        if (sPedometerFlag) {
+            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+        } else {
+            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+        }
 
         mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
 

@@ -137,20 +137,17 @@ public class AlertService extends IntentService implements SensorEventListener,
     @Override
     public IBinder onBind(Intent intent) {
 
-//        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, R.string.app_name, notificationIntent, 0);
         // サービスを永続化するために、通知を作成する
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 //        builder.setContentIntent(pendingIntent);
         builder.setTicker("歩きスマホ防止アプリ起動！");
         builder.setContentTitle(getString(R.string.app_name));
-        builder.setContentText("起動中...");
-        builder.setSubText("アプリを開く際はタップしてください");
+        builder.setContentText("アプリを開く際はタップしてください");
+//        builder.setSubText("アプリを開く際はタップしてください");
         builder.setSmallIcon(R.drawable.ic_stat_small);
         // Large icon appears on the left of the notification
         builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
-        builder.addAction(R.drawable.ic_done_white_48dp,getString(R.string.home_button_stop),getPendingIntentWithBroadcast(MainActivity.CLICK_NOTIFICATION));
+        builder.addAction(R.drawable.ic_stat_small,getString(R.string.home_button_stop),getPendingIntentWithBroadcast(MainActivity.DELETE_NOTIFICATION));
 
         builder.setContentIntent( //通知タップ時のPendingIntent
                 getPendingIntentWithBroadcast(MainActivity.CLICK_NOTIFICATION)
