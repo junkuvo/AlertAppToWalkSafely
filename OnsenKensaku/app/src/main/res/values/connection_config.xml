@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="protocol">http</string>
-    <string name="domain">loco-partners.heteml.jp</string>
-    <string name="URIPrefecture">u/prefectures</string>
-    <string name="URIOnsenPre">u/onsens</string>
-    <string name="URIOnsenLoc">u/onsens/geometric_search</string>
-</resources>
