@@ -1,7 +1,7 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.app.IntentService;
-import android.app.NotificationManager;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,12 +12,11 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -102,13 +101,8 @@ public class AlertService extends IntentService implements SensorEventListener,
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
-        handleOnStart(intent,startId);
-    }
-
-    public int onStartCommand(Intent intent, int flags, int startId){
-        onStart(intent, startId);
+    public int onStartCommand(Intent intent, int flags, int startId) {
+//        super.onStart(intent, startId);
         handleOnStart(intent,startId);
         return START_STICKY;
     }
@@ -173,12 +167,6 @@ public class AlertService extends IntentService implements SensorEventListener,
         if(ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
             handleDetectedActivities( result.getProbableActivities() );
-        }
-    }
-
-    class AlertBinder extends Binder {
-        AlertService getService() {
-            return AlertService.this;
         }
     }
 
@@ -292,25 +280,16 @@ public class AlertService extends IntentService implements SensorEventListener,
         for( DetectedActivity activity : probableActivities ) {
             switch( activity.getType() ) {
                 case DetectedActivity.ON_FOOT: {
-//                    if( activity.getConfidence() >= ACTIVITY_RECOGNITION_CONFIDENCE ) {
-//                        isWalkingStatus = true;
-//                    }
                     confidence = confidence + activity.getConfidence();
                     Log.e( "ActivityRecognition", "On Foot: " + activity.getConfidence() );
                     break;
                 }
                 case DetectedActivity.RUNNING: {
-//                    if( activity.getConfidence() >= ACTIVITY_RECOGNITION_CONFIDENCE ) {
-//                        isWalkingStatus = true;
-//                    }
                     confidence = confidence + activity.getConfidence();
                     Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
                     break;
                 }
                 case DetectedActivity.WALKING: {
-//                    if( activity.getConfidence() >= ACTIVITY_RECOGNITION_CONFIDENCE ) {
-//                        isWalkingStatus = true;
-//                    }
                     confidence = confidence + activity.getConfidence();
                     Log.e( "ActivityRecognition", "Walking: " + activity.getConfidence() );
                     break;
@@ -330,8 +309,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     public void startServiceForeground(){
         // サービスを永続化するために、通知を作成する
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
-//        builder.setContentIntent(pendingIntent);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setTicker("歩きスマホ防止アプリ起動！");
         builder.setContentTitle(getString(R.string.app_name));
         builder.setContentText("アプリを開く際はタップしてください");
@@ -352,8 +330,11 @@ public class AlertService extends IntentService implements SensorEventListener,
             NotificationCompat.BigTextStyle notificationBigTextStyle = new NotificationCompat.BigTextStyle(builder);
             builder.setStyle(notificationBigTextStyle);
         }
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(R.string.app_name, builder.build());
+        // ロックスクリーン上でどう見えるか
+        builder.setVisibility(Notification.VISIBILITY_SECRET);
+
+        // PRIORITY_MINだとどこにも表示されなくなる
+        builder.setPriority(Notification.PRIORITY_MIN);
         // サービス永続化
         startForeground(R.string.app_name, builder.build());
     }

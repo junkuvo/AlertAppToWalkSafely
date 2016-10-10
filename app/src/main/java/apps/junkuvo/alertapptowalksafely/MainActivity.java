@@ -2,19 +2,16 @@ package apps.junkuvo.alertapptowalksafely;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -73,7 +70,6 @@ import twitter4j.auth.RequestToken;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
     public static boolean sPedometerFlag = true;
@@ -101,8 +97,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int MENU_HISTORY_ID = 2;
     private static final String SETTING_SHAREDPREF_NAME = "setting";
 
-    public static final String CLICK_NOTIFICATION = "click_notification";
-    public static final String DELETE_NOTIFICATION = "delete_notification";
+    public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
+    public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
 
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
@@ -155,19 +151,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-
-    // ServiceとActivityをBindするクラス
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            mAlertService = ((AlertService.AlertBinder) service).getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName className) {
-            mAlertService = null;
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -381,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
         if(!mAppRunningFlag) {
-            showToastShort(getString(R.string.toast_instruction)).show();
+            createToastShort(getString(R.string.toast_instruction)).show();
 //        mbtnStart.setAnimation(mAnimationBlink);
             mbtnStart.startAnimation(mAnimationBlink);
         }
@@ -521,7 +504,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             filter.addAction(MainActivity.DELETE_NOTIFICATION);
             registerReceiver(mAlertReceiver, filter);
 
-//            bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
             changeViewState(true, ((ActionButton) v));
             mStepCount = 0;
         }
@@ -688,15 +670,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mAppRunningFlag) {
-            killAlertService();
-        }
-
         Growthbeat.getInstance().stop();
     }
 
     public void killAlertService() {
         unregisterReceiver(mAlertReceiver); // 登録解除
+        stopService(new Intent(MainActivity.this, AlertService.class));
     }
 
     @Override
