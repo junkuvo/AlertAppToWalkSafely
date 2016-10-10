@@ -66,7 +66,6 @@ import twitter4j.auth.RequestToken;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private AlertService mAlertService;
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
     public static boolean sPedometerFlag = true;
@@ -91,6 +90,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int MENU_SHARE_ID = 1;
     private static final int MENU_HISTORY_ID = 2;
     private static final String SETTING_SHAREDPREF_NAME = "setting";
+
+    public static final String CLICK_NOTIFICATION = "click_notification";
+    public static final String DELETE_NOTIFICATION = "delete_notification";
 
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
@@ -132,19 +134,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-
-//    // ServiceとActivityをBindするクラス
-//    private ServiceConnection mServiceConnection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName className, IBinder service) {
-//            mAlertService = ((AlertService.AlertBinder) service).getService();
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName className) {
-//            mAlertService = null;
-//        }
-//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -631,9 +620,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void killAlertService() {
-//        unbindService(mServiceConnection); // バインド解除
         unregisterReceiver(mAlertReceiver); // 登録解除
-//        mAlertService.stopSelf(); // サービスは必要ないので終了させる。
     }
 
     @Override
