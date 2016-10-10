@@ -722,10 +722,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(AccessToken accessToken) {
                 if (accessToken != null) {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed));
+                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed)).show();
                     TwitterUtility.storeAccessToken(getApplicationContext(), accessToken);
                 } else {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_fail));
+                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_fail)).show();
                 }
             }
         };
@@ -749,9 +749,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected void onPostExecute(Boolean result) {
                 if (result) {
                     FlurryAgent.logEvent(getApplicationContext().getString(R.string.twitter_tweet_succeed));
-                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed));
+                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed)).show();
                 } else {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail));
+                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail)).show();
                 }
             }
         };
