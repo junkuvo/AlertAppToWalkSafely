@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
     public static boolean sAlertShowFlag = false;
     public static boolean sPedometerFlag = true;
+    // サービスが起動しているかどうかのフラグ
     private boolean mAppRunningFlag = false;
 
     private Utility mUtility;
@@ -116,15 +117,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private InterstitialAd mInterstitialAd;
     private static final String MY_AD_UNIT_ID = "ca-app-pub-1630604043812019/7857872217";
 
+    //TODO:ActivityのInnerはまずい、Activityとともに消えている
     private class AlertReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(CLICK_NOTIFICATION)){
+            if (intent.getAction().equals(CLICK_NOTIFICATION)) {
                 Intent startActivityIntent = new Intent(context, MainActivity.class);
+                startActivityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(startActivityIntent);
                 return;
             }
             if (intent.getAction().equals(DELETE_NOTIFICATION)) {
+                killAlertService();
                 finish();
                 return;
             }
@@ -363,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-        if(!mAppRunningFlag) {
+        if (!mAppRunningFlag) {
             createToastShort(getString(R.string.toast_instruction)).show();
 //        mbtnStart.setAnimation(mAnimationBlink);
             mbtnStart.startAnimation(mAnimationBlink);
@@ -463,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // サービス停止
             killAlertService();
             changeViewState(false, ((ActionButton) v));
-            Toast.makeText(this,getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
             if (TwitterUtility.hasAccessToken(getApplicationContext())) {
                 Context context = MainActivity.this;
@@ -476,8 +480,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
 //                if(mHasStepFeature) {
-                    mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
-                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
 //                }else{
 //                    mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
 //                            String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
@@ -504,8 +508,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             filter.addAction(MainActivity.DELETE_NOTIFICATION);
             registerReceiver(mAlertReceiver, filter);
 
-            changeViewState(true, ((ActionButton) v));
             mStepCount = 0;
+            changeViewState(true, ((ActionButton) v));
         }
     }
 
@@ -574,10 +578,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setRadioGroupInLayout(View layout) {
         RadioGroup radioGroup = (RadioGroup) layout.findViewById(R.id.radiogroup);
-        RadioButton radioButtonTop = (RadioButton)layout.findViewById(R.id.radiobutton_top);
-        RadioButton radioButtonCenter = (RadioButton)layout.findViewById(R.id.radiobutton_center);
-        RadioButton radioButtonButton = (RadioButton)layout.findViewById(R.id.radiobutton_bottom);
-        switch (mToastPosition){
+        RadioButton radioButtonTop = (RadioButton) layout.findViewById(R.id.radiobutton_top);
+        RadioButton radioButtonCenter = (RadioButton) layout.findViewById(R.id.radiobutton_center);
+        RadioButton radioButtonButton = (RadioButton) layout.findViewById(R.id.radiobutton_bottom);
+        switch (mToastPosition) {
             case Gravity.TOP:
                 radioButtonTop.setChecked(true);
                 break;
@@ -592,7 +596,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch (checkedId){
+                switch (checkedId) {
                     case R.id.radiobutton_top:
                         mToastPosition = Gravity.TOP;
                         break;
@@ -808,9 +812,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, TOAST_TEXT_SIZE);
 //        int pixel = (int)mWindowDensity * 56;
         int toastMargin = getResources().getDimensionPixelSize(R.dimen.toast_margin_top_bottom);
-        tv.setPadding(0,toastMargin,0,toastMargin);
+        tv.setPadding(0, toastMargin, 0, toastMargin);
         toast.setView(tv);
-        toast.setGravity(mToastPosition,0,0);
+        toast.setGravity(mToastPosition, 0, 0);
         toast.setDuration(Toast.LENGTH_SHORT);
 
         return toast;
