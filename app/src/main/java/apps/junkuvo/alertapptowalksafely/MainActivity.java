@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getBooleanExtra("isStepCounter", false)) {
-                if (sPedometerFlag && mAlertService != null) {
+                if (sPedometerFlag) {
                     mStepCount = intent.getIntExtra("stepCount", mStepCount);
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
                 }
