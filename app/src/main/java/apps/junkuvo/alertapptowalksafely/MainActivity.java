@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 if (!sAlertShowFlag && mToastOn) {
                     String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                    showToastShort(alertMessage).show();
+                    createToastShort(alertMessage).show();
                     sAlertShowFlag = true;
                 }
 
@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-        showToastShort(getString(R.string.toast_instruction)).show();
+        createToastShort(getString(R.string.toast_instruction)).show();
 //        mbtnStart.setAnimation(mAnimationBlink);
         mbtnStart.startAnimation(mAnimationBlink);
     }
@@ -722,10 +722,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(AccessToken accessToken) {
                 if (accessToken != null) {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed)).show();
+                    createToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed)).show();
                     TwitterUtility.storeAccessToken(getApplicationContext(), accessToken);
                 } else {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_auth_fail)).show();
+                    createToastShort(getApplicationContext().getString(R.string.twitter_auth_fail)).show();
                 }
             }
         };
@@ -749,16 +749,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected void onPostExecute(Boolean result) {
                 if (result) {
                     FlurryAgent.logEvent(getApplicationContext().getString(R.string.twitter_tweet_succeed));
-                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed)).show();
+                    createToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed)).show();
                 } else {
-                    showToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail)).show();
+                    createToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail)).show();
                 }
             }
         };
         task.execute(tweetString);
     }
 
-    private Toast showToastShort(String text) {
+    private Toast createToastShort(String text) {
         Toast toast = new Toast(this);
         TextView tv = new TextView(this);
         tv.setText(text);
