@@ -2,19 +2,16 @@ package apps.junkuvo.alertapptowalksafely;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -136,18 +133,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    // ServiceとActivityをBindするクラス
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            mAlertService = ((AlertService.AlertBinder) service).getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName className) {
-            mAlertService = null;
-        }
-    };
+//    // ServiceとActivityをBindするクラス
+//    private ServiceConnection mServiceConnection = new ServiceConnection() {
+//        @Override
+//        public void onServiceConnected(ComponentName className, IBinder service) {
+//            mAlertService = ((AlertService.AlertBinder) service).getService();
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName className) {
+//            mAlertService = null;
+//        }
+//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -496,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             IntentFilter filter = new IntentFilter(AlertService.ACTION);
             registerReceiver(mAlertReceiver, filter);
 
-            bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+//            bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
             changeViewState(true, ((ActionButton) v));
             mStepCount = 0;
         }
@@ -634,9 +631,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void killAlertService() {
-        unbindService(mServiceConnection); // バインド解除
+//        unbindService(mServiceConnection); // バインド解除
         unregisterReceiver(mAlertReceiver); // 登録解除
-        mAlertService.stopSelf(); // サービスは必要ないので終了させる。
+//        mAlertService.stopSelf(); // サービスは必要ないので終了させる。
     }
 
     @Override
@@ -778,5 +775,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mInterstitialAd.isLoaded()) {
             mInterstitialAd.show();
         }
+    }
+
+    public static boolean issAlertShowFlag() {
+        return sAlertShowFlag;
+    }
+
+    public static void setsAlertShowFlag(boolean sAlertShowFlag) {
+        MainActivity.sAlertShowFlag = sAlertShowFlag;
+    }
+
+    public static boolean issPedometerFlag() {
+        return sPedometerFlag;
+    }
+
+    public static void setsPedometerFlag(boolean sPedometerFlag) {
+        MainActivity.sPedometerFlag = sPedometerFlag;
     }
 }

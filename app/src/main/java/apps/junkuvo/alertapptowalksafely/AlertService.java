@@ -9,7 +9,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.IBinder;
 
 import java.util.List;
@@ -81,7 +80,7 @@ public class AlertService extends Service implements SensorEventListener {
     // BindしたServiceをActivityに返す
     @Override
     public IBinder onBind(Intent intent) {
-        return new AlertBinder();
+        return null;
     }
 
     @Override
@@ -93,11 +92,11 @@ public class AlertService extends Service implements SensorEventListener {
         return true; // 再度クライアントから接続された際に onRebind を呼び出させる場合は true を返す
     }
 
-    class AlertBinder extends Binder {
-        AlertService getService() {
-            return AlertService.this;
-        }
-    }
+//    class AlertBinder extends Binder {
+//        AlertService getService() {
+//            return AlertService.this;
+//        }
+//    }
 
     // センサーの精度が変更されると呼ばれる
     @Override
