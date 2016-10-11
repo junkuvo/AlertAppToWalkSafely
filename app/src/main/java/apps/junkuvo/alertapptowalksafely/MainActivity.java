@@ -71,8 +71,8 @@ import twitter4j.auth.RequestToken;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private final AlertReceiver mAlertReceiver = new AlertReceiver();
-    public static boolean sAlertShowFlag = false;
-    public static boolean sPedometerFlag = true;
+    public static boolean sShouldShowAlert = false;
+    public static boolean sShouldShowPedometer = true;
     // サービスが起動しているかどうかのフラグ
     private boolean mAppRunningFlag = false;
 
@@ -134,16 +134,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             if (intent.getBooleanExtra("isStepCounter", false)) {
-                if (sPedometerFlag) {
+                if (shouldShowPedometer()) {
                     mStepCount = intent.getIntExtra("stepCount", mStepCount);
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
                 }
             } else {
                 // 歩きスマホの注意
-                if (!sAlertShowFlag && mToastOn) {
+                if (!shouldShowAlert() && mToastOn) {
                     String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
                     createToastShort(alertMessage).show();
-                    sAlertShowFlag = true;
+                    setShouldShowAlert(true);
                 }
 
                 if (mVibrationOn) {
@@ -318,9 +318,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mVibrationOn = data.getBoolean("vibrate", true);
         mPasscodeOn = data.getBoolean("passcode", false);
         sAlertStartAngle = data.getInt("progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
-        sPedometerFlag = data.getBoolean("pedometer", true);
+        setShouldShowPedometer(data.getBoolean("pedometer", true));
         mToastPosition = data.getInt("toastPosition", Gravity.CENTER);
-        if (sPedometerFlag) {
+        if (shouldShowPedometer()) {
             ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
         } else {
             ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
@@ -613,11 +613,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setToggleButtonInLayout(View layout) {
         ToggleButton tgbPedometer = (ToggleButton) layout.findViewById(R.id.tgbPedometer);
-        tgbPedometer.setChecked(sPedometerFlag);
+        tgbPedometer.setChecked(shouldShowPedometer());
         tgbPedometer.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        sPedometerFlag = isChecked;
+                        setShouldShowPedometer(isChecked);
                         if (isChecked) {
                             ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
                         } else {
@@ -660,7 +660,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editor.putBoolean("vibrate", mVibrationOn);
         editor.putBoolean("passcode", mPasscodeOn);
         editor.putInt("progress", sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
-        editor.putBoolean("pedometer", sPedometerFlag);
+        editor.putBoolean("pedometer", shouldShowPedometer());
         editor.putInt("toastPosition", mToastPosition);
         editor.apply();
     }
@@ -709,7 +709,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
             ((TextView) findViewById(R.id.txtWatching)).setVisibility(View.GONE);
             mAppRunningFlag = false;
-            MainActivity.sAlertShowFlag = false;
+            setShouldShowAlert(false);
         }
     }
 
@@ -827,19 +827,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public static boolean issAlertShowFlag() {
-        return sAlertShowFlag;
+    public static boolean shouldShowAlert() {
+        return sShouldShowAlert;
     }
 
-    public static void setsAlertShowFlag(boolean sAlertShowFlag) {
-        MainActivity.sAlertShowFlag = sAlertShowFlag;
+    public static void setShouldShowAlert(boolean sShouldShowAlert) {
+        MainActivity.sShouldShowAlert = sShouldShowAlert;
     }
 
-    public static boolean issPedometerFlag() {
-        return sPedometerFlag;
+    public static boolean shouldShowPedometer() {
+        return sShouldShowPedometer;
     }
 
-    public static void setsPedometerFlag(boolean sPedometerFlag) {
-        MainActivity.sPedometerFlag = sPedometerFlag;
+    public static void setShouldShowPedometer(boolean sShouldShowPedometer) {
+        MainActivity.sShouldShowPedometer = sShouldShowPedometer;
     }
 }

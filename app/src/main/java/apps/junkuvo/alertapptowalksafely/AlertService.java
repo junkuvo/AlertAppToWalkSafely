@@ -166,7 +166,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     protected void onHandleIntent(Intent intent) {
         if(ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-            handleDetectedActivities( result.getProbableActivities() );
+            detectWalkingStatusByGcm( result.getProbableActivities() );
         }
     }
 
@@ -192,7 +192,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    // センサーの値が変化すると呼ばれる
+    // センサーの値が変化すると呼ばれる(加速度・ステップディテクター・ステップカウンター)
     @Override
     public void onSensorChanged(SensorEvent event) {
         // 画面がONの場合、歩きスマホを検知する
@@ -226,7 +226,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                     } else {
                         if (mTendencyOutCount > 0) {
                             mTendencyOutCount--;
-                            MainActivity.sAlertShowFlag = false;
+                            MainActivity.setShouldShowAlert(false);
                         }
                     }
                 }
@@ -239,7 +239,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
             // 歩行センサがある場合
             mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
-            if(MainActivity.sPedometerFlag) {
+            if(MainActivity.shouldShowPedometer()) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
                 intent.putExtra("stepCount",mStepCountCurrent);
@@ -275,7 +275,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         }
     }
 
-    private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
+    private void detectWalkingStatusByGcm(List<DetectedActivity> probableActivities) {
         int confidence = 0;
         for( DetectedActivity activity : probableActivities ) {
             switch( activity.getType() ) {
