@@ -329,6 +329,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
 
         FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
+
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
+        relativeLayout.setOnClickListener(this);
+
+        PackageManager packageManager = this.getPackageManager();
+        mHasStepFeature = packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
+                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
+
     }
 
     @Override
@@ -337,17 +345,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         FlurryAgent.logEvent("onStart");
 
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
-        relativeLayout.setOnClickListener(this);
-
         // カーソルを最後尾に移動
         EditText editText = (EditText) findViewById(R.id.txtAlertMessage);
         editText.setSelection(editText.getText().length());
-
-        PackageManager packageManager = this.getPackageManager();
-        mHasStepFeature = packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
-
     }
 
     private static final int PLUS_ONE_REQUEST_CODE = 0;

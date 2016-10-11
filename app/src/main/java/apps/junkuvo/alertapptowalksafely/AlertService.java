@@ -28,7 +28,7 @@ import com.google.android.gms.location.DetectedActivity;
 import java.util.List;
 
 public class AlertService extends IntentService implements SensorEventListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION = "Alert Service";
 
@@ -103,7 +103,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 //        super.onStart(intent, startId);
-        handleOnStart(intent,startId);
+        handleOnStart(intent, startId);
         return START_STICKY;
     }
 
@@ -113,7 +113,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
         }
-        if(screenStatusReceiver != null) {
+        if (screenStatusReceiver != null) {
             unregisterReceiver(screenStatusReceiver);
         }
 
@@ -124,7 +124,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
-        return PendingIntent.getBroadcast(getApplicationContext(), 0 , new Intent(action), 0);
+        return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
     }
 
     // BindしたServiceをActivityに返す
@@ -145,9 +145,9 @@ public class AlertService extends IntentService implements SensorEventListener,
     // GoogleApiClient
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Intent intent = new Intent( this, AlertService.class );
-        mReceiveRecognitionIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 0, mReceiveRecognitionIntent );
+        Intent intent = new Intent(this, AlertService.class);
+        mReceiveRecognitionIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mReceiveRecognitionIntent);
     }
 
     // GoogleApiClient
@@ -164,9 +164,9 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if(ActivityRecognitionResult.hasResult(intent)) {
+        if (ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-            detectWalkingStatusByGcm( result.getProbableActivities() );
+            detectWalkingStatusByGcm(result.getProbableActivities());
         }
     }
 
@@ -175,7 +175,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    private void handleOnStart(Intent intent, int startId){
+    private void handleOnStart(Intent intent, int startId) {
         startServiceForeground();
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // センサーのオブジェクトリストを取得する
@@ -197,7 +197,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void onSensorChanged(SensorEvent event) {
         // 画面がONの場合、歩きスマホを検知する
         Sensor sensor = event.sensor;
-        if(mIsScreenOn) {
+        if (mIsScreenOn) {
             if (mStepCountBefore == 0) {
                 mStepCountBefore = mStepCountCurrent;
             }
@@ -239,18 +239,18 @@ public class AlertService extends IntentService implements SensorEventListener,
         } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
             // 歩行センサがある場合
             mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
-            if(MainActivity.shouldShowPedometer()) {
+            if (MainActivity.shouldShowPedometer()) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
-                intent.putExtra("stepCount",mStepCountCurrent);
+                intent.putExtra("stepCount", mStepCountCurrent);
                 sendBroadcast(intent);
             }
-        }else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            if(mIsScreenOn) {
+        } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            if (mIsScreenOn) {
                 mTendencyCheckCount++;
             }
             // 歩行センサがない場合 3軸加速度から計算
-            if(!MainActivity.mHasStepFeature) {
+            if (!MainActivity.mHasStepFeature) {
                 mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
@@ -265,11 +265,11 @@ public class AlertService extends IntentService implements SensorEventListener,
     private int mStepCountCurrent = 0;
 
     // 歩数の変化を計算して、変化があれば歩行中と判定
-    private boolean isWalking(){
+    private boolean isWalking() {
         mStepCountAfter = mStepCountCurrent;
-        if(mStepCountBefore == mStepCountAfter){
+        if (mStepCountBefore == mStepCountAfter) {
             return false;
-        }else{
+        } else {
             mStepCountBefore = mStepCountAfter;
             return true;
         }
@@ -277,21 +277,21 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     private void detectWalkingStatusByGcm(List<DetectedActivity> probableActivities) {
         int confidence = 0;
-        for( DetectedActivity activity : probableActivities ) {
-            switch( activity.getType() ) {
+        for (DetectedActivity activity : probableActivities) {
+            switch (activity.getType()) {
                 case DetectedActivity.ON_FOOT: {
                     confidence = confidence + activity.getConfidence();
-                    Log.e( "ActivityRecognition", "On Foot: " + activity.getConfidence() );
+                    Log.e("ActivityRecognition", "On Foot: " + activity.getConfidence());
                     break;
                 }
                 case DetectedActivity.RUNNING: {
                     confidence = confidence + activity.getConfidence();
-                    Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
+                    Log.e("ActivityRecognition", "Running: " + activity.getConfidence());
                     break;
                 }
                 case DetectedActivity.WALKING: {
                     confidence = confidence + activity.getConfidence();
-                    Log.e( "ActivityRecognition", "Walking: " + activity.getConfidence() );
+                    Log.e("ActivityRecognition", "Walking: " + activity.getConfidence());
                     break;
                 }
                 case DetectedActivity.STILL:
@@ -307,7 +307,7 @@ public class AlertService extends IntentService implements SensorEventListener,
         }
     }
 
-    public void startServiceForeground(){
+    public void startServiceForeground() {
         // サービスを永続化するために、通知を作成する
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setTicker("歩きスマホ防止アプリ起動！");
@@ -317,8 +317,9 @@ public class AlertService extends IntentService implements SensorEventListener,
         builder.setSmallIcon(R.drawable.ic_stat_small);
         // Large icon appears on the left of the notification
         builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
-        builder.addAction(R.drawable.ic_stat_small,getString(R.string.home_button_stop),getPendingIntentWithBroadcast(MainActivity.DELETE_NOTIFICATION));
+        builder.addAction(R.drawable.ic_stat_small, getString(R.string.home_button_stop), getPendingIntentWithBroadcast(MainActivity.DELETE_NOTIFICATION));
 
+        // TODO : Receiverは外に出して、そもそもいらないかもActivityちゃんと読んじゃえば
         builder.setContentIntent( //通知タップ時のPendingIntent
                 getPendingIntentWithBroadcast(MainActivity.CLICK_NOTIFICATION)
         );
