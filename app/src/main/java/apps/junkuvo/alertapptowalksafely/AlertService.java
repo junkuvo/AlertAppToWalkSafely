@@ -30,7 +30,7 @@ import java.util.List;
 public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    public static final String ACTION = "Alert Service";
+    public static final String ACTION = "AlertService";
 
     private SensorManager mSensorManager;
 
@@ -250,6 +250,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                 mTendencyCheckCount++;
             }
             // 歩行センサがない場合 3軸加速度から計算
+            // TODO : intentとかでわたそうよ
             if (!MainActivity.mHasStepFeature) {
                 mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
                 Intent intent = new Intent(ACTION);
