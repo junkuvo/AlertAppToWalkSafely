@@ -1,21 +1,21 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Vibrator;
+import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.SpannableString;
-import android.text.style.UnderlineSpan;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -65,25 +65,14 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, AlertReceiver.ReceiveEventListener {
-
-    private AlertReceiver mAlertReceiver = new AlertReceiver();
-    public static boolean sShouldShowAlert = false;
-    public static boolean sShouldShowPedometer = true;
-    // サービスが起動しているかどうかのフラグ
-    private boolean mAppRunningFlag = false;
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Utility mUtility;
+    private Intent mAlertServiceIntent;
 
-    public static int sAlertStartAngle;
-    private boolean mVibrationOn = true;
     private boolean mPasscodeOn = false;
-    private boolean mToastOn = true;
     private int mStepCount = 0;
-    private int mToastPosition;
-    public static boolean mHasStepFeature = false;
-    private static float mWindowDensity = 0;
+    public static final String SETTING_SHAREDPREF_NAME = "setting";
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -93,11 +82,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int MENU_SETTING_ID = 0;
     private static final int MENU_SHARE_ID = 1;
-    private static final int MENU_HISTORY_ID = 2;
-    private static final String SETTING_SHAREDPREF_NAME = "setting";
-
-    public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
-    public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
 
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
@@ -107,50 +91,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
+    private EditText mAlertEditText;
 
     private PlusOneButton mPlusOneButton;
 
     private InterstitialAd mInterstitialAd;
     private static final String MY_AD_UNIT_ID = "ca-app-pub-1630604043812019/7857872217";
 
-//    //TODO:ActivityのInnerはまずい、Activityとともに消えている
-//    private class AlertReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            if (intent.getAction().equals(CLICK_NOTIFICATION)) {
-//                Intent startActivityIntent = new Intent(context, MainActivity.class);
-//                startActivityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//                startActivity(startActivityIntent);
-//                return;
-//            }
-//            if (intent.getAction().equals(DELETE_NOTIFICATION)) {
-//                killAlertService();
-//                finish();
-//                return;
-//            }
-//
-//            if (intent.getBooleanExtra("isStepCounter", false)) {
-//                if (shouldShowPedometer()) {
-//                    mStepCount = intent.getIntExtra("stepCount", mStepCount);
-//                    ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
-//                }
-//            } else {
-//                // 歩きスマホの注意
-//                if (!shouldShowAlert() && mToastOn) {
-//                    String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-//                    createToastShort(alertMessage).show();
-//                    setShouldShowAlert(true);
-//                }
-//
-//                if (mVibrationOn) {
-//                    Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-////            long[] pattern = {1000, 1000, 1000, 1000}; // OFF/ON/OFF/ON...
-////            vibrator.vibrate(pattern, -1);
-//                    vibrator.vibrate(300);
-//                }
-//            }
-//        }
-//    }
+    private boolean mShouldShowAlert = false;
+    private boolean mShouldShowPedometer = true;
+    private boolean mIsToastOn = true;
+    private boolean mIsVibrationOn = true;
+    private int mToastPosition;
+    private String mAlertMessage;
+    private int mAlertStartAngle;
+
+    public TextWatcher mTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            mAlertMessage = s.toString();
+            if (mAlertService != null && mAlertService.isBoundService()) {
+                mAlertService.setAlertMessage(s.toString());
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+
+        }
+    };
+
+    // ActivityがonDestroyしたあと、ここでBindされるServiceは同一（Rebindされる）
+    private AlertService mAlertService;
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
+            mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
+            mAlertService.setIsToastOn(mIsToastOn);
+            mAlertService.setIsVibrationOn(mIsVibrationOn);
+            mAlertService.setToastPosition(mToastPosition);
+            mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
+            mAlertService.setAlertMessage(mAlertMessage);
+            mAlertService.setIsBoundService(true);
+            mAlertService.setTxtStepCount((TextView) findViewById(R.id.txtStepCount));
+            ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent())
+                    + getString(R.string.home_step_count_dimension));
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // サービスとの切断(異常系処理)
+            // プロセスのクラッシュなど意図しないサービスの切断が発生した場合に呼ばれる。
+            // Unbindのタイミングでは呼ばれません（別物）
+            mAlertService = null;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,7 +159,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (actionbar != null) {
             actionbar.show();
         }
-
         // 署名付きAPKではなぜか初期起動後、BGから起動される度にonCreateしてActivityを生み続ける
         // →Intentのフラグの値がおかしいらしいので、下記のコードで対応
         if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
@@ -168,8 +166,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         setContentView(R.layout.activity_main);
-
-        mWindowDensity = getResources().getDisplayMetrics().density;
 
         // Create the interstitial.
         mInterstitialAd = new InterstitialAd(this);
@@ -242,9 +238,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .setIcon(R.drawable.ic_lock_blue_grey_100_48dp)
                             .setCustomView(layout).show();
 
-//                    InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-//                    inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-
                     final PasscodeView passcodeView = (PasscodeView) layout.findViewById(R.id.passcode);
                     final PasscodeView passcodeViewConfirm = (PasscodeView) layout.findViewById(R.id.passcodeConfirm);
                     final TextView txtPasscodeConfirm = (TextView) layout.findViewById(R.id.txtPasscodeConfirm);
@@ -253,7 +246,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
                         @Override
                         public void onPasscodeEntered(String passcode) {
-                            if (mAppRunningFlag) {
+                            if (mAlertService != null && mAlertService.isBoundService()) {
                                 if (passcode.equals(mPasscodeConfirm)) {
                                     FlurryAgent.logEvent("Passcode Unlocked");
 
@@ -296,41 +289,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
+
+        mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
+
         // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
         // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
         if (!mUtility.isTabletNotPhone()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
-        sAlertStartAngle = ALERT_ANGLE_INITIAL_VALUE + ALERT_ANGLE_INITIAL_OFFSET;
         mTwitter = TwitterUtility.getTwitterInstance(this);
         mCallbackURL = getString(R.string.twitter_callback_url);
 //        //　レビューサイトへのリンク
 //        setUrlLinkToReview();
 
-        // 設定の読み込み
-        mToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
-        mVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
-        mPasscodeOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "passcode", false);
-        sAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
-        setShouldShowPedometer(SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true));
-        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
-        if (shouldShowPedometer()) {
-            (findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
-        } else {
-            (findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
-        }
 
         mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
+        // Refresh the state of the +1 button each time the activity receives focus.
+        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
         FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
         relativeLayout.setOnClickListener(this);
 
-        PackageManager packageManager = this.getPackageManager();
-        mHasStepFeature = packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
-        mAlertReceiver.setOnReceiveEventListener(this);
+        mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
+        mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
+        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
+        mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
+        mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
+        (findViewById(R.id.txtStepCount)).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+
+        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
+        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
+        // Application変数を参照している
+        if (((AlertApplication) getApplication()).IsRunningService()) {
+            btnIsStarted = false;
+            setStartButtonFunction(findViewById(R.id.fabStart));
+        }
     }
 
     @Override
@@ -340,8 +335,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         FlurryAgent.logEvent("onStart");
 
         // カーソルを最後尾に移動
-        EditText editText = (EditText) findViewById(R.id.txtAlertMessage);
-        editText.setSelection(editText.getText().length());
+        mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
+        mAlertEditText.setSelection(mAlertEditText.getText().length());
+        mAlertEditText.addTextChangedListener(mTextWatcher);
+        mAlertMessage = mAlertEditText.getText().toString();
     }
 
     private static final int PLUS_ONE_REQUEST_CODE = 0;
@@ -349,8 +346,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh the state of the +1 button each time the activity receives focus.
-        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
     }
 
     @Override
@@ -361,9 +356,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-        if (!mAppRunningFlag) {
+        if (mAlertService != null && !mAlertService.isBoundService()) {
             createToastShort(getString(R.string.toast_instruction)).show();
-//        mbtnStart.setAnimation(mAnimationBlink);
             mbtnStart.startAnimation(mAnimationBlink);
         }
     }
@@ -382,12 +376,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         actionItem = menu.add(Menu.NONE, MENU_SHARE_ID, MENU_SHARE_ID, this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(android.R.drawable.ic_menu_share);
-
-//        //  ★歩数履歴
-//        actionItem = menu.add(Menu.NONE,MENU_HISTORY_ID,MENU_HISTORY_ID,this.getString(R.string.menu_title_history));
-//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-//        actionItem.setIcon(android.R.drawable.ic_menu_recent_history);
-
         return true;
     }
 
@@ -442,11 +430,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
+    private boolean btnIsStarted = false;
+
     public void setStartButtonFunction(View v) {
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
 
-        if (mAppRunningFlag) {
+        if (btnIsStarted) {
             FlurryAgent.logEvent("Service Stop!!");
             // サービス停止
             killAlertService();
@@ -480,31 +470,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             FlurryAgent.logEvent("Service Start!!");
             // サービスを開始
-            Intent intent = new Intent(MainActivity.this, AlertService.class);
-            startService(intent);
-//            IntentFilter filter = new IntentFilter(AlertService.ACTION);
-//            filter.addAction(MainActivity.CLICK_NOTIFICATION);
-//            filter.addAction(MainActivity.DELETE_NOTIFICATION);
-//            registerReceiver(mAlertReceiver, filter);
-
+            bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
             mStepCount = 0;
             changeViewState(true, ((ActionButton) v));
         }
-    }
-
-    public void setStepCountListInLayout(View layout) {
-//        ListView listView = (ListView)layout.findViewById(R.id.livStepCountHistory);
+        btnIsStarted = !btnIsStarted;
     }
 
     public void setSeekBarInLayout(View layout) {
         SeekBar seekBar = (SeekBar) layout.findViewById(R.id.skbSensitivity);
-        seekBar.setProgress(sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
+        seekBar.setProgress(mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         // ツマミをドラッグしたときに呼ばれる
                         FlurryAgent.logEvent("Setting seekbar");
-                        sAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
+                        mAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
+                        if (mAlertService != null && mAlertService.isBoundService()) {
+                            mAlertService.setAlertStartAngle(mAlertStartAngle);
+                        }
                     }
 
                     public void onStartTrackingTouch(SeekBar seekBar) {
@@ -523,11 +507,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final RadioButton radioButtonCenter = (RadioButton) layout.findViewById(R.id.radiobutton_center);
         final RadioButton radioButtonBottom = (RadioButton) layout.findViewById(R.id.radiobutton_bottom);
         Switch swh = (Switch) layout.findViewById(R.id.swhToastOnOff);
-        swh.setChecked(mToastOn);
+        swh.setChecked(mIsToastOn);
         swh.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        mToastOn = isChecked;
+                        mIsToastOn = isChecked;
+                        if (mAlertService != null && mAlertService.isBoundService()) {
+                            mAlertService.setIsToastOn(mIsToastOn);
+                        }
                         radioButtonBottom.setEnabled(isChecked);
                         radioButtonTop.setEnabled(isChecked);
                         radioButtonCenter.setEnabled(isChecked);
@@ -535,11 +522,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
         swh = (Switch) layout.findViewById(R.id.swhVibrationOnOff);
-        swh.setChecked(mVibrationOn);
+        swh.setChecked(mIsVibrationOn);
         swh.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        mVibrationOn = isChecked;
+                        mIsVibrationOn = isChecked;
+                        if (mAlertService != null && mAlertService.isBoundService()) {
+                            mAlertService.setIsVibrationOn(mIsVibrationOn);
+                        }
                     }
                 }
         );
@@ -552,7 +542,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
         );
-        swh.setEnabled(!mAppRunningFlag);
+
+        if (mAlertService != null) {
+            swh.setEnabled(!mAlertService.isBoundService());
+        } else {
+            swh.setEnabled(true);
+        }
     }
 
     public void setRadioGroupInLayout(View layout) {
@@ -581,10 +576,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         break;
                     case R.id.radiobutton_center:
                         mToastPosition = Gravity.CENTER;
+                        if (mAlertService != null) {
+                            mAlertService.setToastPosition(Gravity.CENTER);
+                        }
                         break;
                     case R.id.radiobutton_bottom:
                         mToastPosition = Gravity.BOTTOM;
                         break;
+                }
+                if (mAlertService != null && mAlertService.isBoundService()) {
+                    mAlertService.setToastPosition(mToastPosition);
                 }
             }
         });
@@ -592,52 +593,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void setToggleButtonInLayout(View layout) {
         ToggleButton tgbPedometer = (ToggleButton) layout.findViewById(R.id.tgbPedometer);
-        tgbPedometer.setChecked(shouldShowPedometer());
+        tgbPedometer.setChecked(mShouldShowPedometer);
         tgbPedometer.setOnCheckedChangeListener(
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        setShouldShowPedometer(isChecked);
+                        mShouldShowPedometer = isChecked;
                         if (isChecked) {
-                            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+                            (findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
                         } else {
-                            ((TextView) findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+                            (findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
                         }
                     }
                 }
         );
     }
 
-    public void setUrlLinkToReview() {
-        SpannableString content = new SpannableString(getString(R.string.review_url_title));
-        content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
-        TextView tv = (TextView) findViewById(R.id.home);
-        tv.setText(content);
-        tv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url), getApplicationContext().getPackageName()));
-                Intent i = new Intent(Intent.ACTION_VIEW, uri);
-                try {
-                    startActivity(i);
-                } catch (ActivityNotFoundException activityNotFound) {
-                    // to handle play store not installed scenario
-                    Intent intent = new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
-                    startActivity(intent);
-                }
-            }
-        });
-    }
+//    public void setUrlLinkToReview() {
+//        SpannableString content = new SpannableString(getString(R.string.review_url_title));
+//        content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
+//        TextView tv = (TextView) findViewById(R.id.home);
+//        tv.setText(content);
+//        tv.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url), getApplicationContext().getPackageName()));
+//                Intent i = new Intent(Intent.ACTION_VIEW, uri);
+//                try {
+//                    startActivity(i);
+//                } catch (ActivityNotFoundException activityNotFound) {
+//                    // to handle play store not installed scenario
+//                    Intent intent = new Intent(Intent.ACTION_VIEW,
+//                            Uri.parse("https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
+//                    startActivity(intent);
+//                }
+//            }
+//        });
+//    }
 
     // イベントリスナーの登録を解除
     @Override
     protected void onPause() {
         super.onPause();
-        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "message", mToastOn);
-        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", mVibrationOn);
+        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "message", mIsToastOn);
+        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", mIsVibrationOn);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "passcode", mPasscodeOn);
-        SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", sAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
-        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", shouldShowPedometer());
+        SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
+        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
     }
 
@@ -651,11 +652,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onDestroy() {
         super.onDestroy();
         Growthbeat.getInstance().stop();
+        if (mAlertService != null) {
+            mAlertService.setTxtStepCount(null);
+        }
     }
 
+    /**
+     * bindServiceでは bind と startを兼ねているが、
+     * 止める時は unbind と stop両方やらないとちゃんと止まらない
+     * →こうするとRebindしてonServiceConnectedが呼ばれる
+     */
     public void killAlertService() {
-//        unregisterReceiver(mAlertReceiver); // 登録解除
-        stopService(new Intent(MainActivity.this, AlertService.class));
+        unbindService(mConnection);
+        stopService(mAlertServiceIntent);
     }
 
     @Override
@@ -675,17 +684,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             button.setImageResource(R.drawable.ic_done_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
-            mAppRunningFlag = true;
             ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
-            ((TextView) findViewById(R.id.txtWatching)).setVisibility(View.VISIBLE);
-            ((TextView) findViewById(R.id.txtWatching)).startAnimation(mAnimationBlink);
+            (findViewById(R.id.txtWatching)).setVisibility(View.VISIBLE);
+            (findViewById(R.id.txtWatching)).startAnimation(mAnimationBlink);
         } else {
             button.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorPrimary));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-            ((TextView) findViewById(R.id.txtWatching)).setVisibility(View.GONE);
-            mAppRunningFlag = false;
-            setShouldShowAlert(false);
+            (findViewById(R.id.txtWatching)).setVisibility(View.GONE);
+//            setShouldShowAlert(false);
         }
     }
 
@@ -780,6 +787,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         task.execute(tweetString);
     }
 
+    // TODO : ToastUtilを利用しよう
     private Toast createToastShort(String text) {
         Toast toast = new Toast(this);
         TextView tv = new TextView(this);
@@ -800,55 +808,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void displayInterstitial() {
         if (mInterstitialAd.isLoaded()) {
             mInterstitialAd.show();
-        }
-    }
-
-    public static boolean shouldShowAlert() {
-        return sShouldShowAlert;
-    }
-
-    public static void setShouldShowAlert(boolean sShouldShowAlert) {
-        MainActivity.sShouldShowAlert = sShouldShowAlert;
-    }
-
-    public static boolean shouldShowPedometer() {
-        return sShouldShowPedometer;
-    }
-
-    public static void setShouldShowPedometer(boolean sShouldShowPedometer) {
-        MainActivity.sShouldShowPedometer = sShouldShowPedometer;
-    }
-
-    @Override
-    public void OnReceivedClick() {
-        createToastShort("click").show();
-    }
-
-    @Override
-    public void OnReceivedDelete() {
-        createToastShort("delete").show();
-    }
-
-    @Override
-    public void OnReceivedStep(boolean isStepCounter, int stepCount) {
-        if (isStepCounter) {
-            if (shouldShowPedometer()) {
-                mStepCount = stepCount;
-                ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mStepCount)
-                        + getString(R.string.home_step_count_dimension));
-            }
-        } else {
-            // 歩きスマホの注意
-            if (!shouldShowAlert() && mToastOn) {
-                String alertMessage = ((EditText) findViewById(R.id.txtAlertMessage)).getText().toString();
-                createToastShort(alertMessage).show();
-                setShouldShowAlert(true);
-            }
-
-            if (mVibrationOn) {
-                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                vibrator.vibrate(300);
-            }
         }
     }
 }

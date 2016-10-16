@@ -4,15 +4,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import static apps.junkuvo.alertapptowalksafely.MainActivity.CLICK_NOTIFICATION;
-import static apps.junkuvo.alertapptowalksafely.MainActivity.DELETE_NOTIFICATION;
-
 public class AlertReceiver extends BroadcastReceiver {
     private static final String TAG = AlertReceiver.class.getSimpleName();
     private final AlertReceiver self = this;
+    public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
+    public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
 
     private int mStepCount = 0;
-    private static ReceiveEventListener receiveEventListener;
+    static private ReceiveEventListener receiveEventListener;
 
     @Override
     public void onReceive(Context context, Intent intent) {
