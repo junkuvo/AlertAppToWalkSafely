@@ -165,7 +165,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
             mApiClient.disconnect();
         }
-        Toast.makeText(getApplicationContext(), "destroy", Toast.LENGTH_LONG).show();
         ((AlertApplication) getApplication()).setIsRunningService(false);
     }
 
@@ -176,18 +175,15 @@ public class AlertService extends IntentService implements SensorEventListener, 
     // BindしたServiceをActivityに返す
     @Override
     public IBinder onBind(Intent intent) {
-        Toast.makeText(getApplicationContext(), "bind", Toast.LENGTH_LONG).show();
         return mAlertServiceBinder;
     }
 
     @Override
     public void onRebind(Intent intent) {
-        Toast.makeText(getApplicationContext(), "rebind", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Toast.makeText(getApplicationContext(), "unbind", Toast.LENGTH_LONG).show();
         return true; // 再度クライアントから接続された際に onRebind を呼び出させる場合は true を返す
     }
 
