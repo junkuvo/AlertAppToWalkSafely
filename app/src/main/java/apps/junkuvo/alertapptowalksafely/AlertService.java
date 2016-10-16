@@ -286,8 +286,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
         // 歩数計の値を取得
         if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
         } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-            // 歩行センサがある場合
             mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
+            // 歩行センサがある場合
             if (shouldShowPedometer()) {
                 Intent intent = new Intent(ACTION);
                 intent.putExtra("isStepCounter", true);
@@ -311,7 +311,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
 
     private int mStepCountBefore = 0;
     private int mStepCountAfter = 0;
-    private int mStepCountCurrent = 0;
+    // onSensorChanged の TYPE_STEP_DETECT が最初に1回よばれるのでその分-1
+    private int mStepCountCurrent = -1;
 
     // 歩数の変化を計算して、変化があれば歩行中と判定
     private boolean isWalking() {
@@ -406,10 +407,9 @@ public class AlertService extends IntentService implements SensorEventListener, 
     @Override
     public void OnReceivedStep(boolean isStepCounter, int stepCount) {
         if (isStepCounter) {
-            mStepCountCurrent = stepCount;
+            mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
             if (shouldShowPedometer()) {
-                // TODO : ServiceからUIいじりたい
-                if(mTxtStepCount != null) {
+                if (mTxtStepCount != null) {
                     mTxtStepCount.setText(String.valueOf(mStepCountCurrent) + getString(R.string.home_step_count_dimension));
                 }
             }

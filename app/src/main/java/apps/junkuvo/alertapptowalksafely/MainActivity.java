@@ -139,8 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mAlertService.setAlertMessage(mAlertMessage);
             mAlertService.setIsBoundService(true);
             mAlertService.setTxtStepCount((TextView) findViewById(R.id.txtStepCount));
-            ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent())
-                    + getString(R.string.home_step_count_dimension));
+            ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -356,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-        if (mAlertService != null && !mAlertService.isBoundService()) {
+        if ((mAlertService != null && !mAlertService.isBoundService()) || mAlertService == null) {
             createToastShort(getString(R.string.toast_instruction)).show();
             mbtnStart.startAnimation(mAnimationBlink);
         }
@@ -438,6 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (btnIsStarted) {
             FlurryAgent.logEvent("Service Stop!!");
+            mStepCount = mAlertService.getStepCountCurrent();
             // サービス停止
             killAlertService();
             changeViewState(false, ((ActionButton) v));
@@ -684,7 +684,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             button.setImageResource(R.drawable.ic_done_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
-            ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
             (findViewById(R.id.txtWatching)).setVisibility(View.VISIBLE);
             (findViewById(R.id.txtWatching)).startAnimation(mAnimationBlink);
         } else {
@@ -751,10 +750,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(AccessToken accessToken) {
                 if (accessToken != null) {
-                    createToastShort(getApplicationContext().getString(R.string.twitter_auth_succeed)).show();
+                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.twitter_auth_succeed), Toast.LENGTH_LONG).show();
                     TwitterUtility.storeAccessToken(getApplicationContext(), accessToken);
                 } else {
-                    createToastShort(getApplicationContext().getString(R.string.twitter_auth_fail)).show();
+                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.twitter_auth_fail), Toast.LENGTH_LONG).show();
                 }
             }
         };
@@ -778,9 +777,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected void onPostExecute(Boolean result) {
                 if (result) {
                     FlurryAgent.logEvent(getApplicationContext().getString(R.string.twitter_tweet_succeed));
-                    createToastShort(getApplicationContext().getString(R.string.twitter_tweet_succeed)).show();
+                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.twitter_tweet_succeed), Toast.LENGTH_LONG).show();
                 } else {
-                    createToastShort(getApplicationContext().getString(R.string.twitter_tweet_fail)).show();
+                    Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.twitter_tweet_fail), Toast.LENGTH_LONG).show();
                 }
             }
         };
