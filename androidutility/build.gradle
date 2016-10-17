@@ -21,6 +21,23 @@ android {
     }
 }
 
+// プロジェクトルート配下のrepositoryディレクトリにデプロイする
+def deployTo = new File(rootDir, "utils")
+
+// Mavenプラグインの利用を宣言
+apply plugin: 'maven'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository url: "file:///Users/okubojunji" // デプロイ先
+            pom.version = '0.0.1' // ライブラリバージョン
+            pom.groupId = 'utils.com.junkuvo' // グループ名
+            pom.artifactId = 'androidutils' // アーティファクト名
+        }
+    }
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
