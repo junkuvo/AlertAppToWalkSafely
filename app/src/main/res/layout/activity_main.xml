@@ -31,6 +31,12 @@
         android:layout_above="@+id/fabStart"
         android:layout_centerHorizontal="true"/>
 
+    <com.software.shell.fab.ActionButton
+        android:id="@+id/fabStart"
+        style="@style/fab_action_button_style"
+        fab:type="BIG"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -42,13 +48,6 @@
         android:layout_marginTop="10dp"
         android:layout_centerHorizontal="true"
         android:textSize="40sp" />
-
-    <com.software.shell.fab.ActionButton
-        android:id="@+id/fabStart"
-        style="@style/fab_action_button_style"
-        fab:type="BIG"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" />
 
     <com.google.android.gms.plus.PlusOneButton
         xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
@@ -78,5 +77,14 @@
         app:prompt_view_thanks_display_time_ms="2000"
         app:prompt_view_button_corner_radius="5dp"
         />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ボタンを押すと歩きスマホ検知を開始します！"
+        android:id="@+id/txtExplanation"
+        android:textSize="16sp"
+        android:layout_above="@+id/txtStepCount"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

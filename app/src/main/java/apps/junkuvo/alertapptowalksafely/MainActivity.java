@@ -226,74 +226,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .show();
 
 
-        mbtnStart.setOnClickListener(new View.OnClickListener() {
-            public void onClick(final View v) {
-                if (mPasscodeOn) {
-                    LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
-                    final View layout = inflater.inflate(R.layout.passcode, (ViewGroup) findViewById(R.id.layout_root_passcode));
-                    final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog(MainActivity.this)
-                            .setTitle(getString(R.string.dialog_passcode_title))
-                            .setDescription(getString(R.string.dialog_passcode_description))
-                            .setIcon(R.drawable.ic_lock_blue_grey_100_48dp)
-                            .setCustomView(layout).show();
-
-                    final PasscodeView passcodeView = (PasscodeView) layout.findViewById(R.id.passcode);
-                    final PasscodeView passcodeViewConfirm = (PasscodeView) layout.findViewById(R.id.passcodeConfirm);
-                    final TextView txtPasscodeConfirm = (TextView) layout.findViewById(R.id.txtPasscodeConfirm);
-                    txtPasscodeConfirm.setText(getString(R.string.dialog_passcode_confirm));
-                    ((TextView) layout.findViewById(R.id.txtPasscode)).setText(getString(R.string.dialog_passcode_passcode));
-                    passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
-                        @Override
-                        public void onPasscodeEntered(String passcode) {
-                            if (mAlertService != null && mAlertService.isBoundService()) {
-                                if (passcode.equals(mPasscodeConfirm)) {
-                                    FlurryAgent.logEvent("Passcode Unlocked");
-
-                                    setStartButtonFunction(v);
-                                    materialStyledDialog.dismiss();
-                                } else {
-                                    passcodeView.clearText();
-                                    passcodeView.requestFocus();
-                                }
-                            } else {
-                                passcodeViewConfirm.setVisibility(View.VISIBLE);
-                                txtPasscodeConfirm.setVisibility(View.VISIBLE);
-                                passcodeViewConfirm.requestFocus();
-                                mPasscode = passcode;
-                            }
-                        }
-                    });
-
-                    passcodeViewConfirm.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
-                        @Override
-                        public void onPasscodeEntered(String passcode) {
-                            mPasscodeConfirm = passcodeViewConfirm.getText().toString();
-                            if (mPasscode.equals(mPasscodeConfirm)) {
-                                FlurryAgent.logEvent("Passcode Lock");
-
-                                setStartButtonFunction(v);
-                                materialStyledDialog.dismiss();
-                            } else {
-                                passcodeView.clearText();
-                                passcodeViewConfirm.clearText();
-                                passcodeView.requestFocus();
-                                passcodeViewConfirm.setVisibility(View.GONE);
-                                txtPasscodeConfirm.setVisibility(View.GONE);
-                            }
-                        }
-                    });
-
-                } else {
-                    setStartButtonFunction(v);
-                }
-            }
-        });
+        mbtnStart.setOnClickListener(this);
 
         mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
 
         // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
         // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
-        if (!mUtility.isTabletNotPhone()) {
+        if (!mUtility.isTabletNotPhone(this)) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         mTwitter = TwitterUtility.getTwitterInstance(this);
@@ -349,15 +288,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        FlurryAgent.logEvent("onClick aside from Start button");
+        switch (v.getId()) {
+            case R.id.rtlMain:
+                FlurryAgent.logEvent("onClick aside from Start button");
 
-        // キーボードを隠す
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                // キーボードを隠す
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-        if ((mAlertService != null && !mAlertService.isBoundService()) || mAlertService == null) {
-            createToastShort(getString(R.string.toast_instruction)).show();
-            mbtnStart.startAnimation(mAnimationBlink);
+                if ((mAlertService != null && !mAlertService.isBoundService()) || mAlertService == null) {
+                    createToastShort(getString(R.string.toast_instruction)).show();
+                    mbtnStart.startAnimation(mAnimationBlink);
+                }
+                break;
+            case R.id.fabStart:
+                startBtnClick(v);
+                break;
+
         }
     }
 
@@ -807,6 +754,67 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void displayInterstitial() {
         if (mInterstitialAd.isLoaded()) {
             mInterstitialAd.show();
+        }
+    }
+
+    private void startBtnClick(final View v){
+        if (mPasscodeOn) {
+            LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+            final View layout = inflater.inflate(R.layout.passcode, (ViewGroup) findViewById(R.id.layout_root_passcode));
+            final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog(MainActivity.this)
+                    .setTitle(getString(R.string.dialog_passcode_title))
+                    .setDescription(getString(R.string.dialog_passcode_description))
+                    .setIcon(R.drawable.ic_lock_blue_grey_100_48dp)
+                    .setCustomView(layout).show();
+
+            final PasscodeView passcodeView = (PasscodeView) layout.findViewById(R.id.passcode);
+            final PasscodeView passcodeViewConfirm = (PasscodeView) layout.findViewById(R.id.passcodeConfirm);
+            final TextView txtPasscodeConfirm = (TextView) layout.findViewById(R.id.txtPasscodeConfirm);
+            txtPasscodeConfirm.setText(getString(R.string.dialog_passcode_confirm));
+            ((TextView) layout.findViewById(R.id.txtPasscode)).setText(getString(R.string.dialog_passcode_passcode));
+            passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
+                @Override
+                public void onPasscodeEntered(String passcode) {
+                    if (mAlertService != null && mAlertService.isBoundService()) {
+                        if (passcode.equals(mPasscodeConfirm)) {
+                            FlurryAgent.logEvent("Passcode Unlocked");
+
+                            setStartButtonFunction(v);
+                            materialStyledDialog.dismiss();
+                        } else {
+                            passcodeView.clearText();
+                            passcodeView.requestFocus();
+                        }
+                    } else {
+                        passcodeViewConfirm.setVisibility(View.VISIBLE);
+                        txtPasscodeConfirm.setVisibility(View.VISIBLE);
+                        passcodeViewConfirm.requestFocus();
+                        mPasscode = passcode;
+                    }
+                }
+            });
+
+            passcodeViewConfirm.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
+                @Override
+                public void onPasscodeEntered(String passcode) {
+                    mPasscodeConfirm = passcodeViewConfirm.getText().toString();
+                    if (mPasscode.equals(mPasscodeConfirm)) {
+                        FlurryAgent.logEvent("Passcode Lock");
+
+                        setStartButtonFunction(v);
+                        materialStyledDialog.dismiss();
+                    } else {
+                        passcodeView.clearText();
+                        passcodeViewConfirm.clearText();
+                        passcodeView.requestFocus();
+                        passcodeViewConfirm.setVisibility(View.GONE);
+                        txtPasscodeConfirm.setVisibility(View.GONE);
+                    }
+                }
+            });
+
+        } else {
+            setStartButtonFunction(v);
         }
     }
 }

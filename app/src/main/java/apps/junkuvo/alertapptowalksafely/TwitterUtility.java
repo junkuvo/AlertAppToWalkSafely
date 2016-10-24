@@ -26,8 +26,8 @@ public class TwitterUtility {
      * @return
      */
     public static Twitter getTwitterInstance(Context context) {
-        String consumerKey = TWITTER_CONSUMER_KEY;//context.getString(R.string.twitter_consumer_key);
-        String consumerSecret = TWITTER_CONSUMER_SECRET;//context.getString(R.string.twitter_consumer_secret);
+        String consumerKey = context.getString(R.string.twitter_consumer_key);
+        String consumerSecret = context.getString(R.string.twitter_consumer_secret);
 
         TwitterFactory factory = new TwitterFactory();
         Twitter twitter = factory.getInstance();
@@ -39,7 +39,7 @@ public class TwitterUtility {
         return twitter;
     }
 
-    private static SecretKeySpec sKey = new SecretKeySpec(TWITTER_ENCRYPT_KEY.getBytes(), "AES");// default : utf-8
+    private static SecretKeySpec sKey;// = new SecretKeySpec(TWITTER_ENCRYPT_KEY.getBytes(), "AES");// default : utf-8
 
     /**
      * アクセストークンをプリファレンスに保存します。
@@ -50,12 +50,12 @@ public class TwitterUtility {
     public static void storeAccessToken(Context context, AccessToken accessToken) {
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-
         String token;
         String tokenSecret;
+        SecretKeySpec key = new SecretKeySpec(context.getString(R.string.twitter_encrypt_key).getBytes(), "AES");
         try {
-            token = Utility.stringEncrypt(sKey, accessToken.getToken());
-            tokenSecret = Utility.stringEncrypt(sKey, accessToken.getTokenSecret());
+            token = Utility.stringEncrypt(key, accessToken.getToken());
+            tokenSecret = Utility.stringEncrypt(key, accessToken.getTokenSecret());
             editor.putString(TOKEN, token);
             editor.putString(TOKEN_SECRET, tokenSecret);
             editor.commit();
@@ -74,12 +74,13 @@ public class TwitterUtility {
         SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         String token = preferences.getString(TOKEN, null);
         String tokenSecret = preferences.getString(TOKEN_SECRET, null);
+        SecretKeySpec key = new SecretKeySpec(context.getString(R.string.twitter_encrypt_key).getBytes(), "AES");
         if (token != null && tokenSecret != null) {
             String tokenDecrypt;
             String tokenSecretDecrypt;
             try {
-                tokenDecrypt = Utility.stringDecrypt(sKey, Base64.decode(token, Base64.DEFAULT));
-                tokenSecretDecrypt = Utility.stringDecrypt(sKey, Base64.decode(tokenSecret, Base64.DEFAULT));
+                tokenDecrypt = Utility.stringDecrypt(key, Base64.decode(token, Base64.DEFAULT));
+                tokenSecretDecrypt = Utility.stringDecrypt(key, Base64.decode(tokenSecret, Base64.DEFAULT));
             }catch (Exception ex){
                 ex.printStackTrace();
                 return null;

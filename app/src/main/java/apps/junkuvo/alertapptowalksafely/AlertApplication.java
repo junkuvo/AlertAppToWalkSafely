@@ -18,8 +18,6 @@ import com.growthpush.model.Environment;
 
 
 public class AlertApplication extends MultiDexApplication {
-    private static final String TAG = AlertApplication.class.getSimpleName();
-    private final AlertApplication self = this;
 
     // サービスが動いているかどうかのフラグ
     private boolean sIsRunningService = false;
@@ -30,10 +28,10 @@ public class AlertApplication extends MultiDexApplication {
 
         new FlurryAgent.Builder()
                 .withLogEnabled(false)
-                .build(this, "FNY7NQCRJW697JJQH353");
+                .build(this, getString(R.string.flurry_key));
 
-        Growthbeat.getInstance().initialize(this, "Pkjf4L4sbDeKDs6I", "zYdJEQjTt5xnP78iQXUSO4zjs7eTX8CN");
-        GrowthPush.getInstance().requestRegistrationId("1047305644128", BuildConfig.DEBUG ? Environment.development : Environment.production);
+        Growthbeat.getInstance().initialize(this, getString(R.string.growthpush_application_id), getString(R.string.growthpush_credential_id));
+        GrowthPush.getInstance().requestRegistrationId(getString(R.string.gcm_sender_id), BuildConfig.DEBUG ? Environment.development : Environment.production);
         Growthbeat.getInstance().start();
         // Launchイベントの取得
         GrowthPush.getInstance().trackEvent("Launch");

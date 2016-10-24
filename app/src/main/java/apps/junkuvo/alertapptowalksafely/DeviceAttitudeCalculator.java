@@ -1,6 +1,5 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -16,10 +15,12 @@ public class DeviceAttitudeCalculator {
 //    float[] rotationMatrixOut = new float[9];
 //    float[] attitude = new float[3];
 
-    private Utility mUtility;
+    private boolean isTabletNotPhone;
+    private int orientation;
 
-    DeviceAttitudeCalculator(Context context){
-        mUtility = new Utility(context);
+    DeviceAttitudeCalculator(boolean isTabletNotPhone ,int orientation){
+        this.isTabletNotPhone = isTabletNotPhone;
+        this.orientation = orientation;
     }
 
     public int calculateDeviceAttitude(SensorEvent event){
@@ -33,7 +34,7 @@ public class DeviceAttitudeCalculator {
         }
 
         if (gravity != null){
-            return calculateDeviceTendency(gravity);
+            return calculateDeviceTendency(gravity, isTabletNotPhone, orientation);
         }
 
         /////  今回のアプリではワールド座標系等を考慮しない
@@ -57,13 +58,10 @@ public class DeviceAttitudeCalculator {
     // ★端末によって軸の向きが異なるようなので、対応が必要
     // 前提１：端末の前後方向はgravity[2]である
     // 前提２：タブレット横方向の軸　＝　スマホ縦方向の軸
-    private int calculateDeviceTendency(float[] gravity){
+    private int calculateDeviceTendency(float[] gravity, boolean isTabletNotPhone, int orientation){
         double tendencyDegree;
         double x;// 上下として定義（軸は向きによってx or z）
         double y;// 前後方向
-
-        boolean isTabletNotPhone = mUtility.isTabletNotPhone();
-        int orientation = mUtility.getOrientation();
 
         // 端末の縦・横で場合分け
         if((isTabletNotPhone && orientation == Configuration.ORIENTATION_PORTRAIT)

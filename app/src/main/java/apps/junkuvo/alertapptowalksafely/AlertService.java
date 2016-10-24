@@ -24,7 +24,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,7 +39,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION = "AlertService";
-    private static final float TOAST_TEXT_SIZE = 32; // sp
+    private static final float TOAST_TEXT_SIZE = 24; // sp
 
     private SensorManager mSensorManager;
     private AlertReceiver mAlertReceiver = new AlertReceiver();
@@ -123,7 +122,10 @@ public class AlertService extends IntentService implements SensorEventListener, 
     @Override
     public void onCreate() {
         super.onCreate();
-        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(getApplicationContext());
+        mContext = getApplicationContext();
+        boolean isTablet = Utility.isTabletNotPhone(mContext);
+        int orientation = Utility.getOrientation(mContext);
+        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, orientation);
         mWalkCountCalculator = new WalkCountCalculator();
 
         IntentFilter filter = new IntentFilter();
@@ -138,7 +140,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 .build();
         mApiClient.connect();
 
-        mContext = getApplicationContext();
         mAlertReceiver.setOnReceiveEventListener(this);
         mHasStepFeature = isHasStepFeature();
     }
@@ -258,8 +259,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
                     // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
                     if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 3) {
                         mTendencyOutCount++;
-                        //  下向きと判定されるのが連続5回の場合、Alertを表示させる
-                        if (mTendencyOutCount == 5) {
+                        //  下向きと判定されるのが連続 n 回の場合、Alertを表示させる
+                        if (mTendencyOutCount == 10) {
                             // 歩数計センサの利用：
                             Intent intent = new Intent(ACTION);
                             intent.putExtra("isStepCounter", false);
@@ -417,14 +418,15 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtil.showCustomToast(getApplicationContext(), mAlertMessage, R.color.colorAccent, TOAST_TEXT_SIZE, mToastPosition);
+                        ToastUtil.showCustomToast(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
                     }
                 });
             }
 
             if (IsVibrationOn()) {
                 Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                vibrator.vibrate(300);
+                long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+                vibrator.vibrate(pattern, -1);
             }
         }
     }

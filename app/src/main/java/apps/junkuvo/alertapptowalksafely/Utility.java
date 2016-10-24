@@ -19,8 +19,8 @@ public class Utility {
         mContext = context;
     }
 
-    public int getOrientation() {
-        Resources resources = mContext.getResources();
+    public static int getOrientation(Context context) {
+        Resources resources = context.getResources();
         Configuration config = resources.getConfiguration();
 //        String str;
 //        switch (config.orientation) {
@@ -36,8 +36,8 @@ public class Utility {
         return config.orientation;
     }
 
-    public boolean isTabletNotPhone() {
-        Resources r = mContext.getResources();
+    public static boolean isTabletNotPhone(Context context) {
+        Resources r = context.getResources();
         Configuration configuration = r.getConfiguration();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR2) {
             return (configuration.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
