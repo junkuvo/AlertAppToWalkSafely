@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private String mPasscode;
     private String mPasscodeConfirm;
+    private boolean btnIsStarted = false;
 
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private PlusOneButton mPlusOneButton;
 
     private InterstitialAd mInterstitialAd;
-    private static final String MY_AD_UNIT_ID = "ca-app-pub-1630604043812019/7857872217";
 
     private boolean mShouldShowAlert = false;
     private boolean mShouldShowPedometer = true;
@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
+            // TODO : ここ別スレッドにしたい
             mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
@@ -168,12 +169,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Create the interstitial.
         mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(MY_AD_UNIT_ID);
+        mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
 
         // Create ad request.
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
-                .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID
+                .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
                 .build();
 
         // Begin loading your interstitial.
@@ -237,15 +238,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         mTwitter = TwitterUtility.getTwitterInstance(this);
         mCallbackURL = getString(R.string.twitter_callback_url);
-//        //　レビューサイトへのリンク
-//        setUrlLinkToReview();
-
 
         mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
         // Refresh the state of the +1 button each time the activity receives focus.
         mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
-        FlurryAgent.onStartSession(this, "VM7H7GMWZCFC496H4463");
+        FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
         relativeLayout.setOnClickListener(this);
@@ -376,13 +374,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
-    private boolean btnIsStarted = false;
-
-    public void setStartButtonFunction(View v) {
+    public void setStartButtonFunction(final View v) {
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
 
         if (btnIsStarted) {
+            btnIsStarted = !btnIsStarted;
             FlurryAgent.logEvent("Service Stop!!");
             mStepCount = mAlertService.getStepCountCurrent();
             // サービス停止
@@ -410,18 +407,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 mAlertDialog.setCancelable(false);
                 mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
-                mAlertDialog.create().show();
+                mAlertDialog.show();
             }
 
             displayInterstitial();
         } else {
-            FlurryAgent.logEvent("Service Start!!");
-            // サービスを開始
-            bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-            mStepCount = 0;
-            changeViewState(true, ((ActionButton) v));
+            if (mStepCount != 0) {
+                mAlertDialog = new AlertDialog.Builder(MainActivity.this);
+                mAlertDialog.setIcon(R.drawable.ic_stat_small);
+                mAlertDialog.setMessage("歩数を0に戻してよろしいですか？");
+                mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        btnIsStarted = !btnIsStarted;
+                        FlurryAgent.logEvent("Service Start!!");
+                        // サービスを開始
+                        bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+                        mStepCount = 0;
+                        changeViewState(true, ((ActionButton) v));
+                    }
+                });
+                mAlertDialog.setNegativeButton("いいえ", null);
+                mAlertDialog.show();
+            }else{
+                btnIsStarted = !btnIsStarted;
+                FlurryAgent.logEvent("Service Start!!");
+                // サービスを開始
+                bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+                mStepCount = 0;
+                changeViewState(true, ((ActionButton) v));
+            }
         }
-        btnIsStarted = !btnIsStarted;
     }
 
     public void setSeekBarInLayout(View layout) {
@@ -554,28 +570,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
     }
-
-//    public void setUrlLinkToReview() {
-//        SpannableString content = new SpannableString(getString(R.string.review_url_title));
-//        content.setSpan(new UnderlineSpan(), 0, getString(R.string.review_url_title).length(), 0);
-//        TextView tv = (TextView) findViewById(R.id.home);
-//        tv.setText(content);
-//        tv.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Uri uri = Uri.parse(String.format(getApplicationContext().getString(R.string.review_url), getApplicationContext().getPackageName()));
-//                Intent i = new Intent(Intent.ACTION_VIEW, uri);
-//                try {
-//                    startActivity(i);
-//                } catch (ActivityNotFoundException activityNotFound) {
-//                    // to handle play store not installed scenario
-//                    Intent intent = new Intent(Intent.ACTION_VIEW,
-//                            Uri.parse("https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
-//                    startActivity(intent);
-//                }
-//            }
-//        });
-//    }
 
     // イベントリスナーの登録を解除
     @Override
@@ -757,7 +751,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void startBtnClick(final View v){
+    private void startBtnClick(final View v) {
         if (mPasscodeOn) {
             LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
             final View layout = inflater.inflate(R.layout.passcode, (ViewGroup) findViewById(R.id.layout_root_passcode));

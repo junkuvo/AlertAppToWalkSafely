@@ -81,7 +81,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ボタンを押すと歩きスマホ検知を開始します！"
+        android:text="ボタンをタップで歩きスマホ検知開始！"
         android:id="@+id/txtExplanation"
         android:textSize="16sp"
         android:layout_above="@+id/txtStepCount"

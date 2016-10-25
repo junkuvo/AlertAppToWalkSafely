@@ -52,8 +52,7 @@ public class AlertApplication extends MultiDexApplication {
                     context.startActivity(i);
                 } catch (ActivityNotFoundException activityNotFound) {
                     // to handle play store not installed scenario
-                    Intent i2 = new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/apps/details?id=" + getApplicationContext().getPackageName()));
+                    Intent i2 = new Intent(Intent.ACTION_VIEW, Uri.parse(String.format(getString(R.string.app_googlePlay_url), getPackageName())));
                     context.startActivity(i2);
                 }
 
