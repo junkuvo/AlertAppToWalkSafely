@@ -14,7 +14,7 @@ public class TwitterUtility {
     private static final String TOKEN = "token";
     private static final String TOKEN_SECRET = "token_secret";
     private static final String PREF_NAME = "twitter_access_token";
-    
+
     /**
      * Twitterインスタンスを取得します。アクセストークンが保存されていれば自動的にセットします。
      *
@@ -34,8 +34,6 @@ public class TwitterUtility {
         }
         return twitter;
     }
-
-    private static SecretKeySpec sKey;// = new SecretKeySpec(TWITTER_ENCRYPT_KEY.getBytes(), "AES");// default : utf-8
 
     /**
      * アクセストークンをプリファレンスに保存します。
