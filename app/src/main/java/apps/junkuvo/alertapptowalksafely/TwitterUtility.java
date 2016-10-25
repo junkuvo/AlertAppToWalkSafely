@@ -14,11 +14,7 @@ public class TwitterUtility {
     private static final String TOKEN = "token";
     private static final String TOKEN_SECRET = "token_secret";
     private static final String PREF_NAME = "twitter_access_token";
-
-    private static final String TWITTER_CONSUMER_KEY = "4JPOwJiuv5jokHILCET44I8ah";
-    private static final String TWITTER_CONSUMER_SECRET = "RxpuDYygVKFx5hkdXQiR3FEXxAnTqYxw1VR9dhcFQoOxU3w7uD";
-    private static final String TWITTER_ENCRYPT_KEY = "4JPOwJiuv5jokKEY";// 16byte
-
+    
     /**
      * Twitterインスタンスを取得します。アクセストークンが保存されていれば自動的にセットします。
      *
