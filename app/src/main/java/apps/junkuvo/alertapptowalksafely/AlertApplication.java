@@ -19,9 +19,6 @@ import com.growthpush.model.Environment;
 
 public class AlertApplication extends MultiDexApplication {
 
-    // サービスが動いているかどうかのフラグ
-    private boolean sIsRunningService = false;
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -79,13 +76,5 @@ public class AlertApplication extends MultiDexApplication {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         MultiDex.install(this);
-    }
-
-    public boolean IsRunningService() {
-        return sIsRunningService;
-    }
-
-    public void setIsRunningService(boolean sIsRunningService) {
-        this.sIsRunningService = sIsRunningService;
     }
 }

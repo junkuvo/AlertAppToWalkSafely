@@ -35,6 +35,8 @@ import java.util.List;
 
 import junkuvo.apps.androidutility.ToastUtil;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 public class AlertService extends IntentService implements SensorEventListener, AlertReceiver.ReceiveEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -71,6 +73,9 @@ public class AlertService extends IntentService implements SensorEventListener, 
 
     // サービスがバインドされているかどうかのフラグ
     private boolean mIsBoundService = false;
+
+    // 歩きスマホ検知を開始しているかどうかのフラグ
+    private boolean mIsRunningAlertService = false;
 
     // 歩数計
     private Sensor mStepDetectorSensor;
@@ -148,7 +153,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public int onStartCommand(Intent intent, int flags, int startId) {
 //        super.onStart(intent, startId);
         handleOnStart(intent, startId);
-        ((AlertApplication) getApplication()).setIsRunningService(true);
         return START_STICKY;
     }
 
@@ -166,7 +170,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
             mApiClient.disconnect();
         }
-        ((AlertApplication) getApplication()).setIsRunningService(false);
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
@@ -243,65 +246,67 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void onSensorChanged(SensorEvent event) {
         // 画面がONの場合、歩きスマホを検知する
         Sensor sensor = event.sensor;
-        if (mIsScreenOn) {
-            if (mStepCountBefore == 0) {
-                mStepCountBefore = mStepCountCurrent;
-            }
-            // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-            // 5回カウントして1秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
-            if (mTendencyCheckCount == 5) {
-                // 歩行中であることを判定
-                if (isWalking() || isWalkingStatus) {
-                    // 歩いている状態で下記にてデバイス角度計算
-                    int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
-                    // 下向きかどうかの判定
-                    // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
-                    // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
-                    if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 3) {
-                        mTendencyOutCount++;
-                        //  下向きと判定されるのが連続 n 回の場合、Alertを表示させる
-                        if (mTendencyOutCount == 10) {
-                            // 歩数計センサの利用：
-                            Intent intent = new Intent(ACTION);
-                            intent.putExtra("isStepCounter", false);
-                            sendBroadcast(intent);
-                            mTendencyOutCount = 0;
+        if(mIsRunningAlertService) {
+            if (mIsScreenOn) {
+                if (mStepCountBefore == 0) {
+                    mStepCountBefore = mStepCountCurrent;
+                }
+                // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
+                // 5回カウントして1秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
+                if (mTendencyCheckCount == 5) {
+                    // 歩行中であることを判定
+                    if (isWalking() || isWalkingStatus) {
+                        // 歩いている状態で下記にてデバイス角度計算
+                        int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
+                        // 下向きかどうかの判定
+                        // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
+                        // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
+                        if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 3) {
+                            mTendencyOutCount++;
+                            //  下向きと判定されるのが連続 n 回の場合、Alertを表示させる
+                            if (mTendencyOutCount == 10) {
+                                // 歩数計センサの利用：
+                                Intent intent = new Intent(ACTION);
+                                intent.putExtra("isStepCounter", false);
+                                sendBroadcast(intent);
+                                mTendencyOutCount = 0;
 
-                            isWalkingStatus = false;
-                        }
-                    } else {
-                        if (mTendencyOutCount > 0) {
-                            mTendencyOutCount--;
+                                isWalkingStatus = false;
+                            }
+                        } else {
+                            if (mTendencyOutCount > 0) {
+                                mTendencyOutCount--;
 //                            setShouldShowAlert(false);
+                            }
                         }
                     }
+                    mTendencyCheckCount = 0;
                 }
-                mTendencyCheckCount = 0;
             }
-        }
 
-        // 歩数計の値を取得
-        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-        } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-            mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
-            // 歩行センサがある場合
-            if (shouldShowPedometer()) {
-                Intent intent = new Intent(ACTION);
-                intent.putExtra("isStepCounter", true);
-                intent.putExtra("stepCount", mStepCountCurrent);
-                sendBroadcast(intent);
-            }
-        } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            if (mIsScreenOn) {
-                mTendencyCheckCount++;
-            }
-            // 歩行センサがない場合 3軸加速度から計算
-            if (!mHasStepFeature) {
-                mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
-                Intent intent = new Intent(ACTION);
-                intent.putExtra("isStepCounter", true);
-                intent.putExtra("stepCount", mStepCountCurrent);
-                sendBroadcast(intent);
+            // 歩数計の値を取得
+            if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            } else if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+                mStepCountCurrent++;//Integer.valueOf(String.valueOf(values[0]));
+                // 歩行センサがある場合
+                if (shouldShowPedometer()) {
+                    Intent intent = new Intent(ACTION);
+                    intent.putExtra("isStepCounter", true);
+                    intent.putExtra("stepCount", mStepCountCurrent);
+                    sendBroadcast(intent);
+                }
+            } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                if (mIsScreenOn) {
+                    mTendencyCheckCount++;
+                }
+                // 歩行センサがない場合 3軸加速度から計算
+                if (!mHasStepFeature) {
+                    mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
+                    Intent intent = new Intent(ACTION);
+                    intent.putExtra("isStepCounter", true);
+                    intent.putExtra("stepCount", mStepCountCurrent);
+                    sendBroadcast(intent);
+                }
             }
         }
     }
@@ -391,6 +396,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
     @Override
     public void OnReceivedClick() {
         Intent startActivityIntent = new Intent(mContext, MainActivity.class);
+        startActivityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(startActivityIntent);
     }
 
@@ -516,6 +522,14 @@ public class AlertService extends IntentService implements SensorEventListener, 
 
     public void setStepCountCurrent(int mStepCountCurrent) {
         this.mStepCountCurrent = mStepCountCurrent;
+    }
+
+    public boolean IsRunningAlertService() {
+        return mIsRunningAlertService;
+    }
+
+    public void setIsRunningAlertService(boolean mIsRunningAlertService) {
+        this.mIsRunningAlertService = mIsRunningAlertService;
     }
 }
 

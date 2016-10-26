@@ -131,7 +131,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
-            // TODO : ここ別スレッドにしたい
             mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
@@ -255,13 +254,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
         (findViewById(R.id.txtStepCount)).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
-        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
-        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
-        // Application変数を参照している
-        if (((AlertApplication) getApplication()).IsRunningService()) {
-            btnIsStarted = false;
-            setStartButtonFunction(findViewById(R.id.fabStart));
-        }
+//        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
+//        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
+//        // Application変数を参照している
+//        if (((AlertApplication) getApplication()).IsRunningService()) {
+//            btnIsStarted = false;
+//            setStartButtonFunction(findViewById(R.id.fabStart));
+//        }
+        // サービスを開始
+        bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
     }
 
     @Override
@@ -378,12 +380,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
 
-        if (btnIsStarted) {
-            btnIsStarted = !btnIsStarted;
+        if (mAlertService.IsRunningAlertService()) {
             FlurryAgent.logEvent("Service Stop!!");
             mStepCount = mAlertService.getStepCountCurrent();
-            // サービス停止
-            killAlertService();
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
@@ -409,7 +408,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
                 mAlertDialog.show();
             }
-
+            mAlertService.setIsRunningAlertService(false);
             displayInterstitial();
         } else {
             if (mStepCount != 0) {
@@ -419,23 +418,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        btnIsStarted = !btnIsStarted;
                         FlurryAgent.logEvent("Service Start!!");
-                        // サービスを開始
-                        bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-                        mStepCount = 0;
+                        mAlertService.setIsRunningAlertService(true);
+//                        mStepCount = 0;
+                        mAlertService.setStepCountCurrent(0);
                         changeViewState(true, ((ActionButton) v));
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
                 mAlertDialog.show();
             }else{
-                btnIsStarted = !btnIsStarted;
                 FlurryAgent.logEvent("Service Start!!");
-                // サービスを開始
-                bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-                mStepCount = 0;
                 changeViewState(true, ((ActionButton) v));
+                mAlertService.setIsRunningAlertService(true);
             }
         }
     }
@@ -447,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new SeekBar.OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         // ツマミをドラッグしたときに呼ばれる
-                        FlurryAgent.logEvent("Setting seekbar");
+                        FlurryAgent.logEvent("Setting SeekBar");
                         mAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
                         if (mAlertService != null && mAlertService.isBoundService()) {
                             mAlertService.setAlertStartAngle(mAlertStartAngle);
@@ -593,9 +588,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onDestroy() {
         super.onDestroy();
         Growthbeat.getInstance().stop();
-        if (mAlertService != null) {
-            mAlertService.setTxtStepCount(null);
-        }
+//        if (mAlertService != null) {
+//            mAlertService.setTxtStepCount(null);
+//        }
+        unbindService(mConnection);
     }
 
     /**
