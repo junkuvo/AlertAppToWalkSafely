@@ -18,7 +18,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -140,6 +139,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mAlertService.setIsBoundService(true);
             mAlertService.setTxtStepCount((TextView) findViewById(R.id.txtStepCount));
             ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+
+            if (mAlertService.IsRunningAlertService()) {
+                // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
+                mAlertService.setIsRunningAlertService(false);
+                setStartButtonFunction(findViewById(R.id.fabStart));
+                ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent()));
+            } else {
+                mAlertService.setStepCountCurrent(0);
+            }
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -174,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
                 .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
+                .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
                 .build();
 
         // Begin loading your interstitial.
@@ -262,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
         // サービスを開始
+        startService(mAlertServiceIntent);
         bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
     }
@@ -296,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-                if ((mAlertService != null && !mAlertService.isBoundService()) || mAlertService == null) {
+                if (!btnIsStarted) {
                     createToastShort(getString(R.string.toast_instruction)).show();
                     mbtnStart.startAnimation(mAnimationBlink);
                 }
@@ -408,7 +418,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
                 mAlertDialog.show();
             }
-            mAlertService.setIsRunningAlertService(false);
+            mAlertService.stopSensors();
             displayInterstitial();
         } else {
             if (mStepCount != 0) {
@@ -419,18 +429,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         FlurryAgent.logEvent("Service Start!!");
-                        mAlertService.setIsRunningAlertService(true);
+                        mAlertService.startSensors();
 //                        mStepCount = 0;
-                        mAlertService.setStepCountCurrent(0);
+                        ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
                         changeViewState(true, ((ActionButton) v));
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
                 mAlertDialog.show();
-            }else{
+            } else {
                 FlurryAgent.logEvent("Service Start!!");
                 changeViewState(true, ((ActionButton) v));
-                mAlertService.setIsRunningAlertService(true);
+                mAlertService.startSensors();
             }
         }
     }
@@ -588,15 +598,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onDestroy() {
         super.onDestroy();
         Growthbeat.getInstance().stop();
-//        if (mAlertService != null) {
-//            mAlertService.setTxtStepCount(null);
-//        }
-        unbindService(mConnection);
     }
 
     /**
-     * bindServiceでは bind と startを兼ねているが、
-     * 止める時は unbind と stop両方やらないとちゃんと止まらない
+     * bindServiceでは bind だけでserviceはstartされる
+     * serviceは存在していてActivity再起動後、bindServiceすると
      * →こうするとRebindしてonServiceConnectedが呼ばれる
      */
     public void killAlertService() {
@@ -605,15 +611,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-//                finish();
-                // 端末のホーム画面に戻る
-                moveTaskToBack(true);
-                return false;
-        }
-        return super.onKeyDown(keyCode, event);
+    public void onBackPressed() {
+        // これをコメントアウトしないとバックキー押してすぐアプリがBackgroundに回ってしまう
+//        super.onBackPressed();
+//        // 端末のホーム画面に戻る
+//        moveTaskToBack(true);
+        mAlertDialog = new AlertDialog.Builder(MainActivity.this);
+        mAlertDialog.setMessage(getString(R.string.dialog_back_key_message));
+        mAlertDialog.setPositiveButton(getString(R.string.dialog_back_key_positive), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                killAlertService();
+                finish();
+            }
+        });
+        mAlertDialog.setNegativeButton(getString(R.string.dialog_back_key_negative), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                return;
+            }
+        });
+        mAlertDialog.show();
     }
 
     public void changeViewState(boolean isStart, ActionButton button) {

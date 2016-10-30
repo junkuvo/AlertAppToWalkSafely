@@ -60,7 +60,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
     // Recognition API用
     private GoogleApiClient mApiClient;
     private PendingIntent mReceiveRecognitionIntent;
-    private final int ACTIVITY_RECOGNITION_CONFIDENCE = 10;
+    private final int ACTIVITY_RECOGNITION_CONFIDENCE = 15;
     private boolean isWalkingStatus = false;
 
     private boolean mShouldShowAlert = false;
@@ -124,6 +124,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
     //Binderの生成
     private final IBinder mAlertServiceBinder = new AlertServiceBinder();
 
+    private IntentFilter intentFilter = new IntentFilter();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -133,43 +135,49 @@ public class AlertService extends IntentService implements SensorEventListener, 
         mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, orientation);
         mWalkCountCalculator = new WalkCountCalculator();
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        registerReceiver(screenStatusReceiver, filter);
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        intentFilter.addAction(Intent.ACTION_SCREEN_ON);
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-        mApiClient.connect();
 
         mAlertReceiver.setOnReceiveEventListener(this);
         mHasStepFeature = isHasStepFeature();
     }
 
+    /**
+     * これはonStartServiceでしか呼ばれない
+     *
+     * @param intent
+     * @param flags
+     * @param startId
+     * @return
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-//        super.onStart(intent, startId);
-        handleOnStart(intent, startId);
+        super.onStart(intent, startId);
         return START_STICKY;
     }
 
+    // TODO : serviceまでDestroyされる？？
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this);
-        }
-        if (screenStatusReceiver != null) {
-            unregisterReceiver(screenStatusReceiver);
-        }
-
-        if (mApiClient != null && mApiClient.isConnected()) {
-            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
-            mApiClient.disconnect();
-        }
+//        if (mSensorManager != null) {
+//            mSensorManager.unregisterListener(this);
+//        }
+//        if (screenStatusReceiver != null) {
+//            unregisterReceiver(screenStatusReceiver);
+//        }
+//
+//        if (mApiClient != null && mApiClient.isConnected()) {
+//            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
+//            mApiClient.disconnect();
+//        }
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
@@ -192,6 +200,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
     }
 
     // GoogleApiClient
+    // mApiClient.connect()のcallback
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Intent intent = new Intent(this, AlertService.class);
@@ -224,8 +233,15 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    private void handleOnStart(Intent intent, int startId) {
+    public void startSensors() {
         startServiceForeground();
+        setIsRunningAlertService(true);
+
+        registerReceiver(screenStatusReceiver, intentFilter);
+
+        // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
+//        mApiClient.connect();
+
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         // センサーのオブジェクトリストを取得する
         List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
@@ -239,6 +255,33 @@ public class AlertService extends IntentService implements SensorEventListener, 
         mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+        initializeSensingValues();
+    }
+
+    public void stopSensors() {
+        // Notificationを消す
+        stopForeground(true);
+
+        if (mSensorManager != null) {
+            mSensorManager.unregisterListener(this);
+        }
+        if (screenStatusReceiver != null) {
+            unregisterReceiver(screenStatusReceiver);
+        }
+
+        if (mApiClient != null && mApiClient.isConnected()) {
+            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
+            mApiClient.disconnect();
+        }
+        setIsRunningAlertService(false);
+    }
+
+    public void initializeSensingValues() {
+        mTendencyCheckCount = 0;
+        mTendencyOutCount = 0;
+        isWalkingStatus = false;
+        mStepCountCurrent = -1;
     }
 
     // センサーの値が変化すると呼ばれる(加速度・ステップディテクター・ステップカウンター)
@@ -246,22 +289,23 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void onSensorChanged(SensorEvent event) {
         // 画面がONの場合、歩きスマホを検知する
         Sensor sensor = event.sensor;
-        if(mIsRunningAlertService) {
+        if (mIsRunningAlertService) {
             if (mIsScreenOn) {
                 if (mStepCountBefore == 0) {
                     mStepCountBefore = mStepCountCurrent;
                 }
-                // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
-                // 5回カウントして1秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
-                if (mTendencyCheckCount == 5) {
+
+                if (isEveryOneSecond()) {
                     // 歩行中であることを判定
-                    if (isWalking() || isWalkingStatus) {
+                    // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
+                    if (isWalking()) {// || isWalkingStatus) {
+
                         // 歩いている状態で下記にてデバイス角度計算
                         int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
                         // 下向きかどうかの判定
                         // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
-                        // さらにテーブルに置いたときなど、水平状態があり得るため tendency > 3(適当) とする
-                        if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 3) {
+                        // さらにテーブルに置いたときなど、水平状態があり得るため tendency > (適当) とする
+                        if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 8) {
                             mTendencyOutCount++;
                             //  下向きと判定されるのが連続 n 回の場合、Alertを表示させる
                             if (mTendencyOutCount == 10) {
@@ -269,9 +313,10 @@ public class AlertService extends IntentService implements SensorEventListener, 
                                 Intent intent = new Intent(ACTION);
                                 intent.putExtra("isStepCounter", false);
                                 sendBroadcast(intent);
-                                mTendencyOutCount = 0;
 
+                                mTendencyOutCount = 0;
                                 isWalkingStatus = false;
+                                mStepCountBefore = mStepCountCurrent;
                             }
                         } else {
                             if (mTendencyOutCount > 0) {
@@ -297,6 +342,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 }
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 if (mIsScreenOn) {
+                    // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
+                    // 5回カウントして1秒ごとに下記を実行する(1秒くらいあれば歩数が変化している前提)
                     mTendencyCheckCount++;
                 }
                 // 歩行センサがない場合 3軸加速度から計算
@@ -327,8 +374,13 @@ public class AlertService extends IntentService implements SensorEventListener, 
         }
     }
 
+    private boolean isEveryOneSecond() {
+        return mTendencyCheckCount == 5;
+    }
+
     private void detectWalkingStatusByGcm(List<DetectedActivity> probableActivities) {
         int confidence = 0;
+        int confidenceOthers = 0;
         for (DetectedActivity activity : probableActivities) {
             switch (activity.getType()) {
                 case DetectedActivity.ON_FOOT: {
@@ -350,28 +402,30 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 case DetectedActivity.IN_VEHICLE:
                 case DetectedActivity.ON_BICYCLE:
                 case DetectedActivity.TILTING:
+                    confidenceOthers = confidenceOthers + activity.getConfidence();
                 case DetectedActivity.UNKNOWN:
-                    isWalkingStatus = false;
                     Log.e("ActivityRecognition", "others: " + activity.getConfidence());
+                    isWalkingStatus = false;
                     break;
             }
-            isWalkingStatus = (confidence >= ACTIVITY_RECOGNITION_CONFIDENCE);
+            isWalkingStatus = (confidence >= ACTIVITY_RECOGNITION_CONFIDENCE
+                    && confidenceOthers <= ACTIVITY_RECOGNITION_CONFIDENCE);
         }
     }
 
     public void startServiceForeground() {
         // サービスを永続化するために、通知を作成する
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setTicker("歩きスマホ防止アプリ起動！");
+        builder.setTicker(getString(R.string.notification_ticker));
         builder.setContentTitle(getString(R.string.app_name));
-        builder.setContentText("アプリを開く際はタップしてください");
+        builder.setContentText(getString(R.string.notification_content_text));
 //        builder.setSubText("アプリを開く際はタップしてください");
         builder.setSmallIcon(R.drawable.ic_stat_small);
         // Large icon appears on the left of the notification
         builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
 
         // FIXME : service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-//        builder.addAction(R.drawable.ic_stat_small, getString(R.string.home_button_stop), getPendingIntentWithBroadcast(AlertReceiver.DELETE_NOTIFICATION));
+        builder.addAction(R.drawable.ic_stat_small, getString(R.string.home_button_stop), getPendingIntentWithBroadcast(AlertReceiver.DELETE_NOTIFICATION));
 
         builder.setContentIntent( //通知タップ時のPendingIntent
                 getPendingIntentWithBroadcast(AlertReceiver.CLICK_NOTIFICATION)
@@ -404,7 +458,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void OnReceivedDelete() {
         // FIXME : unbindはどうする？
         // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-        stopSelf();
+//        stopSelf();
+        stopSensors();
     }
 
     @Override

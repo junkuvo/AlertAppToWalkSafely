@@ -27,7 +27,6 @@
 
     <string name="dialog_tweet">Twitterで送信しますか？</string>
 
-
     <string name="dialog_title_history">歩数記録</string>
     <string name="dialog_title_history_nodata">歩数記録データがないようです…</string>
 
@@ -70,5 +69,12 @@
     <string name="setting_toast_Bottom">下部</string>
     <string name="home_text_watching">歩きスマホを監視中</string>
     <string name="app_used_thankyou">ご利用ありがとうございます！</string>
+
+    <string name="notification_ticker">歩きスマホ防止アプリ起動！</string>
+    <string name="notification_content_text">アプリを開く際はタップしてください！</string>
+
+    <string name="dialog_back_key_positive">終了</string>
+    <string name="dialog_back_key_negative">戻る</string>
+    <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>
 
 </resources>
