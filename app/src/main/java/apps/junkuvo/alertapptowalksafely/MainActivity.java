@@ -271,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
         // サービスを開始
-        startService(mAlertServiceIntent);
+//        startService(mAlertServiceIntent);
         bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
     }
@@ -607,7 +607,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void killAlertService() {
         unbindService(mConnection);
-        stopService(mAlertServiceIntent);
+        mConnection = null;
+        mAlertService.stopSensors();
+        mAlertService = null;
+
+//        stopService(mAlertServiceIntent);
     }
 
     @Override

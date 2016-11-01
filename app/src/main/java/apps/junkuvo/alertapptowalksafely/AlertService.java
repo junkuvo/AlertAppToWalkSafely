@@ -159,7 +159,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStart(intent, startId);
+//        super.onStart(intent, startId);
         return START_STICKY;
     }
 
@@ -167,6 +167,8 @@ public class AlertService extends IntentService implements SensorEventListener, 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopSensors();
+
 //        if (mSensorManager != null) {
 //            mSensorManager.unregisterListener(this);
 //        }
@@ -460,6 +462,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
         // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
 //        stopSelf();
         stopSensors();
+        // TODO : Activityの状態変更
     }
 
     @Override
