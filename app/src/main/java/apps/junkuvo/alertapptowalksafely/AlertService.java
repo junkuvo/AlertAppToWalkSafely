@@ -23,7 +23,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -80,9 +79,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
     // 歩数計
     private Sensor mStepDetectorSensor;
     private Sensor mStepCounterSensor;
-
-    // 歩数表示のTextView
-    private TextView mTxtStepCount;
 
     // 画面のON/OFFを検知する
     private boolean mIsScreenOn = true;
@@ -159,6 +155,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
 //        super.onStart(intent, startId);
         return START_STICKY;
     }
@@ -168,18 +165,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void onDestroy() {
         super.onDestroy();
         stopSensors();
-
-//        if (mSensorManager != null) {
-//            mSensorManager.unregisterListener(this);
-//        }
-//        if (screenStatusReceiver != null) {
-//            unregisterReceiver(screenStatusReceiver);
-//        }
-//
-//        if (mApiClient != null && mApiClient.isConnected()) {
-//            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
-//            mApiClient.disconnect();
-//        }
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
@@ -267,6 +252,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
 
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(this);
+            mSensorManager = null;
         }
         if (screenStatusReceiver != null) {
             unregisterReceiver(screenStatusReceiver);
@@ -469,11 +455,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
     public void OnReceivedStep(boolean isStepCounter, int stepCount) {
         if (isStepCounter) {
             mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
-            if (shouldShowPedometer()) {
-                if (mTxtStepCount != null) {
-                    mTxtStepCount.setText(String.valueOf(mStepCountCurrent) + getString(R.string.home_step_count_dimension));
-                }
-            }
+            onWalkStepListener.onWalkStep(mStepCountCurrent);
         } else {
             // 歩きスマホの注意
             if (IsToastOn()) {
@@ -482,7 +464,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtil.showCustomToast(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
+                        ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
                     }
                 });
             }
@@ -494,6 +476,16 @@ public class AlertService extends IntentService implements SensorEventListener, 
             }
         }
     }
+
+    public interface onWalkStepListener {
+        void onWalkStep(int stepCount);
+    }
+
+    public void setOnWalkStepListener(AlertService.onWalkStepListener onWalkStepListener) {
+        this.onWalkStepListener = onWalkStepListener;
+    }
+
+    private onWalkStepListener onWalkStepListener;
 
     public boolean shouldShowAlert() {
         return mShouldShowAlert;
@@ -564,14 +556,6 @@ public class AlertService extends IntentService implements SensorEventListener, 
 
     public void setIsBoundService(boolean isBoundService) {
         this.mIsBoundService = isBoundService;
-    }
-
-    public TextView getTxtStepCount() {
-        return mTxtStepCount;
-    }
-
-    public void setTxtStepCount(TextView txtStepCount) {
-        this.mTxtStepCount = txtStepCount;
     }
 
     public int getStepCountCurrent() {

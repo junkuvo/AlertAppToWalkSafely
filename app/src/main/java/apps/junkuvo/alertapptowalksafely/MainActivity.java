@@ -131,20 +131,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onServiceConnected(ComponentName className, IBinder binder) {
             // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
             mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
+            mAlertService.setOnWalkStepListener(new AlertService.onWalkStepListener() {
+                @Override
+                public void onWalkStep(int stepCount) {
+                    ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
+                }
+            });
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
             mAlertService.setToastPosition(mToastPosition);
             mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
             mAlertService.setAlertMessage(mAlertMessage);
             mAlertService.setIsBoundService(true);
-            mAlertService.setTxtStepCount((TextView) findViewById(R.id.txtStepCount));
             ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
 
             if (mAlertService.IsRunningAlertService()) {
                 // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
                 mAlertService.setIsRunningAlertService(false);
                 setStartButtonFunction(findViewById(R.id.fabStart));
-                ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent()));
+//                ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent()));
             } else {
                 mAlertService.setStepCountCurrent(0);
             }
@@ -251,8 +256,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Refresh the state of the +1 button each time the activity receives focus.
         mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
-        FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
-
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
         relativeLayout.setOnClickListener(this);
 
@@ -280,8 +283,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStart() {
         super.onStart();
 
-        FlurryAgent.logEvent("onStart");
-
         // カーソルを最後尾に移動
         mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
         mAlertEditText.setSelection(mAlertEditText.getText().length());
@@ -294,6 +295,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
+        FlurryAgent.logEvent("onStart");
     }
 
     @Override
@@ -586,12 +589,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
+        FlurryAgent.onEndSession(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        FlurryAgent.onEndSession(this);
     }
 
     @Override

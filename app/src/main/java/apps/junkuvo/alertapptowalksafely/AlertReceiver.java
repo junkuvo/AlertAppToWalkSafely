@@ -9,7 +9,7 @@ public class AlertReceiver extends BroadcastReceiver {
     public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
 
     private int mStepCount = 0;
-    private ReceiveEventListener receiveEventListener;
+    private static ReceiveEventListener receiveEventListener;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -22,7 +22,6 @@ public class AlertReceiver extends BroadcastReceiver {
             receiveEventListener.OnReceivedDelete();
             return;
         }
-
         receiveEventListener.OnReceivedStep(intent.getBooleanExtra("isStepCounter", false), intent.getIntExtra("stepCount", mStepCount));
     }
 
