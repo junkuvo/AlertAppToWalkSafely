@@ -36,7 +36,7 @@ import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-public class AlertService extends IntentService implements SensorEventListener, AlertReceiver.ReceiveEventListener,
+public class AlertService extends IntentService implements SensorEventListener,// AlertReceiver.ReceiveEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION = "AlertService";
@@ -80,6 +80,9 @@ public class AlertService extends IntentService implements SensorEventListener, 
     private Sensor mStepDetectorSensor;
     private Sensor mStepCounterSensor;
 
+    public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
+    public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
+
     // 画面のON/OFFを検知する
     private boolean mIsScreenOn = true;
     private BroadcastReceiver screenStatusReceiver = new BroadcastReceiver() {
@@ -91,6 +94,46 @@ public class AlertService extends IntentService implements SensorEventListener, 
             }
             if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
                 mIsScreenOn = true;
+            }
+            if (intent.getAction().equals(CLICK_NOTIFICATION)) {
+                Intent startActivityIntent = new Intent(mContext, MainActivity.class);
+                startActivityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(startActivityIntent);
+                return;
+            }
+
+            if (intent.getAction().equals(DELETE_NOTIFICATION)) {
+                // FIXME : unbindはどうする？
+                // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
+                // stopSelf();
+                stopSensors();
+                // TODO : Activityの状態変更
+                onActionFromNotificationListener.onStopFromNotification(DELETE_NOTIFICATION);
+                return;
+            }
+
+            int stepCount = intent.getIntExtra("stepCount", mStepCountCurrent);
+            if (intent.getBooleanExtra("isStepCounter", false)) {
+                mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
+                onWalkStepListener.onWalkStep(mStepCountCurrent);
+            } else {
+                // 歩きスマホの注意
+                if (IsToastOn()) {
+//                if (shouldShowAlert() && IsToastOn()) {
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
+                        }
+                    });
+                }
+
+                if (IsVibrationOn()) {
+                    Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                    long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+                    vibrator.vibrate(pattern, -1);
+                }
             }
         }
     };
@@ -134,6 +177,9 @@ public class AlertService extends IntentService implements SensorEventListener, 
         intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
         intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+        intentFilter.addAction(CLICK_NOTIFICATION);
+        intentFilter.addAction(DELETE_NOTIFICATION);
+        intentFilter.addAction(ACTION);
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -141,7 +187,7 @@ public class AlertService extends IntentService implements SensorEventListener, 
                 .addOnConnectionFailedListener(this)
                 .build();
 
-        mAlertReceiver.setOnReceiveEventListener(this);
+//        mAlertReceiver.setOnReceiveEventListener(this);
         mHasStepFeature = isHasStepFeature();
     }
 
@@ -247,22 +293,27 @@ public class AlertService extends IntentService implements SensorEventListener, 
     }
 
     public void stopSensors() {
-        // Notificationを消す
-        stopForeground(true);
+        try {
+            // Notificationを消す
+            stopForeground(true);
 
-        if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this);
-            mSensorManager = null;
-        }
-        if (screenStatusReceiver != null) {
-            unregisterReceiver(screenStatusReceiver);
-        }
+            if (mSensorManager != null) {
+                mSensorManager.unregisterListener(this);
+                mSensorManager = null;
+            }
+            if (screenStatusReceiver != null) {
+                unregisterReceiver(screenStatusReceiver);
+            }
 
-        if (mApiClient != null && mApiClient.isConnected()) {
-            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
-            mApiClient.disconnect();
+            if (mApiClient != null && mApiClient.isConnected()) {
+                ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
+                mApiClient.disconnect();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            setIsRunningAlertService(false);
         }
-        setIsRunningAlertService(false);
     }
 
     public void initializeSensingValues() {
@@ -435,57 +486,66 @@ public class AlertService extends IntentService implements SensorEventListener, 
         startForeground(R.string.app_name, builder.build());
     }
 
-    @Override
-    public void OnReceivedClick() {
-        Intent startActivityIntent = new Intent(mContext, MainActivity.class);
-        startActivityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(startActivityIntent);
-    }
-
-    @Override
-    public void OnReceivedDelete() {
-        // FIXME : unbindはどうする？
-        // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-//        stopSelf();
-        stopSensors();
-        // TODO : Activityの状態変更
-    }
-
-    @Override
-    public void OnReceivedStep(boolean isStepCounter, int stepCount) {
-        if (isStepCounter) {
-            mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
-            onWalkStepListener.onWalkStep(mStepCountCurrent);
-        } else {
-            // 歩きスマホの注意
-            if (IsToastOn()) {
-//                if (shouldShowAlert() && IsToastOn()) {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
-                    }
-                });
-            }
-
-            if (IsVibrationOn()) {
-                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
-                vibrator.vibrate(pattern, -1);
-            }
-        }
-    }
+//    @Override
+//    public void OnReceivedClick() {
+//        Intent startActivityIntent = new Intent(mContext, MainActivity.class);
+//        startActivityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+//        mContext.startActivity(startActivityIntent);
+//    }
+//
+//    @Override
+//    public void OnReceivedDelete() {
+//        // FIXME : unbindはどうする？
+//        // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
+////        stopSelf();
+//        stopSensors();
+//        // TODO : Activityの状態変更
+//    }
+//
+//    @Override
+//    public void OnReceivedStep(boolean isStepCounter, int stepCount) {
+//        if (isStepCounter) {
+//            mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
+//            onWalkStepListener.onWalkStep(mStepCountCurrent);
+//        } else {
+//            // 歩きスマホの注意
+//            if (IsToastOn()) {
+////                if (shouldShowAlert() && IsToastOn()) {
+//                Handler handler = new Handler(Looper.getMainLooper());
+//                handler.post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
+//                    }
+//                });
+//            }
+//
+//            if (IsVibrationOn()) {
+//                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+//                long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+//                vibrator.vibrate(pattern, -1);
+//            }
+//        }
+//    }
 
     public interface onWalkStepListener {
         void onWalkStep(int stepCount);
     }
 
-    public void setOnWalkStepListener(AlertService.onWalkStepListener onWalkStepListener) {
+    public void setOnWalkStepListener(onWalkStepListener onWalkStepListener) {
         this.onWalkStepListener = onWalkStepListener;
     }
 
+    public interface onActionFromNotificationListener {
+        void onStopFromNotification(String action);
+    }
+
+    public void setOnActionromNotificationListener(onActionFromNotificationListener onActionromNotificationListener) {
+        this.onActionFromNotificationListener = onActionromNotificationListener;
+    }
+
     private onWalkStepListener onWalkStepListener;
+    private onActionFromNotificationListener onActionFromNotificationListener;
 
     public boolean shouldShowAlert() {
         return mShouldShowAlert;

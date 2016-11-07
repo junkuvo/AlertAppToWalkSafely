@@ -137,6 +137,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
+            mAlertService.setOnActionromNotificationListener(new AlertService.onActionFromNotificationListener() {
+                @Override
+                public void onStopFromNotification(String action) {
+                    mAlertService.setIsRunningAlertService(true);
+                    setStartButtonFunction(findViewById(R.id.fabStart));
+                }
+            });
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
             mAlertService.setToastPosition(mToastPosition);
@@ -149,7 +156,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
                 mAlertService.setIsRunningAlertService(false);
                 setStartButtonFunction(findViewById(R.id.fabStart));
-//                ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(mAlertService.getStepCountCurrent()));
             } else {
                 mAlertService.setStepCountCurrent(0);
             }
@@ -602,6 +608,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onDestroy();
         Growthbeat.getInstance().stop();
     }
+
+
 
     /**
      * bindServiceでは bind だけでserviceはstartされる

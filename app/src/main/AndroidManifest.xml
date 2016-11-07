@@ -52,15 +52,16 @@
         <service
             android:name=".AlertService"
             android:enabled="true" />
-        <receiver android:name=".AlertReceiver">
-            <intent-filter>
-                <!--定義したactionを追記する-->
-                <action android:name="AlertService" />
-                <action android:name="walk_safe_click_notification" />
-                <action android:name="walk_safe_delete_notification" />
-                <action android:name="click_service_notification" />
-            </intent-filter>
-        </receiver>
+
+        <!--<receiver android:name=".AlertReceiver">-->
+            <!--<intent-filter>-->
+                <!--&lt;!&ndash;定義したactionを追記する&ndash;&gt;-->
+                <!--<action android:name="AlertService" />-->
+                <!--<action android:name="walk_safe_click_notification" />-->
+                <!--<action android:name="walk_safe_delete_notification" />-->
+                <!--<action android:name="click_service_notification" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
 
         <!-- for Growth Push -->
         <activity
