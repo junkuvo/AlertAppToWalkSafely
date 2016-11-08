@@ -137,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
+            // TODO  リスナ解除
             mAlertService.setOnActionromNotificationListener(new AlertService.onActionFromNotificationListener() {
                 @Override
                 public void onStopFromNotification(String action) {
@@ -610,7 +611,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-
     /**
      * bindServiceでは bind だけでserviceはstartされる
      * serviceは存在していてActivity再起動後、bindServiceすると
@@ -698,6 +698,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         task.execute();
     }
 
+    //  TODO : ここ呼ばれてないかも
     @Override
     public void onNewIntent(Intent intent) {
         if (intent == null || intent.getData() == null || !intent.getData().toString().startsWith(mCallbackURL)) {

@@ -85,6 +85,7 @@ public class AlertService extends IntentService implements SensorEventListener,/
 
     // 画面のON/OFFを検知する
     private boolean mIsScreenOn = true;
+    // Todo :
     private BroadcastReceiver screenStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -103,7 +104,6 @@ public class AlertService extends IntentService implements SensorEventListener,/
             }
 
             if (intent.getAction().equals(DELETE_NOTIFICATION)) {
-                // FIXME : unbindはどうする？
                 // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
                 // stopSelf();
                 stopSensors();
@@ -268,6 +268,8 @@ public class AlertService extends IntentService implements SensorEventListener,/
 
     public void startSensors() {
         startServiceForeground();
+        // TODO : 名前
+        // TODO : try catch
         setIsRunningAlertService(true);
 
         registerReceiver(screenStatusReceiver, intentFilter);
