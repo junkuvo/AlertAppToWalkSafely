@@ -36,14 +36,13 @@ import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-public class AlertService extends IntentService implements SensorEventListener,// AlertReceiver.ReceiveEventListener,
+public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String ACTION = "AlertService";
     private static final float TOAST_TEXT_SIZE = 24; // sp
 
     private SensorManager mSensorManager;
-    private AlertReceiver mAlertReceiver = new AlertReceiver();
 
     // 歩きスマホの判定に利用（姿勢の計算）
     private DeviceAttitudeCalculator mDeviceAttitudeCalculator;
@@ -187,7 +186,6 @@ public class AlertService extends IntentService implements SensorEventListener,/
                 .addOnConnectionFailedListener(this)
                 .build();
 
-//        mAlertReceiver.setOnReceiveEventListener(this);
         mHasStepFeature = isHasStepFeature();
     }
 
@@ -268,30 +266,33 @@ public class AlertService extends IntentService implements SensorEventListener,/
 
     public void startSensors() {
         startServiceForeground();
-        // TODO : 名前
-        // TODO : try catch
-        setIsRunningAlertService(true);
+        try {
+            setIsRunningAlertService(true);
 
-        registerReceiver(screenStatusReceiver, intentFilter);
+            registerReceiver(screenStatusReceiver, intentFilter);
 
-        // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
+            // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
 //        mApiClient.connect();
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        // センサーのオブジェクトリストを取得する
-        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            // センサーのオブジェクトリストを取得する
+            List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+            if (sensors.size() > 0) {
+                Sensor s = sensors.get(0);
+                mSensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
+            }
+
+            // 歩数計用のセンサー登録
+            mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+            mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+            mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+            initializeSensingValues();
+        } catch (Exception e) {
+            stopSensors();
+            e.printStackTrace();
         }
-
-        // 歩数計用のセンサー登録
-        mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        mStepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        mSensorManager.registerListener(this, mStepCounterSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
-
-        initializeSensingValues();
     }
 
     public void stopSensors() {
@@ -466,13 +467,13 @@ public class AlertService extends IntentService implements SensorEventListener,/
         builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
 
         // FIXME : service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-        builder.addAction(R.drawable.ic_stat_small, getString(R.string.home_button_stop), getPendingIntentWithBroadcast(AlertReceiver.DELETE_NOTIFICATION));
+        builder.addAction(R.drawable.ic_stat_small, getString(R.string.home_button_stop), getPendingIntentWithBroadcast(DELETE_NOTIFICATION));
 
         builder.setContentIntent( //通知タップ時のPendingIntent
-                getPendingIntentWithBroadcast(AlertReceiver.CLICK_NOTIFICATION)
+                getPendingIntentWithBroadcast(CLICK_NOTIFICATION)
         );
         builder.setDeleteIntent(  //通知の削除時のPendingIntent
-                getPendingIntentWithBroadcast(AlertReceiver.DELETE_NOTIFICATION)
+                getPendingIntentWithBroadcast(DELETE_NOTIFICATION)
         );
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
@@ -483,52 +484,10 @@ public class AlertService extends IntentService implements SensorEventListener,/
         builder.setVisibility(Notification.VISIBILITY_SECRET);
 
         // PRIORITY_MINだとどこにも表示されなくなる
-        builder.setPriority(Notification.PRIORITY_MIN);
+        builder.setPriority(Notification.PRIORITY_MAX);
         // サービス永続化
         startForeground(R.string.app_name, builder.build());
     }
-
-//    @Override
-//    public void OnReceivedClick() {
-//        Intent startActivityIntent = new Intent(mContext, MainActivity.class);
-//        startActivityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-//        mContext.startActivity(startActivityIntent);
-//    }
-//
-//    @Override
-//    public void OnReceivedDelete() {
-//        // FIXME : unbindはどうする？
-//        // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-////        stopSelf();
-//        stopSensors();
-//        // TODO : Activityの状態変更
-//    }
-//
-//    @Override
-//    public void OnReceivedStep(boolean isStepCounter, int stepCount) {
-//        if (isStepCounter) {
-//            mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
-//            onWalkStepListener.onWalkStep(mStepCountCurrent);
-//        } else {
-//            // 歩きスマホの注意
-//            if (IsToastOn()) {
-////                if (shouldShowAlert() && IsToastOn()) {
-//                Handler handler = new Handler(Looper.getMainLooper());
-//                handler.post(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
-//                    }
-//                });
-//            }
-//
-//            if (IsVibrationOn()) {
-//                Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-//                long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
-//                vibrator.vibrate(pattern, -1);
-//            }
-//        }
-//    }
 
     public interface onWalkStepListener {
         void onWalkStep(int stepCount);
