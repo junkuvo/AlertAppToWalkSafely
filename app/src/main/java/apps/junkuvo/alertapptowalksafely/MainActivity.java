@@ -137,8 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
-            // TODO  リスナ解除
-            mAlertService.setOnActionromNotificationListener(new AlertService.onActionFromNotificationListener() {
+            mAlertService.setOnActionFromNotificationListener(new AlertService.onActionFromNotificationListener() {
                 @Override
                 public void onStopFromNotification(String action) {
                     mAlertService.setIsRunningAlertService(true);
@@ -316,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-                if (!btnIsStarted) {
+                if (!mAlertService.IsRunningAlertService()) {
                     createToastShort(getString(R.string.toast_instruction)).show();
                     mbtnStart.startAnimation(mAnimationBlink);
                 }
@@ -365,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setSwitchInLayout(layout);
                 setRadioGroupInLayout(layout);
                 setToggleButtonInLayout(layout);
-                mAlertDialog.create().show();
+                mAlertDialog.show();
                 break;
             case MENU_SHARE_ID:
                 FlurryAgent.logEvent("Share twitter");
@@ -389,7 +388,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     });
                     mAlertDialog.setCancelable(false);
                     mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_cancel), null);
-                    mAlertDialog.create().show();
+                    mAlertDialog.show();
                 }
                 break;
         }
@@ -429,9 +428,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.show();
             }
             mAlertService.stopSensors();
+            mAlertService.setIsBoundService(false);
             displayInterstitial();
         } else {
-            if (mStepCount != 0) {
+            if (mStepCount > 0) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
                 mAlertDialog.setIcon(R.drawable.ic_stat_small);
                 mAlertDialog.setMessage("歩数を0に戻してよろしいですか？");
@@ -619,6 +619,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void killAlertService() {
         unbindService(mConnection);
         mConnection = null;
+        mAlertService.removeOnActionFromNotificationListener();
+        mAlertService.removeOnWalkStepListener();
         mAlertService.stopSensors();
         mAlertService = null;
 
@@ -698,7 +700,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         task.execute();
     }
 
-    //  TODO : ここ呼ばれてないかも
     @Override
     public void onNewIntent(Intent intent) {
         if (intent == null || intent.getData() == null || !intent.getData().toString().startsWith(mCallbackURL)) {
