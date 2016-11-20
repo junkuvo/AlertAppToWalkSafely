@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         );
 
         if (mAlertService != null) {
-            swh.setEnabled(!mAlertService.isBoundService());
+            swh.setEnabled(!mAlertService.IsRunningAlertService());
         } else {
             swh.setEnabled(true);
         }
@@ -800,7 +800,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
                 @Override
                 public void onPasscodeEntered(String passcode) {
-                    if (mAlertService != null && mAlertService.isBoundService()) {
+                    if (mAlertService != null && mAlertService.IsRunningAlertService()) {
                         if (passcode.equals(mPasscodeConfirm)) {
                             FlurryAgent.logEvent("Passcode Unlocked");
 

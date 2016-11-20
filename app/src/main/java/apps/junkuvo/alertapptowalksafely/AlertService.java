@@ -35,6 +35,7 @@ import java.util.List;
 
 import junkuvo.apps.androidutility.ToastUtil;
 
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class AlertService extends IntentService implements SensorEventListener,
@@ -50,6 +51,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     // 歩数カウントに利用（ステップセンサがない場合）
     private WalkCountCalculator mWalkCountCalculator;
+    private WalkCountCalculator mWalkCountCalculatorAsNg;
 
     private int mAlertStartAngle;
     private int mTendencyCheckCount = 0;
@@ -86,6 +88,34 @@ public class AlertService extends IntentService implements SensorEventListener,
     // 画面のON/OFFを検知する
     private boolean mIsScreenOn = true;
 
+    private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int stepCount = intent.getIntExtra("stepCount", mStepCountCurrent);
+            if (intent.getBooleanExtra("isStepCounter", false)) {
+//                mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
+//                onWalkStepListener.onWalkStep(mStepCountCurrent);
+            } else {
+                // 歩きスマホの注意
+                if (IsToastOn()) {
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
+                        }
+                    });
+                }
+
+                if (IsVibrationOn()) {
+                    Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                    long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+                    vibrator.vibrate(pattern, -1);
+                }
+            }
+        }
+    };
+
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -109,29 +139,6 @@ public class AlertService extends IntentService implements SensorEventListener,
                 stopSensors();
                 onActionFromNotificationListener.onStopFromNotification(DELETE_NOTIFICATION);
                 return;
-            }
-
-            int stepCount = intent.getIntExtra("stepCount", mStepCountCurrent);
-            if (intent.getBooleanExtra("isStepCounter", false)) {
-//                mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
-//                onWalkStepListener.onWalkStep(mStepCountCurrent);
-            } else {
-                // 歩きスマホの注意
-                if (IsToastOn()) {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
-                        }
-                    });
-                }
-
-                if (IsVibrationOn()) {
-                    Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                    long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
-                    vibrator.vibrate(pattern, -1);
-                }
             }
         }
     };
@@ -162,6 +169,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     private final IBinder mAlertServiceBinder = new AlertServiceBinder();
 
     private IntentFilter intentFilter = new IntentFilter();
+    private IntentFilter localIntentFilter = new IntentFilter();
 
     @Override
     public void onCreate() {
@@ -171,13 +179,13 @@ public class AlertService extends IntentService implements SensorEventListener,
         int orientation = Utility.getOrientation(mContext);
         mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, orientation);
         mWalkCountCalculator = new WalkCountCalculator();
+        mWalkCountCalculatorAsNg = new WalkCountCalculator();
 
-        intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
         intentFilter.addAction(Intent.ACTION_SCREEN_ON);
         intentFilter.addAction(CLICK_NOTIFICATION);
         intentFilter.addAction(DELETE_NOTIFICATION);
-        intentFilter.addAction(ACTION);
+        localIntentFilter.addAction(ACTION);
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -210,7 +218,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
-        return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
+        return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), FLAG_UPDATE_CURRENT);
     }
 
     // BindしたServiceをActivityに返す
@@ -233,7 +241,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Intent intent = new Intent(this, AlertService.class);
-        mReceiveRecognitionIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mReceiveRecognitionIntent = PendingIntent.getService(this, 0, intent, FLAG_UPDATE_CURRENT);
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mReceiveRecognitionIntent);
     }
 
@@ -267,7 +275,8 @@ public class AlertService extends IntentService implements SensorEventListener,
         try {
             setIsRunningAlertService(true);
 
-            LocalBroadcastManager.getInstance(mContext).registerReceiver(broadcastReceiver, intentFilter);
+            LocalBroadcastManager.getInstance(mContext).registerReceiver(localBroadcastReceiver, localIntentFilter);
+            registerReceiver(broadcastReceiver, intentFilter);
 
             // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
 //        mApiClient.connect();
@@ -300,9 +309,12 @@ public class AlertService extends IntentService implements SensorEventListener,
                 mSensorManager.unregisterListener(this);
                 mSensorManager = null;
             }
+            if (localBroadcastReceiver != null) {
+                LocalBroadcastManager.getInstance(mContext).unregisterReceiver(localBroadcastReceiver);
+            }
+
             if (broadcastReceiver != null) {
-                LocalBroadcastManager.getInstance(mContext).unregisterReceiver(broadcastReceiver);
-//                unregisterReceiver(broadcastReceiver);
+                unregisterReceiver(broadcastReceiver);
             }
 
             if (mApiClient != null && mApiClient.isConnected()) {
@@ -321,7 +333,13 @@ public class AlertService extends IntentService implements SensorEventListener,
         mTendencyOutCount = 0;
         isWalkingStatus = false;
         mStepCountCurrent = -1;
+        countAsNg = -1;
     }
+
+    // 歩きスマホ中として歩数をカウントするかどうかのフラグ
+    private boolean shouldCountAsNg = false;
+    // 歩きスマホ中の歩数。画面に表示される
+    private int countAsNg = -1;
 
     // センサーの値が変化すると呼ばれる(加速度・ステップディテクター・ステップカウンター)
     @Override
@@ -330,8 +348,8 @@ public class AlertService extends IntentService implements SensorEventListener,
         final Sensor sensor = event.sensor;
         if (mIsRunningAlertService) {
             if (mIsScreenOn) {
-                mStepCountCurrent = mStepCountCurrent < 0 ? 0 : mStepCountCurrent;
-                onWalkStepListener.onWalkStep(mStepCountCurrent);
+                int stepCount = countAsNg < 0 ? 0 : countAsNg;
+                onWalkStepListener.onWalkStep(stepCount);
 
                 if (mStepCountBefore == 0) {
                     mStepCountBefore = mStepCountCurrent;
@@ -349,6 +367,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                         // さらにテーブルに置いたときなど、水平状態があり得るため tendency > (適当) とする
                         if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 8) {
                             mTendencyOutCount++;
+                            shouldCountAsNg = true;
                             //  下向きと判定されるのが連続 n 回(= n 秒)の場合、Alertを表示させる
                             if (mTendencyOutCount == 5) {
                                 // 歩数計センサの利用：
@@ -364,24 +383,24 @@ public class AlertService extends IntentService implements SensorEventListener,
                             if (mTendencyOutCount > 0) {
                                 mTendencyOutCount--;
                             }
+                            shouldCountAsNg = false;
                         }
                     }
                     mTendencyCheckCount = 0;
                 }
+            } else {
+                // FIXME : 本来はScreenがOffの場合、センサを停止したい
+                shouldCountAsNg = false;
+                mTendencyCheckCount = 0;
+                mTendencyOutCount = 0;
             }
 
             // 歩数計の値を取得
-//            if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-//            } else
             if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
                 mStepCountCurrent++;
-//                // 歩行センサがある場合
-//                if (shouldShowPedometer()) {
-//                    Intent intent = new Intent(ACTION);
-//                    intent.putExtra("isStepCounter", true);
-//                    intent.putExtra("stepCount", mStepCountCurrent);
-////                            LocalBroadcastManager.getInstance(mContext).sendBroadcastSync(intent);
-//                }
+                if (shouldCountAsNg) {
+                    countAsNg++;
+                }
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 if (mIsScreenOn) {
                     // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
@@ -391,6 +410,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                 // 歩行センサがない場合 3軸加速度から計算
                 if (!mHasStepFeature) {
                     mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
+                    if (shouldCountAsNg) {
+                        countAsNg = mWalkCountCalculatorAsNg.walkCountCalculate(event);
+                    }
                     Intent intent = new Intent(ACTION);
                     intent.putExtra("isStepCounter", true);
                     intent.putExtra("stepCount", mStepCountCurrent);
