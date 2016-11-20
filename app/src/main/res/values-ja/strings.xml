@@ -70,6 +70,8 @@
     <string name="home_text_watching">歩きスマホを監視中</string>
     <string name="app_used_thankyou">ご利用ありがとうございます！</string>
 
+    <string name="app_explanation">ボタンをタップで歩きスマホ検知開始！</string>
+
     <string name="notification_ticker">歩きスマホ防止アプリ起動！</string>
     <string name="notification_content_text">アプリを開く際はタップしてください！</string>
 

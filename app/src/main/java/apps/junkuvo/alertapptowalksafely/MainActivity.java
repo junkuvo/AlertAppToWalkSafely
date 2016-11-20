@@ -270,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
         mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
-        (findViewById(R.id.txtStepCount)).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+        findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
 //        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
 //        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
@@ -577,9 +577,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         mShouldShowPedometer = isChecked;
                         if (isChecked) {
-                            (findViewById(R.id.txtStepCount)).setVisibility(View.VISIBLE);
+                            findViewById(R.id.txtStepCount).setVisibility(View.VISIBLE);
+                            findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
                         } else {
-                            (findViewById(R.id.txtStepCount)).setVisibility(View.INVISIBLE);
+                            findViewById(R.id.txtStepCount).setVisibility(View.INVISIBLE);
+                            if (mAlertService.IsRunningAlertService()) {
+                                findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
+                            }
                         }
                     }
                 }
@@ -656,15 +660,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             button.setImageResource(R.drawable.ic_done_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
-            (findViewById(R.id.txtWatching)).setVisibility(View.VISIBLE);
-            (findViewById(R.id.txtWatching)).startAnimation(mAnimationBlink);
+            findViewById(R.id.txtWatching).setVisibility(View.VISIBLE);
+            findViewById(R.id.txtWatching).startAnimation(mAnimationBlink);
+            if (!mShouldShowPedometer) {
+                findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
+            }
+            ((TextView) findViewById(R.id.txtExplanation)).setText("歩きスマホ中の歩数を計測中");
         } else {
             button.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorPrimary));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-            (findViewById(R.id.txtWatching)).setVisibility(View.GONE);
+            findViewById(R.id.txtWatching).setVisibility(View.GONE);
+            findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.txtExplanation)).setText(getString(R.string.app_explanation));
+
 //            setShouldShowAlert(false);
         }
+
     }
 
     private String mCallbackURL;
