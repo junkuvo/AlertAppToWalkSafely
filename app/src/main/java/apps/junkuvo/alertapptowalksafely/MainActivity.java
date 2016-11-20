@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog.show();
             }
             mAlertService.stopSensors();
-            mAlertService.setIsBoundService(false);
+//            mAlertService.setIsBoundService(false);
             displayInterstitial();
         } else {
             if (mStepCount > 0) {
@@ -622,6 +622,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void killAlertService() {
         unbindService(mConnection);
+        mAlertService.setIsBoundService(false);
         mConnection = null;
         mAlertService.removeOnActionFromNotificationListener();
         mAlertService.removeOnWalkStepListener();

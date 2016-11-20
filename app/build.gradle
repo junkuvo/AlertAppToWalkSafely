@@ -32,8 +32,8 @@ android {
         applicationId "apps.junkuvo.alertapptowalksafely"
         minSdkVersion 15
         targetSdkVersion 24
-        versionCode 41
-        versionName "4.2.1"
+        versionCode 43
+        versionName "4.3.1"
         multiDexEnabled true
     }
     buildTypes {

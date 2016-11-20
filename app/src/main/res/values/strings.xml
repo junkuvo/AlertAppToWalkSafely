@@ -67,4 +67,12 @@
     <string name="home_text_watching">watching</string>
     <string name="app_used_thankyou">Thank you for using this app :)</string>
 
+    <string name="app_explanation">ボタンをタップで歩きスマホ検知開始！</string>
+
+    <string name="notification_ticker">歩きスマホ防止アプリ起動！</string>
+    <string name="notification_content_text">アプリを開く際はタップしてください！</string>
+
+    <string name="dialog_back_key_positive">終了</string>
+    <string name="dialog_back_key_negative">戻る</string>
+    <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>
 </resources>
