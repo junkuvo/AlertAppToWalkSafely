@@ -25,7 +25,7 @@ android {
             apply from: releaseSettingGradleFile, to: android
         }
     }
-    compileSdkVersion 24
+    compileSdkVersion 25
     buildToolsVersion "24.0.3"
     defaultConfig {
         generatedDensities = []
@@ -61,8 +61,8 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile 'com.android.support:design:24.2.0'
+    compile 'com.android.support:appcompat-v7:25.1.0'
+    compile 'com.android.support:design:25.1.0'
     compile 'com.github.stkent:amplify:1.5.0'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;
@@ -74,9 +74,13 @@ dependencies {
     compile 'com.flurry.android:analytics:6.3.1'
     compile 'com.growthbeat:growthbeat-android:1.2.6@aar'
     compile 'com.android.support:multidex:1.0.0'
-    compile 'com.google.android.gms:play-services-gcm:9.0.1'
-    compile 'com.google.android.gms:play-services-ads:9.0.1'
-    compile 'com.google.android.gms:play-services-plus:9.0.1'
-    compile 'com.google.android.gms:play-services-location:9.0.1'
+    compile 'com.google.android.gms:play-services-gcm:9.0.2'
+    compile 'com.google.android.gms:play-services-ads:9.0.2'
+    compile 'com.google.android.gms:play-services-plus:9.0.2'
+    compile 'com.google.android.gms:play-services-location:9.0.2'
+    compile 'com.google.firebase:firebase-config:9.0.2'
     compile project(':androidutility')
 }
+
+apply plugin: 'com.google.gms.google-services'
+

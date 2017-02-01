@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -47,6 +48,10 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.software.shell.fab.ActionButton;
@@ -185,6 +190,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         setContentView(R.layout.activity_main);
 
+        initializeFirebaseRemoteConfig();
+
         // Create the interstitial.
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
@@ -309,6 +316,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.rtlMain:
+
+                fetch();
+                Toast.makeText(getApplicationContext(), mFirebaseRemoteConfig.getString("test_string"), Toast.LENGTH_SHORT).show();
+
                 FlurryAgent.logEvent("onClick aside from Start button");
 
                 // キーボードを隠す
@@ -854,5 +865,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             setStartButtonFunction(v);
         }
+    }
+
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
+
+    private void initializeFirebaseRemoteConfig() {
+
+        //instance取得
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+
+        //デベロッパーモード指定
+        FirebaseRemoteConfigSettings configSettings = new FirebaseRemoteConfigSettings.Builder()
+                .setDeveloperModeEnabled(BuildConfig.DEBUG)
+                .build();
+        mFirebaseRemoteConfig.setConfigSettings(configSettings);
+
+        //デフォルトの値を読み込む
+        mFirebaseRemoteConfig.setDefaults(R.xml.remote_config_defaults);
+    }
+
+    private void fetch() {
+        int cacheTime = mFirebaseRemoteConfig.getInfo().getConfigSettings().isDeveloperModeEnabled() ? 0 : 60 * 60;// Cache時間設定(秒)
+        mFirebaseRemoteConfig.fetch(cacheTime)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            //値を反映
+                            mFirebaseRemoteConfig.activateFetched();
+                        } else {
+                            //fetch失敗
+                        }
+                    }
+                });
     }
 }

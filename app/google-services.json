@@ -1,0 +1,58 @@
+{
+  "project_info": {
+    "project_number": "1047305644128",
+    "firebase_url": "https://alert-while-walking.firebaseio.com",
+    "project_id": "alert-while-walking",
+    "storage_bucket": "alert-while-walking.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047305644128:android:56684d7ddccb86e0",
+        "android_client_info": {
+          "package_name": "apps.junkuvo.alertapptowalksafely"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1047305644128-cq8uhk90ro592k2pffgslu4q6bclt6sf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "apps.junkuvo.alertapptowalksafely",
+            "certificate_hash": "8B3D81E4281B0C55581E6AF2AB8ABF5829751C69"
+          }
+        },
+        {
+          "client_id": "1047305644128-0l3nu5h5i7629s1drdqltkmatevi3o7h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwayglkY5tQ1kAD4Yi8zZ-Y9pPqtMUvis"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-78482574-1"
+          }
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1047305644128-0l3nu5h5i7629s1drdqltkmatevi3o7h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

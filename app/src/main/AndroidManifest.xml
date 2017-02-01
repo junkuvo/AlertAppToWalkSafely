@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-
     <!-- under API 15 -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
@@ -54,13 +53,13 @@
             android:enabled="true" />
 
         <!--<receiver android:name=".AlertReceiver">-->
-            <!--<intent-filter>-->
-                <!--&lt;!&ndash;定義したactionを追記する&ndash;&gt;-->
-                <!--<action android:name="AlertService" />-->
-                <!--<action android:name="walk_safe_click_notification" />-->
-                <!--<action android:name="walk_safe_delete_notification" />-->
-                <!--<action android:name="click_service_notification" />-->
-            <!--</intent-filter>-->
+        <!--<intent-filter>-->
+        <!--&lt;!&ndash;定義したactionを追記する&ndash;&gt;-->
+        <!--<action android:name="AlertService" />-->
+        <!--<action android:name="walk_safe_click_notification" />-->
+        <!--<action android:name="walk_safe_delete_notification" />-->
+        <!--<action android:name="click_service_notification" />-->
+        <!--</intent-filter>-->
         <!--</receiver>-->
 
         <!-- for Growth Push -->
