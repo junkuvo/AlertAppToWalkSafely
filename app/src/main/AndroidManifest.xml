@@ -38,13 +38,10 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
-
-                <data
-                    android:host="twitter"
-                    android:scheme="junkuvo" />
+                <data android:host="twitter" android:scheme="junkuvo" />
+                <data android:scheme="optly8203781431" />
             </intent-filter>
         </activity>
 

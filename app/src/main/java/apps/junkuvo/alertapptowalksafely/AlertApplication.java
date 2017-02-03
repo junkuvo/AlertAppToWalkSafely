@@ -15,6 +15,7 @@ import com.growthbeat.Growthbeat;
 import com.growthpush.GrowthPush;
 import com.growthpush.handler.DefaultReceiveHandler;
 import com.growthpush.model.Environment;
+import com.optimizely.Optimizely;
 
 
 public class AlertApplication extends MultiDexApplication {
@@ -70,6 +71,9 @@ public class AlertApplication extends MultiDexApplication {
                 .setLastCrashTimeCooldownDays(3) // Prompt not shown within input days of most recent crash.
                 .addTotalEventCountRule(PromptInteractionEvent.USER_GAVE_POSITIVE_FEEDBACK,
                         new MaximumCountRule(1)); // Never ask the user for feedback again if they already responded positively.
+
+        // You can find the following code snippet in your project code.
+        Optimizely.startOptimizelyWithAPIToken("<API Token>", this);
     }
 
     @Override
