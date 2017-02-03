@@ -538,22 +538,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     private onWalkStepListener onWalkStepListener;
     private onActionFromNotificationListener onActionFromNotificationListener;
 
-    public boolean shouldShowAlert() {
-        return mShouldShowAlert;
-    }
-
-    public void setShouldShowAlert(boolean shouldShowAlert) {
-        mShouldShowAlert = shouldShowAlert;
-    }
-
-    public boolean shouldShowPedometer() {
-        return mShouldShowPedometer;
-    }
-
-    public void setShouldShowPedometer(boolean shouldShowPedometer) {
-        mShouldShowPedometer = shouldShowPedometer;
-    }
-
     public boolean IsToastOn() {
         return mIsToastOn;
     }

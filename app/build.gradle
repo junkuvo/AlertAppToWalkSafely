@@ -31,7 +31,7 @@ android {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"
         minSdkVersion 15
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode 43
         versionName "4.3.1"
         multiDexEnabled true
@@ -80,6 +80,9 @@ dependencies {
     compile 'com.google.android.gms:play-services-location:9.0.2'
     compile 'com.google.firebase:firebase-config:9.0.2'
     compile project(':androidutility')
+    compile('com.optimizely:optimizely:+@aar') {
+        transitive = true
+    }
 }
 
 apply plugin: 'com.google.gms.google-services'
