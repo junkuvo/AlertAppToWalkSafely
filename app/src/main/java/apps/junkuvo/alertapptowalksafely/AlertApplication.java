@@ -56,13 +56,6 @@ public class AlertApplication extends MultiDexApplication {
             }
         }));
 
-//        Amplify.initSharedInstance(this)
-//                .setFeedbackEmailAddress("someone@example.com")
-//                .setAlwaysShow(true);
-//        Amplify.get(this)
-//                .setFeedbackEmailAddress("0825elle@gmail.com")
-//                .applyAllDefaultRules();
-
         Amplify.initSharedInstance(this)
                 .setFeedbackEmailAddress("0825elle@gmail.com")
                 .setInstallTimeCooldownDays(3) // Prompt not shown input days of initial install.

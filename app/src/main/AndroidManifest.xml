@@ -52,15 +52,16 @@
             android:name=".AlertService"
             android:enabled="true" />
 
-        <!--<receiver android:name=".AlertReceiver">-->
-        <!--<intent-filter>-->
-        <!--&lt;!&ndash;定義したactionを追記する&ndash;&gt;-->
-        <!--<action android:name="AlertService" />-->
-        <!--<action android:name="walk_safe_click_notification" />-->
-        <!--<action android:name="walk_safe_delete_notification" />-->
-        <!--<action android:name="click_service_notification" />-->
-        <!--</intent-filter>-->
-        <!--</receiver>-->
+        <!-- <receiver android:name=".AlertReceiver"> -->
+        <!-- <intent-filter> -->
+        <!-- &lt;!&ndash;定義したactionを追記する&ndash;&gt; -->
+        <!-- <action android:name="AlertService" /> -->
+        <!-- <action android:name="walk_safe_click_notification" /> -->
+        <!-- <action android:name="walk_safe_delete_notification" /> -->
+        <!-- <action android:name="click_service_notification" /> -->
+        <!-- </intent-filter> -->
+        <!-- </receiver> -->
+
 
         <!-- for Growth Push -->
         <activity
@@ -114,13 +115,17 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:theme="@android:style/Theme.Translucent" />
 
-        <!--<receiver android:name=".NotificationReceiver">-->
-        <!--<intent-filter>-->
-        <!--&lt;!&ndash;定義したactionを追記する&ndash;&gt;-->
-        <!--<action android:name="click_notification" />-->
-        <!--<action android:name="delete_notification" />-->
-        <!--</intent-filter>-->
-        <!--</receiver>-->
+        <!-- <receiver android:name=".NotificationReceiver"> -->
+        <!-- <intent-filter> -->
+        <!-- &lt;!&ndash;定義したactionを追記する&ndash;&gt; -->
+        <!-- <action android:name="click_notification" /> -->
+        <!-- <action android:name="delete_notification" /> -->
+        <!-- </intent-filter> -->
+        <!-- </receiver> -->
+        <activity
+            android:name=".HistoryActivity"
+            android:label="@string/title_activity_history"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

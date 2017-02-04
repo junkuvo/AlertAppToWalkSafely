@@ -7,22 +7,27 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <!--Base components layout width && height-->
     <style name="fab_layout_match_width_wrap_height_style">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
     </style>
+
     <style name="fab_layout_wrap_width_wrap_height_style">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
     </style>
+
     <style name="fab_layout_match_width_match_height_style">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -30,6 +35,7 @@
 
     <!--Action Button-->
     <style name="fab_action_button_base_style" parent="fab_layout_wrap_width_wrap_height_style" />
+
     <style name="fab_action_button_style" parent="fab_action_button_base_style">
         <!--<item name="android:layout_alignParentBottom">true</item>-->
         <item name="android:layout_marginRight">@dimen/fab_margin</item>

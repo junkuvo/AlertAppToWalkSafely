@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -79,8 +80,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final float TOAST_TEXT_SIZE = 32; // sp
 
-    private static final int MENU_SETTING_ID = 0;
-    private static final int MENU_SHARE_ID = 1;
+    /**
+     * メニュー表示順に並べること
+     */
+    enum MENU_ID {
+        SHARE(R.drawable.ic_share_white_48dp),
+        HISTORY(R.drawable.ic_history_white_48dp),
+        SETTING(R.drawable.ic_settings_white_48dp);
+
+        private int drawableResId;
+
+        MENU_ID(@DrawableRes int drawableResId) {
+            this.drawableResId = drawableResId;
+        }
+
+        public int getDrawableResId() {
+            return drawableResId;
+        }
+
+        public static MENU_ID getMenuIdEnum(int itemId) {
+            for (int i = 0; i < MENU_ID.values().length; i++) {
+                if (MENU_ID.values()[i].ordinal() == itemId) {
+                    return MENU_ID.values()[i];
+                }
+            }
+            return null;
+        }
+    }
 
     private AlertDialog.Builder mAlertDialog;
     private EditText mTweetText;
@@ -338,16 +364,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // メニューの要素を追加
-        MenuItem actionItem = menu.add(Menu.NONE, MENU_SETTING_ID, MENU_SETTING_ID, this.getString(R.string.menu_title_setting));
+        MenuItem actionItem = menu.add(Menu.NONE, MENU_ID.SETTING.ordinal(), MENU_ID.SETTING.ordinal(), this.getString(R.string.menu_title_setting));
         // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        // アイコンを設定
-        actionItem.setIcon(android.R.drawable.ic_menu_manage);
+        actionItem.setIcon(R.drawable.ic_settings_white_48dp);
 
         //  ★Twitter連携
-        actionItem = menu.add(Menu.NONE, MENU_SHARE_ID, MENU_SHARE_ID, this.getString(R.string.menu_title_share));
+        actionItem = menu.add(Menu.NONE, MENU_ID.SHARE.ordinal(), MENU_ID.SHARE.ordinal(), this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(android.R.drawable.ic_menu_share);
+        actionItem.setIcon(R.drawable.ic_share_white_48dp);
+
+        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(R.drawable.ic_history_white_48dp);
+
         return true;
     }
 
@@ -355,15 +385,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item) {
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         final View layout;
-        switch (item.getItemId()) {
-            case MENU_SETTING_ID:
+        MENU_ID menu_id = MENU_ID.getMenuIdEnum(item.getItemId());
+        switch (menu_id) {
+            case SETTING:
                 FlurryAgent.logEvent("Setting");
                 // リスト表示用のアラートダイアログ
                 layout = inflater.inflate(R.layout.setting, (ViewGroup) findViewById(R.id.layout_root));
 
                 mAlertDialog = new AlertDialog.Builder(this);
                 mAlertDialog.setTitle(this.getString(R.string.dialog_title_setting));
-                mAlertDialog.setIcon(android.R.drawable.ic_menu_manage);
+                mAlertDialog.setIcon(MENU_ID.SETTING.getDrawableResId());
                 mAlertDialog.setView(layout);
                 mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_ok), null);
 
@@ -373,7 +404,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setToggleButtonInLayout(layout);
                 mAlertDialog.show();
                 break;
-            case MENU_SHARE_ID:
+            case SHARE:
                 FlurryAgent.logEvent("Share twitter");
                 if (!TwitterUtility.hasAccessToken(this)) {
                     startAuthorize();
@@ -382,7 +413,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
                     mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
-                    mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
+                    mAlertDialog.setIcon(MENU_ID.SHARE.getDrawableResId());
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
                     mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
@@ -397,6 +428,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_cancel), null);
                     mAlertDialog.show();
                 }
+                break;
+            case HISTORY:
+                Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+                startActivity(intent);
                 break;
         }
         return true;
@@ -419,7 +454,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog = new AlertDialog.Builder(context);
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
-                mAlertDialog.setIcon(android.R.drawable.ic_menu_share);
+                mAlertDialog.setIcon(MENU_ID.SHARE.getDrawableResId());
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
                 mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
