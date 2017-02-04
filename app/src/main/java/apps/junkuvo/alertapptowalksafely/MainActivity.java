@@ -84,9 +84,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * メニュー表示順に並べること
      */
     enum MENU_ID {
-        SHARE(R.drawable.ic_share_white_48dp),
-        HISTORY(R.drawable.ic_history_white_48dp),
-        SETTING(R.drawable.ic_settings_white_48dp);
+        SHARE(R.drawable.ic_share_white_24dp),
+        HISTORY(R.drawable.ic_history_white_24dp),
+        SETTING(R.drawable.ic_settings_white_24dp);
 
         private int drawableResId;
 
@@ -367,16 +367,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         MenuItem actionItem = menu.add(Menu.NONE, MENU_ID.SETTING.ordinal(), MENU_ID.SETTING.ordinal(), this.getString(R.string.menu_title_setting));
         // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(R.drawable.ic_settings_white_48dp);
+        actionItem.setIcon(MENU_ID.SETTING.getDrawableResId());
 
         //  ★Twitter連携
         actionItem = menu.add(Menu.NONE, MENU_ID.SHARE.ordinal(), MENU_ID.SHARE.ordinal(), this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(R.drawable.ic_share_white_48dp);
+        actionItem.setIcon(MENU_ID.SHARE.getDrawableResId());
 
         actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(R.drawable.ic_history_white_48dp);
+        actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
 
         return true;
     }
@@ -394,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 mAlertDialog = new AlertDialog.Builder(this);
                 mAlertDialog.setTitle(this.getString(R.string.dialog_title_setting));
-                mAlertDialog.setIcon(MENU_ID.SETTING.getDrawableResId());
+                mAlertDialog.setIcon(R.drawable.ic_settings_black_48dp);
                 mAlertDialog.setView(layout);
                 mAlertDialog.setNegativeButton(this.getString(R.string.dialog_button_ok), null);
 
@@ -413,7 +413,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
                     mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
-                    mAlertDialog.setIcon(MENU_ID.SHARE.getDrawableResId());
+                    mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                     mAlertDialog.setView(layout);
                     mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
                     mTweetText.setText(getString(R.string.twitter_tweetText) + "\n" +
