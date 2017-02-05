@@ -106,5 +106,7 @@ public class HistoryItemFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         void onListFragmentInteraction(RealmObject item);
+
+        void onDeleteButtonClick(View view);
     }
 }

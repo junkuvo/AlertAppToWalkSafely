@@ -70,11 +70,33 @@ public class RealmUtil {
         return realmResults;
     }
 
+    public static RealmResults<HistoryItemModel> selectHistoryItemById(Realm realm, long id) {
+        RealmResults<HistoryItemModel> realmResults = null;
+        try {
+            realmResults = realm.where(HistoryItemModel.class).equalTo("id", id).findAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return realmResults;
+    }
+
     private static void copyToRealmObject(HistoryItemModel from, HistoryItemModel to) {
         to.setStartDateTime(from.getStartDateTime());
         to.setEndDateTime(from.getEndDateTime());
         to.setStepCount(from.getStepCount());
         to.setStepCountAlert(from.getStepCountAlert());
+    }
+
+    public static void deleteHistoryItem(Realm realm, long id) {
+        final RealmResults<HistoryItemModel> historyItemModels = selectHistoryItemById(realm, id);
+        // All changes to data must happen in a transaction
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                // remove single match
+                historyItemModels.deleteFirstFromRealm();
+            }
+        });
     }
 
     public interface realmTransactionCallbackListener {

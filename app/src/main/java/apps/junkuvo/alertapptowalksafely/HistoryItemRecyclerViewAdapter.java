@@ -42,6 +42,8 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
         holder.mStartDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.hhmmss));
         holder.mEndDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getEndDateTime(), DateUtil.DATE_FORMAT.hhmmss));
 
+        holder.tvTitle.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.YYYYMMDD));
+
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,6 +52,14 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
                     // fragment is attached to one) that an item has been selected.
                     mListener.onListFragmentInteraction(holder.mItem);
                 }
+            }
+        });
+        holder.ivDelete.setTag(mValues.get(position).getId());
+
+        holder.ivDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onDeleteButtonClick(v);
             }
         });
     }
