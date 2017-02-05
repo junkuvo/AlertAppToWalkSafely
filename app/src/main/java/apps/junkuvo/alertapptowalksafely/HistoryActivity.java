@@ -1,12 +1,11 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-import apps.junkuvo.alertapptowalksafely.dummy.DummyContent;
+import io.realm.RealmObject;
 
-public class HistoryActivity extends AppCompatActivity implements HistoryItemFragment.OnListFragmentInteractionListener {
+public class HistoryActivity extends AbstractActivity implements HistoryItemFragment.OnListFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +25,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryItemFra
     }
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+    public void onListFragmentInteraction(RealmObject item) {
 
     }
 }

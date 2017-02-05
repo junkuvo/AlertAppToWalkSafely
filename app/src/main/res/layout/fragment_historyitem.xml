@@ -14,19 +14,56 @@
         android:layout_marginTop="4dp"
         card_view:cardCornerRadius="4dp">
 
-        <TextView
-            android:id="@+id/id"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/text_margin"
-            android:textAppearance="?attr/textAppearanceListItem" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/content"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/text_margin"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            <TextView
+                android:id="@+id/start_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/basic_margin"
+                android:text="start"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+
+            <TextView
+                android:id="@+id/end_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/basic_margin"
+                android:text="end"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:layout_alignBaseline="@+id/start_time"
+                android:layout_alignBottom="@+id/start_time"
+                android:layout_toRightOf="@+id/start_time"
+                android:layout_toEndOf="@+id/start_time" />
+
+            <TextView
+                android:id="@+id/step_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/basic_margin"
+                android:text="stepcount"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:layout_alignParentBottom="true"
+                android:layout_alignLeft="@+id/start_time"
+                android:layout_alignStart="@+id/start_time" />
+
+            <TextView
+                android:id="@+id/step_count_alert"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/basic_margin"
+                android:text="stepcountalert"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:layout_alignParentBottom="true"
+                android:layout_toRightOf="@+id/step_count"
+                android:layout_toEndOf="@+id/step_count" />
+
+        </RelativeLayout>
     </android.support.v7.widget.CardView>
 
 </LinearLayout>

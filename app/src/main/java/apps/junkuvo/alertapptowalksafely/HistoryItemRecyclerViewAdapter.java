@@ -1,42 +1,46 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.support.v7.widget.RecyclerView;
+import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
-import java.util.List;
+import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
+import io.realm.OrderedRealmCollection;
+import io.realm.RealmRecyclerViewAdapter;
 
-import apps.junkuvo.alertapptowalksafely.dummy.DummyContent.DummyItem;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
- * specified {@link apps.junkuvo.alertapptowalksafely.HistoryItemFragment.OnListFragmentInteractionListener}.
- * TODO: Replace the implementation with code for your data type.
+ *
  */
-public class HistoryItemRecyclerViewAdapter extends RecyclerView.Adapter<HistoryItemRecyclerViewAdapter.ViewHolder> {
+public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<HistoryItemModel, HistoryItemViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final OrderedRealmCollection<HistoryItemModel> mValues;
     private final HistoryItemFragment.OnListFragmentInteractionListener mListener;
 
-    public HistoryItemRecyclerViewAdapter(List<DummyItem> items, HistoryItemFragment.OnListFragmentInteractionListener listener) {
-        mValues = items;
-        mListener = listener;
+    public HistoryItemRecyclerViewAdapter(@NonNull Context context, @Nullable OrderedRealmCollection<HistoryItemModel> data, boolean autoUpdate, HistoryItemFragment.OnListFragmentInteractionListener listener) {
+        super(context, data, autoUpdate);
+        this.mValues = data;
+        this.mListener = listener;
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public HistoryItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.fragment_historyitem, parent, false);
-        return new ViewHolder(view);
+        return new HistoryItemViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final HistoryItemViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mStepCountView.setText(mValues.get(position).getStepCount());
+        holder.mStepCountAlertView.setText(mValues.get(position).getStepCountAlert());
+        holder.mStartDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.hhmmss));
+        holder.mEndDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getEndDateTime(), DateUtil.DATE_FORMAT.hhmmss));
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,24 +57,5 @@ public class HistoryItemRecyclerViewAdapter extends RecyclerView.Adapter<History
     @Override
     public int getItemCount() {
         return mValues.size();
-    }
-
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        public final View mView;
-        public final TextView mIdView;
-        public final TextView mContentView;
-        public DummyItem mItem;
-
-        public ViewHolder(View view) {
-            super(view);
-            mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
-            mContentView = (TextView) view.findViewById(R.id.content);
-        }
-
-        @Override
-        public String toString() {
-            return super.toString() + " '" + mContentView.getText() + "'";
-        }
     }
 }
