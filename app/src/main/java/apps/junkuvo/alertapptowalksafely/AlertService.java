@@ -109,7 +109,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 
                 if (IsVibrationOn()) {
                     Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                    long[] pattern = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
+                    long[] pattern = {100, 100, 100, 100, 100, 100};
                     vibrator.vibrate(pattern, -1);
                 }
             }

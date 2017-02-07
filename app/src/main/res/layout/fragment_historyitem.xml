@@ -35,57 +35,67 @@
                 android:text="title"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
-            <android.support.v7.widget.AppCompatTextView
-                android:id="@+id/txtStartTimeCaption"
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/ivClock"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
                 android:layout_below="@+id/txtTitle"
-                android:text="開始：" />
+                app:srcCompat="@drawable/ic_access_time_455a64_24dp" />
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/start_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@+id/txtStartTimeCaption"
-                android:layout_toRightOf="@+id/txtStartTimeCaption"
+                android:layout_below="@+id/txtTitle"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
+                android:layout_toEndOf="@+id/ivClock"
+                android:layout_toRightOf="@+id/ivClock"
                 android:text="start"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@android:color/black" />
-
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/txtEndTimeCaption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBaseline="@+id/start_time"
-                android:layout_marginLeft="@dimen/basic_margin"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
                 android:layout_toRightOf="@+id/start_time"
-                android:text="終了：" />
+                android:text="〜" />
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/end_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBaseline="@+id/txtEndTimeCaption"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
                 android:layout_toRightOf="@+id/txtEndTimeCaption"
                 android:text="end"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@android:color/black" />
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_alignLeft="@+id/txtStartTimeCaption"
-                android:layout_alignStart="@+id/txtStartTimeCaption"
-                android:layout_below="@+id/txtStartTimeCaption">
+                android:layout_alignLeft="@+id/ivClock"
+                android:layout_alignStart="@+id/ivClock"
+                android:layout_below="@+id/ivClock"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/ivWalk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_directions_walk_black_24dp" />
 
                 <android.support.v7.widget.AppCompatTextView
                     android:id="@+id/step_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_toRightOf="@+id/txtStepCountCaption"
-                    android:text="stepcount"
+                    android:layout_marginLeft="@dimen/basic_margin_8dp"
+                    android:text="step"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
                     android:textColor="@color/colorPrimaryDark" />
 
@@ -93,10 +103,7 @@
                     android:id="@+id/txtStepCountAlertCaption"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
                     android:layout_marginLeft="@dimen/basic_margin"
-                    android:layout_toEndOf="@+id/step_count"
-                    android:layout_toRightOf="@+id/step_count"
                     android:text="歩きスマホ："
                     android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                     android:textSize="18sp" />
@@ -105,34 +112,21 @@
                     android:id="@+id/step_count_alert"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_toRightOf="@+id/txtStepCountAlertCaption"
-                    android:text="stepcountalert"
+                    android:text="stepcount"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                    android:textColor="?attr/colorPrimaryDark" />
+                    android:textColor="?attr/colorAccent" />
 
-                <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/txtStepCountCaption"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:text="歩数："
-                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-                    android:textSize="18sp" />
+            </LinearLayout>
 
-                <android.support.v7.widget.AppCompatImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_delete_deep_455a64_24dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentEnd="true"
-                    android:id="@+id/ivDelete"
-                    android:background="@android:color/transparent" />
+            <android.support.v7.widget.AppCompatImageButton
+                android:id="@+id/ivDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:background="@android:color/transparent"
+                app:srcCompat="@drawable/ic_delete_deep_455a64_24dp" />
 
-            </RelativeLayout>
         </RelativeLayout>
     </android.support.v7.widget.CardView>
 

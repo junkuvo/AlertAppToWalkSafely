@@ -9,7 +9,7 @@ public class DateUtil {
     public enum DATE_FORMAT {
         YYYYMMDD("yyyy/MM/dd"),
         YYYYMMDDhhmmss("yyyy/MM/dd hh:mm:ss"),
-        hhmmss("hh:mm:ss");
+        HHmmss("HH:mm:ss");
 
         private String format;
 

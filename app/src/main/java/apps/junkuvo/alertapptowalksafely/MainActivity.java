@@ -482,7 +482,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog = new AlertDialog.Builder(context);
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
-                mAlertDialog.setIcon(MENU_ID.SHARE.getDrawableResId());
+                mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
                 mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +

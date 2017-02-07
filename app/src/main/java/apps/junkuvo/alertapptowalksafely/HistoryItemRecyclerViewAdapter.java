@@ -39,8 +39,8 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
         holder.mItem = mValues.get(position);
         holder.mStepCountView.setText(mValues.get(position).getStepCount());
         holder.mStepCountAlertView.setText(mValues.get(position).getStepCountAlert());
-        holder.mStartDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.hhmmss));
-        holder.mEndDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getEndDateTime(), DateUtil.DATE_FORMAT.hhmmss));
+        holder.mStartDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.HHmmss));
+        holder.mEndDateTimeView.setText(DateUtil.convertDateToString(mValues.get(position).getEndDateTime(), DateUtil.DATE_FORMAT.HHmmss));
 
         holder.tvTitle.setText(DateUtil.convertDateToString(mValues.get(position).getStartDateTime(), DateUtil.DATE_FORMAT.YYYYMMDD));
 
