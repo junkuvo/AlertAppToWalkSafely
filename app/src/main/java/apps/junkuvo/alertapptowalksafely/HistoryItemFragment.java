@@ -10,8 +10,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import apps.junkuvo.alertapptowalksafely.dummy.DummyContent;
-import apps.junkuvo.alertapptowalksafely.dummy.DummyContent.DummyItem;
+import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
+import io.realm.Realm;
+import io.realm.RealmObject;
+import io.realm.RealmResults;
 
 /**
  * A fragment representing a list of Items.
@@ -67,7 +70,8 @@ public class HistoryItemFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new HistoryItemRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance());
+            recyclerView.setAdapter(new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener));
         }
         return view;
     }
@@ -101,7 +105,8 @@ public class HistoryItemFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(RealmObject item);
+
+        void onDeleteButtonClick(View view);
     }
 }

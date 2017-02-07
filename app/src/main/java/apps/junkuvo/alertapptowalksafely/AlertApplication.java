@@ -16,12 +16,20 @@ import com.growthpush.GrowthPush;
 import com.growthpush.handler.DefaultReceiveHandler;
 import com.growthpush.model.Environment;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+
 
 public class AlertApplication extends MultiDexApplication {
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // realmの初期化
+        Realm.init(this);
+        RealmConfiguration config = new RealmConfiguration.Builder().build();
+        Realm.setDefaultConfiguration(config);
 
         new FlurryAgent.Builder()
                 .withLogEnabled(false)
@@ -70,4 +78,6 @@ public class AlertApplication extends MultiDexApplication {
         super.attachBaseContext(base);
         MultiDex.install(this);
     }
+
+
 }

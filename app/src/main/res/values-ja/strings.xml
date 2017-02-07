@@ -75,6 +75,8 @@
     <string name="notification_ticker">歩きスマホ防止アプリ起動！</string>
     <string name="notification_content_text">アプリを開く際はタップしてください！</string>
 
+    <string name="delete">削除</string>
+    <string name="dialog_messge_delete">削除してよろしいですか?\n※一度削除したデータは復元できません</string>
     <string name="dialog_back_key_positive">終了</string>
     <string name="dialog_back_key_negative">戻る</string>
     <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>

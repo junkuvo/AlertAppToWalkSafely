@@ -14,7 +14,6 @@ import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.TypedValue;
@@ -54,7 +53,10 @@ import com.software.shell.fab.ActionButton;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
+import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
 import co.mobiwise.materialintro.view.MaterialIntroView;
@@ -65,7 +67,7 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
     private Utility mUtility;
     private Intent mAlertServiceIntent;
@@ -437,6 +439,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
+    private Date startDateTime;
+
+    private HistoryItemModel createHistoryItemData() {
+        HistoryItemModel historyItemModel = new HistoryItemModel();
+        historyItemModel.setStartDateTime(startDateTime);
+        historyItemModel.setEndDateTime(new Date());
+        historyItemModel.setStepCount(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
+        String stepCount = ((TextView) findViewById(R.id.txtStepCount)).getText().toString();
+        historyItemModel.setStepCountAlert(stepCount);
+        return historyItemModel;
+    }
+
     public void setStartButtonFunction(final View v) {
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
@@ -447,6 +461,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
+            if (mStepCount > 0) {
+                RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
+                    @Override
+                    public void OnSuccess() {
+
+                    }
+
+                    @Override
+                    public void OnError() {
+
+                    }
+                });
+            }
+
             if (TwitterUtility.hasAccessToken(getApplicationContext())) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
@@ -454,7 +482,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mAlertDialog = new AlertDialog.Builder(context);
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
-                mAlertDialog.setIcon(MENU_ID.SHARE.getDrawableResId());
+                mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
                 mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
@@ -482,6 +510,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onClick(DialogInterface dialog, int which) {
                         FlurryAgent.logEvent("Service Start!!");
                         mAlertService.startSensors();
+                        startDateTime = new Date();
 //                        mStepCount = 0;
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
                         changeViewState(true, ((ActionButton) v));
@@ -493,6 +522,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 FlurryAgent.logEvent("Service Start!!");
                 changeViewState(true, ((ActionButton) v));
                 mAlertService.startSensors();
+                startDateTime = new Date();
             }
         }
     }
@@ -653,6 +683,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // FIXME : これどこで呼ぶのが一番いいのか
         Growthbeat.getInstance().stop();
     }
 
