@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:id="@+id/rtlMain"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/home_text_watching"
+        android:id="@+id/txtWatching"
+        android:layout_above="@+id/txtAlertMessage"
+        android:layout_marginBottom="16dp"
+        android:textSize="32sp"
+        android:visibility="gone"
+        android:layout_centerHorizontal="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtAlertMessage"
+        android:text="@string/home_edittext_alert"
+        android:layout_above="@+id/fabStart"
+        android:layout_centerHorizontal="true"/>
+
+    <com.software.shell.fab.ActionButton
+        android:id="@+id/fabStart"
+        style="@style/fab_action_button_style"
+        fab:type="BIG"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/home_step_count_initial"
+        android:id="@+id/txtStepCount"
+        android:layout_below="@+id/fabStart"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:textSize="40sp" />
+
+    <com.google.android.gms.plus.PlusOneButton
+        xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
+        android:id="@+id/plus_one_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        plus:size="standard"
+        plus:annotation="inline"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/txtStepCount" />
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-1630604043812019/9847037818"
+        >
+    </com.google.android.gms.ads.AdView>
+
+    <com.github.stkent.amplify.prompt.DefaultLayoutPromptView
+        android:id="@+id/prompt_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:prompt_view_thanks_display_time_ms="2000"
+        app:prompt_view_button_corner_radius="5dp"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_explanation"
+        android:id="@+id/txtExplanation"
+        android:textSize="16sp"
+        android:layout_above="@+id/txtStepCount"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>

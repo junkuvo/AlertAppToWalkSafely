@@ -1,8 +1,0 @@
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
-/.idea/compiler.xml
-/build
-*/*.apk
-release.gradle

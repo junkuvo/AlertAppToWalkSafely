@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">WebAPIAccessApp</string>
-    <string name="progress_message">データ取得中...</string>
-
-    <string name="Cancel">Cancel</string>
-    <string name="OK">OK</string>
-</resources>

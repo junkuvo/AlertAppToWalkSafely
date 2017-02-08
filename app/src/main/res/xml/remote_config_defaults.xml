@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>test_string</key>
+        <value>文字列だよ</value>
+    </entry>
+    <entry>
+        <key>test_bool</key>
+        <value>false</value>
+    </entry>
+    <entry>
+        <key>test_long</key>
+        <value>100</value>
+    </entry>
+</defaultsMap>

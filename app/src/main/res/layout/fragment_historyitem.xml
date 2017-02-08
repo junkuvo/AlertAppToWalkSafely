@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/history_item_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="4dp"
+        card_view:cardCornerRadius="4dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="@dimen/basic_margin"
+            android:paddingLeft="@dimen/basic_margin"
+            android:paddingRight="@dimen/basic_margin"
+            android:paddingTop="@dimen/basic_margin_8dp">
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/txtTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginBottom="@dimen/basic_margin_8dp"
+                android:text="title"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/ivClock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@+id/txtTitle"
+                app:srcCompat="@drawable/ic_access_time_455a64_24dp" />
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/start_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txtTitle"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
+                android:layout_toEndOf="@+id/ivClock"
+                android:layout_toRightOf="@+id/ivClock"
+                android:text="start"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@android:color/black" />
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/txtEndTimeCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/start_time"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
+                android:layout_toRightOf="@+id/start_time"
+                android:text="〜" />
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/end_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/txtEndTimeCaption"
+                android:layout_marginLeft="@dimen/basic_margin_8dp"
+                android:layout_toRightOf="@+id/txtEndTimeCaption"
+                android:text="end"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="@android:color/black" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignLeft="@+id/ivClock"
+                android:layout_alignStart="@+id/ivClock"
+                android:layout_below="@+id/ivClock"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/ivWalk"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/ic_directions_walk_black_24dp" />
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:id="@+id/step_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/basic_margin_8dp"
+                    android:text="step"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:textColor="@color/colorPrimaryDark" />
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:id="@+id/txtStepCountAlertCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/basic_margin"
+                    android:text="歩きスマホ："
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    android:textSize="18sp" />
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:id="@+id/step_count_alert"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="stepcount"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:textColor="?attr/colorAccent" />
+
+            </LinearLayout>
+
+            <android.support.v7.widget.AppCompatImageButton
+                android:id="@+id/ivDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:background="@android:color/transparent"
+                app:srcCompat="@drawable/ic_delete_deep_455a64_24dp" />
+
+        </RelativeLayout>
+    </android.support.v7.widget.CardView>
+
+</LinearLayout>
