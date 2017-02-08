@@ -80,5 +80,7 @@
     <string name="dialog_back_key_positive">終了</string>
     <string name="dialog_back_key_negative">戻る</string>
     <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>
+    <string name="action_settings">設定</string>
+    <string name="title_activity_abstract">AbstractActivity</string>
 
 </resources>
