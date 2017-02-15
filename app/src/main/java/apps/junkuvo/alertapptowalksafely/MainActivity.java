@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -69,9 +70,6 @@ import twitter4j.auth.RequestToken;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
-    private Utility mUtility;
-    private Intent mAlertServiceIntent;
-
     private boolean mPasscodeOn = false;
     private int mStepCount = 0;
     public static final String SETTING_SHAREDPREF_NAME = "setting";
@@ -115,7 +113,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private String mPasscode;
     private String mPasscodeConfirm;
-    private boolean btnIsStarted = false;
 
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
@@ -125,13 +122,18 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private InterstitialAd mInterstitialAd;
 
-    private boolean mShouldShowAlert = false;
-    private boolean mShouldShowPedometer = true;
-    private boolean mIsToastOn = true;
-    private boolean mIsVibrationOn = true;
-    private int mToastPosition;
+    @VisibleForTesting
+    boolean mShouldShowPedometer = true;
+    @VisibleForTesting
+    boolean mIsToastOn = true;
+    @VisibleForTesting
+    boolean mIsVibrationOn = true;
+    @VisibleForTesting
+    int mToastPosition;
+    @VisibleForTesting
+    int mAlertStartAngle;
+
     private String mAlertMessage;
-    private int mAlertStartAngle;
 
     public TextWatcher mTextWatcher = new TextWatcher() {
         @Override
@@ -201,6 +203,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
+
         ActionBar actionbar = getSupportActionBar();
         if (actionbar != null) {
             actionbar.show();
@@ -211,96 +214,93 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             finish();
             return;
         }
-        setContentView(R.layout.activity_main);
 
-        FirebaseRemoteConfigUtil.initialize();
+        if (!isRunningJunit) {
+            setContentView(R.layout.activity_main);
 
-        // Create the interstitial.
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
+            FirebaseRemoteConfigUtil.initialize();
 
-        // Create ad request.
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
-                .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
-                .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
-                .build();
+            // Create the interstitial.
+            mInterstitialAd = new InterstitialAd(this);
+            mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
 
-        // Begin loading your interstitial.
-        mInterstitialAd.loadAd(adRequest);
+            // Create ad request.
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                    .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
+                    .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
+                    .build();
 
-        AdView mAdView = (AdView) findViewById(R.id.adView);
-        mAdView.loadAd(adRequest);
+            // Begin loading your interstitial.
+            mInterstitialAd.loadAd(adRequest);
 
-        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
+            AdView mAdView = (AdView) findViewById(R.id.adView);
+            mAdView.loadAd(adRequest);
 
-        final BasePromptViewConfig basePromptViewConfig
-                = new BasePromptViewConfig.Builder()
-                .setUserOpinionQuestionTitle(getString(R.string.prompt_title))
-                .setUserOpinionQuestionPositiveButtonLabel(getString(R.string.prompt_btn_yes))
-                .setUserOpinionQuestionNegativeButtonLabel(getString(R.string.prompt_btn_no))
-                .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
-                .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
-                .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
-                .setCriticalFeedbackQuestionTitle(getString(R.string.prompt_title_feedback_2))
-                .setCriticalFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
-                .setCriticalFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
-                .setThanksTitle(getString(R.string.prompt_thanks))
-                .build();
+            DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
-        promptView.applyBaseConfig(basePromptViewConfig);
-        Amplify.getSharedInstance().promptIfReady(promptView);
+            final BasePromptViewConfig basePromptViewConfig
+                    = new BasePromptViewConfig.Builder()
+                    .setUserOpinionQuestionTitle(getString(R.string.prompt_title))
+                    .setUserOpinionQuestionPositiveButtonLabel(getString(R.string.prompt_btn_yes))
+                    .setUserOpinionQuestionNegativeButtonLabel(getString(R.string.prompt_btn_no))
+                    .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
+                    .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                    .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                    .setCriticalFeedbackQuestionTitle(getString(R.string.prompt_title_feedback_2))
+                    .setCriticalFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                    .setCriticalFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                    .setThanksTitle(getString(R.string.prompt_thanks))
+                    .build();
 
-        mUtility = new Utility(this);
-        mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
+            promptView.applyBaseConfig(basePromptViewConfig);
+            Amplify.getSharedInstance().promptIfReady(promptView);
 
-        int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
-        int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
-        mbtnStart = (ActionButton) findViewById(R.id.fabStart);
-        mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
-        mbtnStart.setButtonColor(buttonColor);
-        mbtnStart.setButtonColorPressed(buttonPressedColor);
+            Utility mUtility = new Utility(this);
+            mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
 
-        new MaterialIntroView.Builder(this)
-                .enableDotAnimation(false)
-                .enableIcon(true)
-                .setFocusGravity(FocusGravity.CENTER)
-                .setFocusType(Focus.MINIMUM)
-                .setDelayMillis(500)
-                .enableFadeAnimation(true)
-                .performClick(true)
-                .setInfoText(getString(R.string.intro_description))
-                .setTarget(mbtnStart)
-                .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
-                .dismissOnTouch(true)
-                .show();
+            int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
+            int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
+            mbtnStart = (ActionButton) findViewById(R.id.fabStart);
+            mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
+            mbtnStart.setButtonColor(buttonColor);
+            mbtnStart.setButtonColorPressed(buttonPressedColor);
+
+            new MaterialIntroView.Builder(this)
+                    .enableDotAnimation(false)
+                    .enableIcon(true)
+                    .setFocusGravity(FocusGravity.CENTER)
+                    .setFocusType(Focus.MINIMUM)
+                    .setDelayMillis(500)
+                    .enableFadeAnimation(true)
+                    .performClick(true)
+                    .setInfoText(getString(R.string.intro_description))
+                    .setTarget(mbtnStart)
+                    .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                    .dismissOnTouch(true)
+                    .show();
 
 
-        mbtnStart.setOnClickListener(this);
+            mbtnStart.setOnClickListener(this);
 
-        mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
+            Intent mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
 
-        // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
-        // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
-        if (!mUtility.isTabletNotPhone(this)) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-        mTwitter = TwitterUtility.getTwitterInstance(this);
-        mCallbackURL = getString(R.string.twitter_callback_url);
+            // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
+            // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
+            if (!Utility.isTabletNotPhone(this)) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
+            mTwitter = TwitterUtility.getTwitterInstance(this);
+            mCallbackURL = getString(R.string.twitter_callback_url);
 
-        mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
-        // Refresh the state of the +1 button each time the activity receives focus.
-        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
+            mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
+            // Refresh the state of the +1 button each time the activity receives focus.
+            mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
-        relativeLayout.setOnClickListener(this);
+            RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
+            relativeLayout.setOnClickListener(this);
 
-        mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
-        mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
-        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
-        mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
-        mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
-        findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+            findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
 //        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
 //        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
@@ -309,9 +309,17 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //            btnIsStarted = false;
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
-        // サービスを開始
+            // サービスを開始
 //        startService(mAlertServiceIntent);
-        bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+            bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+        }
+
+        mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
+        mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
+        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
+        mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
+        mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
 
     }
 
@@ -319,11 +327,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onStart() {
         super.onStart();
 
-        // カーソルを最後尾に移動
-        mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
-        mAlertEditText.setSelection(mAlertEditText.getText().length());
-        mAlertEditText.addTextChangedListener(mTextWatcher);
-        mAlertMessage = mAlertEditText.getText().toString();
+        if (!isRunningJunit) {
+            // カーソルを最後尾に移動
+            mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
+            mAlertEditText.setSelection(mAlertEditText.getText().length());
+            mAlertEditText.addTextChangedListener(mTextWatcher);
+            mAlertMessage = mAlertEditText.getText().toString();
+        }
     }
 
     private static final int PLUS_ONE_REQUEST_CODE = 0;
@@ -388,6 +398,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         final View layout;
         MENU_ID menu_id = MENU_ID.getMenuIdEnum(item.getItemId());
+        assert menu_id != null;
         switch (menu_id) {
             case SETTING:
                 FlurryAgent.logEvent("Setting");
