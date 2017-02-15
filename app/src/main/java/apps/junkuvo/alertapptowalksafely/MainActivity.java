@@ -234,8 +234,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             // Begin loading your interstitial.
             mInterstitialAd.loadAd(adRequest);
 
+            // FIXME : クリック率悪いので消します。
             AdView mAdView = (AdView) findViewById(R.id.adView);
             mAdView.loadAd(adRequest);
+
+            // TODO : 代わりに何か機能入れよう
 
             DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 

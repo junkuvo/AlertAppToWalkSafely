@@ -64,8 +64,9 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
+        android:visibility="gone"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-1630604043812019/9847037818"></com.google.android.gms.ads.AdView>
+        ads:adUnitId="ca-app-pub-1630604043812019/9847037818" />
 
     <com.github.stkent.amplify.prompt.DefaultLayoutPromptView
         android:id="@+id/prompt_view"
