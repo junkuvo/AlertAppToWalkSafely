@@ -50,12 +50,12 @@ public class MainActivityTest {
         boolean isVibrationOn = !activity.mIsVibrationOn;
         boolean isShouldShowPedeometer = !activity.mShouldShowPedometer;
         int toastPosition = activity.mToastPosition == Gravity.TOP ? Gravity.BOTTOM : Gravity.TOP;
-        int aleartStartAngle = activity.mAlertStartAngle - 10;
+        int alertStartAngle = activity.mAlertStartAngle - 10;
         activity.mIsToastOn = isToastOn;
         activity.mIsVibrationOn = isVibrationOn;
         activity.mShouldShowPedometer = isShouldShowPedeometer;
         activity.mToastPosition = toastPosition;
-        activity.mAlertStartAngle = aleartStartAngle;
+        activity.mAlertStartAngle = alertStartAngle;
 
         // onDestroyまで実行
         activityController.pause().destroy();
@@ -69,6 +69,6 @@ public class MainActivityTest {
         assertThat(isVibrationOn, is(activity.mIsVibrationOn));
         assertThat(isShouldShowPedeometer, is(activity.mShouldShowPedometer));
         assertThat(toastPosition, is(activity.mToastPosition));
-        assertThat(aleartStartAngle, is(activity.mAlertStartAngle));
+        assertThat(alertStartAngle, is(activity.mAlertStartAngle));
     }
 }
