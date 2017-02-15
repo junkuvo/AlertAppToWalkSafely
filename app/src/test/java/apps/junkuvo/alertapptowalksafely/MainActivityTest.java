@@ -48,12 +48,12 @@ public class MainActivityTest {
 
         boolean isToastOn = !activity.mIsToastOn;
         boolean isVibrationOn = !activity.mIsVibrationOn;
-        boolean isShouldShowPedeometer = !activity.mShouldShowPedometer;
+        boolean isShouldShowPedometer = !activity.mShouldShowPedometer;
         int toastPosition = activity.mToastPosition == Gravity.TOP ? Gravity.BOTTOM : Gravity.TOP;
         int alertStartAngle = activity.mAlertStartAngle - 10;
         activity.mIsToastOn = isToastOn;
         activity.mIsVibrationOn = isVibrationOn;
-        activity.mShouldShowPedometer = isShouldShowPedeometer;
+        activity.mShouldShowPedometer = isShouldShowPedometer;
         activity.mToastPosition = toastPosition;
         activity.mAlertStartAngle = alertStartAngle;
 
@@ -67,7 +67,7 @@ public class MainActivityTest {
 
         assertThat(isToastOn, is(activity.mIsToastOn));
         assertThat(isVibrationOn, is(activity.mIsVibrationOn));
-        assertThat(isShouldShowPedeometer, is(activity.mShouldShowPedometer));
+        assertThat(isShouldShowPedometer, is(activity.mShouldShowPedometer));
         assertThat(toastPosition, is(activity.mToastPosition));
         assertThat(alertStartAngle, is(activity.mAlertStartAngle));
     }
