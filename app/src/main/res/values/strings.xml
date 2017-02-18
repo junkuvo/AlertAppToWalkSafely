@@ -79,4 +79,7 @@
     <string name="title_activity_abstract">AbstractActivity</string>
     <string name="delete">Delete</string>
     <string name="dialog_messge_delete">Are you sure to delete?</string>
+    <string name="facebook_app_id">216549442084538</string>
+    <string name="menu_title_facebook">Facebook</string>
+    <string name="menu_title_line">LINE</string>
 </resources>
