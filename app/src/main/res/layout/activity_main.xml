@@ -49,15 +49,6 @@
         android:layout_centerHorizontal="true"
         android:textSize="40sp" />
 
-    <com.google.android.gms.plus.PlusOneButton xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
-        android:id="@+id/plus_one_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        plus:size="standard"
-        plus:annotation="inline"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/txtStepCount" />
-
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="wrap_content"
@@ -84,4 +75,26 @@
         android:layout_above="@+id/txtStepCount"
         android:layout_centerHorizontal="true" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/basic_margin"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_below="@+id/txtStepCount">
+
+        <com.google.android.gms.plus.PlusOneButton xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
+            android:id="@+id/plus_one_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            plus:size="medium"
+            plus:annotation="bubble" />
+
+        <com.facebook.share.widget.LikeView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/basic_margin"
+            android:id="@+id/like_view" />
+    </LinearLayout>
 </RelativeLayout>

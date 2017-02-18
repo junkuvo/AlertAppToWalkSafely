@@ -39,6 +39,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
@@ -57,6 +58,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
@@ -84,8 +86,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
      * メニュー表示順に並べること
      */
     enum MENU_ID {
-        SHARE(R.drawable.ic_share_white_24dp),
         HISTORY(R.drawable.ic_history_white_24dp),
+        TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
+        FACEBOOK(R.drawable.ic_action_fb_f_logo__white_1024),
+        LINE(R.drawable.ic_action_fb_f_logo__white_1024),
         SETTING(R.drawable.ic_settings_white_24dp);
 
         private int drawableResId;
@@ -220,6 +224,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             FirebaseRemoteConfigUtil.initialize();
 
+            LikeView likeView = (LikeView) findViewById(R.id.like_view);
+            likeView.setObjectIdAndType(String.format(getString(R.string.app_googlePlay_url), getPackageName()), LikeView.ObjectType.PAGE);
+
             // Create the interstitial.
             mInterstitialAd = new InterstitialAd(this);
             mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
@@ -237,8 +244,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             // FIXME : クリック率悪いので消します。
             AdView mAdView = (AdView) findViewById(R.id.adView);
             mAdView.loadAd(adRequest);
-
-            // TODO : 代わりに何か機能入れよう
 
             DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
@@ -369,6 +374,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 }
                 break;
             case R.id.fabStart:
+                showShareDialog();
+
                 startBtnClick(v);
                 break;
 
@@ -385,13 +392,24 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setIcon(MENU_ID.SETTING.getDrawableResId());
 
         //  ★Twitter連携
-        actionItem = menu.add(Menu.NONE, MENU_ID.SHARE.ordinal(), MENU_ID.SHARE.ordinal(), this.getString(R.string.menu_title_share));
+        actionItem = menu.add(Menu.NONE, MENU_ID.TWITTER.ordinal(), MENU_ID.TWITTER.ordinal(), this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(MENU_ID.SHARE.getDrawableResId());
+        actionItem.setIcon(MENU_ID.TWITTER.getDrawableResId());
 
-        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+        // Facebook
+        actionItem = menu.add(Menu.NONE, MENU_ID.FACEBOOK.ordinal(), MENU_ID.FACEBOOK.ordinal(), this.getString(R.string.menu_title_facebook));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(MENU_ID.FACEBOOK.getDrawableResId());
+
+        // HISTORY
+        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+
+//        // LINE
+//        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
+//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+//        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
 
         return true;
     }
@@ -420,7 +438,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 setToggleButtonInLayout(layout);
                 mAlertDialog.show();
                 break;
-            case SHARE:
+            case TWITTER:
                 FlurryAgent.logEvent("Share twitter");
                 if (!TwitterUtility.hasAccessToken(this)) {
                     startAuthorize();
@@ -448,6 +466,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             case HISTORY:
                 Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
                 startActivity(intent);
+                break;
+            case FACEBOOK:
+                showShareDialog();
+                break;
+            case LINE:
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                LINEUtil.sendStringMessage(this, getString(R.string.twitter_tweetText) + "\n" +
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
                 break;
         }
         return true;
