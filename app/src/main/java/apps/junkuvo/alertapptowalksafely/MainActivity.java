@@ -52,6 +52,7 @@ import com.google.android.gms.plus.PlusOneButton;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.software.shell.fab.ActionButton;
+import com.webianks.easy_feedback.EasyFeedback;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -87,9 +88,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
      */
     enum MENU_ID {
         HISTORY(R.drawable.ic_history_white_24dp),
-        TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
         FACEBOOK(R.drawable.ic_action_fb_f_logo__white_1024),
+        TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
         LINE(R.drawable.ic_action_fb_f_logo__white_1024),
+        FEEDBACK(R.drawable.ic_action_fb_f_logo__white_1024),
         SETTING(R.drawable.ic_settings_white_24dp);
 
         private int drawableResId;
@@ -409,6 +411,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 //        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
 
+        // FEEDBACK
+        actionItem = menu.add(Menu.NONE, MENU_ID.FEEDBACK.ordinal(), MENU_ID.FEEDBACK.ordinal(), this.getString(R.string.menu_title_feedback));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setIcon(MENU_ID.FEEDBACK.getDrawableResId());
+
         return true;
     }
 
@@ -472,6 +479,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 LINEUtil.sendStringMessage(this, getString(R.string.twitter_tweetText) + "\n" +
                         String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                break;
+            case FEEDBACK:
+                Toast.makeText(this, "ご意見お待ちしております！", Toast.LENGTH_LONG).show();
+                new EasyFeedback.Builder(this)
+                        .withEmail("0825elle@gmail.com")
+                        .build()
+                        .start();
                 break;
         }
         return true;
