@@ -374,8 +374,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 }
                 break;
             case R.id.fabStart:
-                showShareDialog();
-
                 startBtnClick(v);
                 break;
 
