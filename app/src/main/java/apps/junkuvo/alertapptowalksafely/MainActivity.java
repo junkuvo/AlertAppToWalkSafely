@@ -51,6 +51,8 @@ import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
+import com.mikepenz.aboutlibraries.Libs;
+import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.software.shell.fab.ActionButton;
 import com.webianks.easy_feedback.EasyFeedback;
 
@@ -91,8 +93,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         FACEBOOK(R.drawable.ic_action_fb_f_logo__white_1024),
         TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
         LINE(R.drawable.ic_action_fb_f_logo__white_1024),
-        FEEDBACK(R.drawable.ic_action_fb_f_logo__white_1024),
-        SETTING(R.drawable.ic_settings_white_24dp);
+        FEEDBACK(0),
+        SETTING(R.drawable.ic_settings_white_24dp),
+        LICENSE(0);
 
         private int drawableResId;
 
@@ -387,11 +390,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         // メニューの要素を追加
         MenuItem actionItem = menu.add(Menu.NONE, MENU_ID.SETTING.ordinal(), MENU_ID.SETTING.ordinal(), this.getString(R.string.menu_title_setting));
-        // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.SETTING.getDrawableResId());
 
-        //  ★Twitter連携
+        // ★Twitter連携
         actionItem = menu.add(Menu.NONE, MENU_ID.TWITTER.ordinal(), MENU_ID.TWITTER.ordinal(), this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.TWITTER.getDrawableResId());
@@ -406,15 +408,20 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
 
-//        // LINE
-//        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
-//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-//        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
+        // LINE
+        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
 
         // FEEDBACK
         actionItem = menu.add(Menu.NONE, MENU_ID.FEEDBACK.ordinal(), MENU_ID.FEEDBACK.ordinal(), this.getString(R.string.menu_title_feedback));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         actionItem.setIcon(MENU_ID.FEEDBACK.getDrawableResId());
+
+        // LICENSE
+        actionItem = menu.add(Menu.NONE, MENU_ID.LICENSE.ordinal(), MENU_ID.LICENSE.ordinal(), this.getString(R.string.menu_title_license));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
         return true;
     }
@@ -476,9 +483,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 showShareDialog();
                 break;
             case LINE:
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 LINEUtil.sendStringMessage(this, getString(R.string.twitter_tweetText) + "\n" +
-                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()));
                 break;
             case FEEDBACK:
                 Toast.makeText(this, "ご意見お待ちしております！", Toast.LENGTH_LONG).show();
@@ -487,6 +493,17 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         .build()
                         .start();
                 break;
+            case LICENSE:
+                new LibsBuilder()
+                        //provide a style (optional) (LIGHT, DARK, LIGHT_DARK_TOOLBAR)
+                        .withActivityStyle(Libs.ActivityStyle.LIGHT_DARK_TOOLBAR)
+                        .withAboutIconShown(true)
+                        .withAboutVersionShown(true)
+//                        .withAboutDescription("T")
+                        //start the activity
+                        .start(this);
+                break;
+
         }
         return true;
     }
@@ -552,6 +569,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService.stopSensors();
 //            mAlertService.setIsBoundService(false);
             displayInterstitial();
+
+            mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+            mbtnStart.playShowAnimation();
+
         } else {
             if (mStepCount > 0) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
@@ -566,6 +587,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //                        mStepCount = 0;
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
                         changeViewState(true, ((ActionButton) v));
+                        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                        mbtnStart.playShowAnimation();
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
@@ -575,6 +598,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 changeViewState(true, ((ActionButton) v));
                 mAlertService.startSensors();
                 startDateTime = new Date();
+                mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                mbtnStart.playShowAnimation();
             }
         }
     }
