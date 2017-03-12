@@ -86,4 +86,5 @@
     <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>
     <string name="action_settings">設定</string>
     <string name="title_activity_abstract">AbstractActivity</string>
+    <string name="tweet_edit_hint">つぶやきを書き込んでみましょう！</string>
 </resources>

@@ -408,10 +408,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
 
-//        // LINE
-//        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
-//        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-//        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
+        // LINE
+        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
 
         // FEEDBACK
         actionItem = menu.add(Menu.NONE, MENU_ID.FEEDBACK.ordinal(), MENU_ID.FEEDBACK.ordinal(), this.getString(R.string.menu_title_feedback));
@@ -483,9 +483,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 showShareDialog();
                 break;
             case LINE:
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
                 LINEUtil.sendStringMessage(this, getString(R.string.twitter_tweetText) + "\n" +
-                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()));
                 break;
             case FEEDBACK:
                 Toast.makeText(this, "ご意見お待ちしております！", Toast.LENGTH_LONG).show();
@@ -570,6 +569,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService.stopSensors();
 //            mAlertService.setIsBoundService(false);
             displayInterstitial();
+
+            mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+            mbtnStart.playShowAnimation();
+
         } else {
             if (mStepCount > 0) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
@@ -584,6 +587,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //                        mStepCount = 0;
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
                         changeViewState(true, ((ActionButton) v));
+                        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                        mbtnStart.playShowAnimation();
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
@@ -593,6 +598,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 changeViewState(true, ((ActionButton) v));
                 mAlertService.startSensors();
                 startDateTime = new Date();
+                mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                mbtnStart.playShowAnimation();
             }
         }
     }
