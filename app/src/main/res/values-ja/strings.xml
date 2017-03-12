@@ -16,8 +16,12 @@
     <string name="review_url_title">レビューサイトへ</string>
 
     <string name="menu_title_setting">設定</string>
-    <string name="menu_title_share">共有</string>
+    <string name="menu_title_share">Twitter</string>
     <string name="menu_title_history">履歴</string>
+    <string name="menu_title_facebook">Facebook</string>
+    <string name="menu_title_line">LINE</string>
+    <string name="menu_title_feedback">お問い合わせ</string>
+    <string name="menu_title_license">ライセンス</string>
 
     <string name="dialog_title_setting">各種設定</string>
     <string name="dialog_title_tweet">つぶやく</string>
@@ -82,5 +86,5 @@
     <string name="dialog_back_key_message">アプリを終了しますか？\n歩きスマホが検知できなくなります</string>
     <string name="action_settings">設定</string>
     <string name="title_activity_abstract">AbstractActivity</string>
-
+    <string name="tweet_edit_hint">つぶやきを書き込んでみましょう！</string>
 </resources>

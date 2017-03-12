@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -38,6 +39,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.crashlytics.android.Crashlytics;
+import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
@@ -49,13 +51,17 @@ import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
+import com.mikepenz.aboutlibraries.Libs;
+import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.software.shell.fab.ActionButton;
+import com.webianks.easy_feedback.EasyFeedback;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
@@ -68,9 +74,6 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
-
-    private Utility mUtility;
-    private Intent mAlertServiceIntent;
 
     private boolean mPasscodeOn = false;
     private int mStepCount = 0;
@@ -86,9 +89,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
      * メニュー表示順に並べること
      */
     enum MENU_ID {
-        SHARE(R.drawable.ic_share_white_24dp),
         HISTORY(R.drawable.ic_history_white_24dp),
-        SETTING(R.drawable.ic_settings_white_24dp);
+        FACEBOOK(R.drawable.ic_action_fb_f_logo__white_1024),
+        TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
+        LINE(R.drawable.ic_action_fb_f_logo__white_1024),
+        FEEDBACK(0),
+        SETTING(R.drawable.ic_settings_white_24dp),
+        LICENSE(0);
 
         private int drawableResId;
 
@@ -115,7 +122,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private String mPasscode;
     private String mPasscodeConfirm;
-    private boolean btnIsStarted = false;
 
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
@@ -125,13 +131,18 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private InterstitialAd mInterstitialAd;
 
-    private boolean mShouldShowAlert = false;
-    private boolean mShouldShowPedometer = true;
-    private boolean mIsToastOn = true;
-    private boolean mIsVibrationOn = true;
-    private int mToastPosition;
+    @VisibleForTesting
+    boolean mShouldShowPedometer = true;
+    @VisibleForTesting
+    boolean mIsToastOn = true;
+    @VisibleForTesting
+    boolean mIsVibrationOn = true;
+    @VisibleForTesting
+    int mToastPosition;
+    @VisibleForTesting
+    int mAlertStartAngle;
+
     private String mAlertMessage;
-    private int mAlertStartAngle;
 
     public TextWatcher mTextWatcher = new TextWatcher() {
         @Override
@@ -201,6 +212,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
+
         ActionBar actionbar = getSupportActionBar();
         if (actionbar != null) {
             actionbar.show();
@@ -211,96 +223,97 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             finish();
             return;
         }
-        setContentView(R.layout.activity_main);
 
-        FirebaseRemoteConfigUtil.initialize();
+        if (!isRunningJunit) {
+            setContentView(R.layout.activity_main);
 
-        // Create the interstitial.
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
+            FirebaseRemoteConfigUtil.initialize();
 
-        // Create ad request.
-        AdRequest adRequest = new AdRequest.Builder()
-                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
-                .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
-                .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
-                .build();
+            LikeView likeView = (LikeView) findViewById(R.id.like_view);
+            likeView.setObjectIdAndType(String.format(getString(R.string.app_googlePlay_url), getPackageName()), LikeView.ObjectType.PAGE);
 
-        // Begin loading your interstitial.
-        mInterstitialAd.loadAd(adRequest);
+            // Create the interstitial.
+            mInterstitialAd = new InterstitialAd(this);
+            mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
 
-        AdView mAdView = (AdView) findViewById(R.id.adView);
-        mAdView.loadAd(adRequest);
+            // Create ad request.
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                    .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
+                    .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
+                    .build();
 
-        DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
+            // Begin loading your interstitial.
+            mInterstitialAd.loadAd(adRequest);
 
-        final BasePromptViewConfig basePromptViewConfig
-                = new BasePromptViewConfig.Builder()
-                .setUserOpinionQuestionTitle(getString(R.string.prompt_title))
-                .setUserOpinionQuestionPositiveButtonLabel(getString(R.string.prompt_btn_yes))
-                .setUserOpinionQuestionNegativeButtonLabel(getString(R.string.prompt_btn_no))
-                .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
-                .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
-                .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
-                .setCriticalFeedbackQuestionTitle(getString(R.string.prompt_title_feedback_2))
-                .setCriticalFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
-                .setCriticalFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
-                .setThanksTitle(getString(R.string.prompt_thanks))
-                .build();
+            // FIXME : クリック率悪いので消します。
+            AdView mAdView = (AdView) findViewById(R.id.adView);
+            mAdView.loadAd(adRequest);
 
-        promptView.applyBaseConfig(basePromptViewConfig);
-        Amplify.getSharedInstance().promptIfReady(promptView);
+            DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
-        mUtility = new Utility(this);
-        mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
+            final BasePromptViewConfig basePromptViewConfig
+                    = new BasePromptViewConfig.Builder()
+                    .setUserOpinionQuestionTitle(getString(R.string.prompt_title))
+                    .setUserOpinionQuestionPositiveButtonLabel(getString(R.string.prompt_btn_yes))
+                    .setUserOpinionQuestionNegativeButtonLabel(getString(R.string.prompt_btn_no))
+                    .setPositiveFeedbackQuestionTitle(getString(R.string.prompt_title_feedback))
+                    .setPositiveFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                    .setPositiveFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                    .setCriticalFeedbackQuestionTitle(getString(R.string.prompt_title_feedback_2))
+                    .setCriticalFeedbackQuestionNegativeButtonLabel(getString(R.string.prompt_btn_notnow))
+                    .setCriticalFeedbackQuestionPositiveButtonLabel(getString(R.string.prompt_btn_sure))
+                    .setThanksTitle(getString(R.string.prompt_thanks))
+                    .build();
 
-        int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
-        int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
-        mbtnStart = (ActionButton) findViewById(R.id.fabStart);
-        mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
-        mbtnStart.setButtonColor(buttonColor);
-        mbtnStart.setButtonColorPressed(buttonPressedColor);
+            promptView.applyBaseConfig(basePromptViewConfig);
+            Amplify.getSharedInstance().promptIfReady(promptView);
 
-        new MaterialIntroView.Builder(this)
-                .enableDotAnimation(false)
-                .enableIcon(true)
-                .setFocusGravity(FocusGravity.CENTER)
-                .setFocusType(Focus.MINIMUM)
-                .setDelayMillis(500)
-                .enableFadeAnimation(true)
-                .performClick(true)
-                .setInfoText(getString(R.string.intro_description))
-                .setTarget(mbtnStart)
-                .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
-                .dismissOnTouch(true)
-                .show();
+            Utility mUtility = new Utility(this);
+            mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
+
+            int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
+            int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
+            mbtnStart = (ActionButton) findViewById(R.id.fabStart);
+            mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
+            mbtnStart.setButtonColor(buttonColor);
+            mbtnStart.setButtonColorPressed(buttonPressedColor);
+
+            new MaterialIntroView.Builder(this)
+                    .enableDotAnimation(false)
+                    .enableIcon(true)
+                    .setFocusGravity(FocusGravity.CENTER)
+                    .setFocusType(Focus.MINIMUM)
+                    .setDelayMillis(500)
+                    .enableFadeAnimation(true)
+                    .performClick(true)
+                    .setInfoText(getString(R.string.intro_description))
+                    .setTarget(mbtnStart)
+                    .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                    .dismissOnTouch(true)
+                    .show();
 
 
-        mbtnStart.setOnClickListener(this);
+            mbtnStart.setOnClickListener(this);
 
-        mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
+            Intent mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
 
-        // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
-        // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
-        if (!mUtility.isTabletNotPhone(this)) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-        mTwitter = TwitterUtility.getTwitterInstance(this);
-        mCallbackURL = getString(R.string.twitter_callback_url);
+            // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
+            // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
+            if (!Utility.isTabletNotPhone(this)) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            }
+            mTwitter = TwitterUtility.getTwitterInstance(this);
+            mCallbackURL = getString(R.string.twitter_callback_url);
 
-        mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
-        // Refresh the state of the +1 button each time the activity receives focus.
-        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
+            mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
+            // Refresh the state of the +1 button each time the activity receives focus.
+            mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
-        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
-        relativeLayout.setOnClickListener(this);
+            RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
+            relativeLayout.setOnClickListener(this);
 
-        mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
-        mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
-        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
-        mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
-        mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
-        findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+            findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
 //        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
 //        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
@@ -309,9 +322,17 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //            btnIsStarted = false;
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
-        // サービスを開始
+            // サービスを開始
 //        startService(mAlertServiceIntent);
-        bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+            bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+
+        }
+
+        mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
+        mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
+        mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
+        mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
+        mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
 
     }
 
@@ -319,11 +340,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onStart() {
         super.onStart();
 
-        // カーソルを最後尾に移動
-        mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
-        mAlertEditText.setSelection(mAlertEditText.getText().length());
-        mAlertEditText.addTextChangedListener(mTextWatcher);
-        mAlertMessage = mAlertEditText.getText().toString();
+        if (!isRunningJunit) {
+            // カーソルを最後尾に移動
+            mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
+            mAlertEditText.setSelection(mAlertEditText.getText().length());
+            mAlertEditText.addTextChangedListener(mTextWatcher);
+            mAlertMessage = mAlertEditText.getText().toString();
+        }
     }
 
     private static final int PLUS_ONE_REQUEST_CODE = 0;
@@ -367,18 +390,38 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         // メニューの要素を追加
         MenuItem actionItem = menu.add(Menu.NONE, MENU_ID.SETTING.ordinal(), MENU_ID.SETTING.ordinal(), this.getString(R.string.menu_title_setting));
-        // SHOW_AS_ACTION_IF_ROOM:余裕があれば表示
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.SETTING.getDrawableResId());
 
-        //  ★Twitter連携
-        actionItem = menu.add(Menu.NONE, MENU_ID.SHARE.ordinal(), MENU_ID.SHARE.ordinal(), this.getString(R.string.menu_title_share));
+        // ★Twitter連携
+        actionItem = menu.add(Menu.NONE, MENU_ID.TWITTER.ordinal(), MENU_ID.TWITTER.ordinal(), this.getString(R.string.menu_title_share));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        actionItem.setIcon(MENU_ID.SHARE.getDrawableResId());
+        actionItem.setIcon(MENU_ID.TWITTER.getDrawableResId());
 
-        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+        // Facebook
+        actionItem = menu.add(Menu.NONE, MENU_ID.FACEBOOK.ordinal(), MENU_ID.FACEBOOK.ordinal(), this.getString(R.string.menu_title_facebook));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(MENU_ID.FACEBOOK.getDrawableResId());
+
+        // HISTORY
+        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+
+        // LINE
+        actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        actionItem.setIcon(MENU_ID.LINE.getDrawableResId());
+
+        // FEEDBACK
+        actionItem = menu.add(Menu.NONE, MENU_ID.FEEDBACK.ordinal(), MENU_ID.FEEDBACK.ordinal(), this.getString(R.string.menu_title_feedback));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setIcon(MENU_ID.FEEDBACK.getDrawableResId());
+
+        // LICENSE
+        actionItem = menu.add(Menu.NONE, MENU_ID.LICENSE.ordinal(), MENU_ID.LICENSE.ordinal(), this.getString(R.string.menu_title_license));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
         return true;
     }
@@ -388,6 +431,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         final View layout;
         MENU_ID menu_id = MENU_ID.getMenuIdEnum(item.getItemId());
+        assert menu_id != null;
         switch (menu_id) {
             case SETTING:
                 FlurryAgent.logEvent("Setting");
@@ -406,7 +450,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 setToggleButtonInLayout(layout);
                 mAlertDialog.show();
                 break;
-            case SHARE:
+            case TWITTER:
                 FlurryAgent.logEvent("Share twitter");
                 if (!TwitterUtility.hasAccessToken(this)) {
                     startAuthorize();
@@ -435,6 +479,31 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
                 startActivity(intent);
                 break;
+            case FACEBOOK:
+                showShareDialog();
+                break;
+            case LINE:
+                LINEUtil.sendStringMessage(this, getString(R.string.twitter_tweetText) + "\n" +
+                        String.format(getString(R.string.app_googlePlay_url), getPackageName()));
+                break;
+            case FEEDBACK:
+                Toast.makeText(this, "ご意見お待ちしております！", Toast.LENGTH_LONG).show();
+                new EasyFeedback.Builder(this)
+                        .withEmail("0825elle@gmail.com")
+                        .build()
+                        .start();
+                break;
+            case LICENSE:
+                new LibsBuilder()
+                        //provide a style (optional) (LIGHT, DARK, LIGHT_DARK_TOOLBAR)
+                        .withActivityStyle(Libs.ActivityStyle.LIGHT_DARK_TOOLBAR)
+                        .withAboutIconShown(true)
+                        .withAboutVersionShown(true)
+//                        .withAboutDescription("T")
+                        //start the activity
+                        .start(this);
+                break;
+
         }
         return true;
     }
@@ -500,6 +569,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService.stopSensors();
 //            mAlertService.setIsBoundService(false);
             displayInterstitial();
+
+            mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+            mbtnStart.playShowAnimation();
+
         } else {
             if (mStepCount > 0) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
@@ -514,6 +587,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //                        mStepCount = 0;
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
                         changeViewState(true, ((ActionButton) v));
+                        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                        mbtnStart.playShowAnimation();
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
@@ -523,6 +598,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 changeViewState(true, ((ActionButton) v));
                 mAlertService.startSensors();
                 startDateTime = new Date();
+                mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+                mbtnStart.playShowAnimation();
             }
         }
     }

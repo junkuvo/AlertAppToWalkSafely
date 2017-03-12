@@ -9,8 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <!-- under API 15 -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
     <!-- for Growth Push -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
@@ -109,6 +107,19 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:theme="@android:style/Theme.Translucent" />
+
+        <provider
+            android:authorities="com.facebook.app.FacebookContentProvider216549442084538"
+            android:name="com.facebook.FacebookContentProvider"
+            android:exported="true" />
+
         <!-- Include the AdActivity configChanges and theme. -->
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
@@ -126,10 +137,6 @@
             android:name=".HistoryActivity"
             android:label="@string/title_activity_history"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".AbstractActivity"
-            android:label="@string/title_activity_abstract"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

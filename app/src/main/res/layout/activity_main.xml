@@ -29,7 +29,7 @@
         android:id="@+id/txtAlertMessage"
         android:text="@string/home_edittext_alert"
         android:layout_above="@+id/fabStart"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true" />
 
     <com.software.shell.fab.ActionButton
         android:id="@+id/fabStart"
@@ -49,34 +49,22 @@
         android:layout_centerHorizontal="true"
         android:textSize="40sp" />
 
-    <com.google.android.gms.plus.PlusOneButton
-        xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
-        android:id="@+id/plus_one_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        plus:size="standard"
-        plus:annotation="inline"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/txtStepCount" />
-
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
+        android:visibility="gone"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-1630604043812019/9847037818"
-        >
-    </com.google.android.gms.ads.AdView>
+        ads:adUnitId="ca-app-pub-1630604043812019/9847037818" />
 
     <com.github.stkent.amplify.prompt.DefaultLayoutPromptView
         android:id="@+id/prompt_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:prompt_view_thanks_display_time_ms="2000"
-        app:prompt_view_button_corner_radius="5dp"
-        />
+        app:prompt_view_button_corner_radius="5dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -87,4 +75,26 @@
         android:layout_above="@+id/txtStepCount"
         android:layout_centerHorizontal="true" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/basic_margin"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_below="@+id/txtStepCount">
+
+        <com.google.android.gms.plus.PlusOneButton xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
+            android:id="@+id/plus_one_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            plus:size="medium"
+            plus:annotation="bubble" />
+
+        <com.facebook.share.widget.LikeView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/basic_margin"
+            android:id="@+id/like_view" />
+    </LinearLayout>
 </RelativeLayout>
