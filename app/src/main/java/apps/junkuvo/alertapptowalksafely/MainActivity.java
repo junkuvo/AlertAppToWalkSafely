@@ -8,8 +8,10 @@ import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
@@ -72,6 +74,8 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
+
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
@@ -323,7 +327,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
             // サービスを開始
-//        startService(mAlertServiceIntent);
+//            startService(mAlertServiceIntent);
             bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
         }
@@ -581,27 +585,58 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        FlurryAgent.logEvent("Service Start!!");
-                        mAlertService.startSensors();
-                        startDateTime = new Date();
-//                        mStepCount = 0;
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
-                        changeViewState(true, ((ActionButton) v));
-                        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
-                        mbtnStart.playShowAnimation();
+                        start(v);
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
                 mAlertDialog.show();
             } else {
-                FlurryAgent.logEvent("Service Start!!");
-                changeViewState(true, ((ActionButton) v));
-                mAlertService.startSensors();
-                startDateTime = new Date();
-                mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
-                mbtnStart.playShowAnimation();
+                start(v);
             }
         }
+    }
+
+    private boolean checkOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            /** check if we already  have permission to draw over other apps */
+            return Settings.canDrawOverlays(this);
+        }
+        return true;
+    }
+
+    private void start(View v) {
+        if (checkOverlayPermission()) {
+            startProcesses(v);
+        } else {
+            /** if not construct intent to request permission */
+            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
+            /** request permission via start activity for result */
+            startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    public static int CHECK_OVERLAY_PERMISSION_REQUEST_CODE = 1000;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "aaaa", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void startProcesses(View v) {
+        FlurryAgent.logEvent("Service Start!!");
+        changeViewState(true, ((ActionButton) v));
+        mAlertService.startSensors();
+        startDateTime = new Date();
+        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+        mbtnStart.playShowAnimation();
     }
 
     public void setSeekBarInLayout(View layout) {

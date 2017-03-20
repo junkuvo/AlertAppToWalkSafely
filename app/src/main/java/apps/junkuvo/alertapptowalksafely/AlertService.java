@@ -9,11 +9,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,6 +27,11 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,6 +45,8 @@ import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
 
 public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -194,7 +204,12 @@ public class AlertService extends IntentService implements SensorEventListener,
                 .build();
 
         mHasStepFeature = isHasStepFeature();
+
     }
+
+    private View overlay;
+    private WindowManager windowManager;
+
 
     /**
      * これはonStartServiceでしか呼ばれない
@@ -207,7 +222,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-//        super.onStart(intent, startId);
         return START_STICKY;
     }
 
@@ -273,6 +287,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void startSensors() {
         startServiceForeground();
         try {
+            startOverlay();
             setIsRunningAlertService(true);
 
             LocalBroadcastManager.getInstance(mContext).registerReceiver(localBroadcastReceiver, localIntentFilter);
@@ -302,6 +317,9 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     public void stopSensors() {
         try {
+            if (overlay != null) {
+                windowManager.removeView(overlay);
+            }
             // Notificationを消す
             stopForeground(true);
 
@@ -326,6 +344,51 @@ public class AlertService extends IntentService implements SensorEventListener,
         } finally {
             setIsRunningAlertService(false);
         }
+    }
+
+    private void startOverlay() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_TOAST,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+
+        Display display = windowManager.getDefaultDisplay();
+        final Point point = new Point(0, 0);
+        // Android 4.2~
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            display.getRealSize(point);
+        }
+
+        overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null);
+        overlay.findViewById(R.id.fabStartOverlay).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int x = (int) event.getRawX();
+                int y = (int) event.getRawY();
+
+                switch (event.getAction()) {
+                    case ACTION_MOVE:
+                        int centerX = x - (point.x / 2);
+                        int centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.fab_margin);
+                        layoutParams.x = centerX;
+                        layoutParams.y = centerY;
+                        windowManager.updateViewLayout(overlay, layoutParams);
+                        break;
+                    case ACTION_UP:
+                        break;
+                }
+                return false;
+            }
+        });
+
+        windowManager.addView(overlay, layoutParams);
     }
 
     public void initializeSensingValues() {
