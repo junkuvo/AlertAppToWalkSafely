@@ -32,6 +32,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -46,7 +47,6 @@ import junkuvo.apps.androidutility.ToastUtil;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.view.MotionEvent.ACTION_MOVE;
-import static android.view.MotionEvent.ACTION_UP;
 
 public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -346,12 +346,14 @@ public class AlertService extends IntentService implements SensorEventListener,
         }
     }
 
+    private WindowManager.LayoutParams layoutParams;
+
     private void startOverlay() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
+        layoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_TOAST,
+                WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
@@ -375,19 +377,16 @@ public class AlertService extends IntentService implements SensorEventListener,
 
                 switch (event.getAction()) {
                     case ACTION_MOVE:
-                        int centerX = x - (point.x / 2);
-                        int centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.fab_margin);
+                        int centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);
+                        int centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_20dp);
                         layoutParams.x = centerX;
                         layoutParams.y = centerY;
                         windowManager.updateViewLayout(overlay, layoutParams);
-                        break;
-                    case ACTION_UP:
                         break;
                 }
                 return false;
             }
         });
-
         windowManager.addView(overlay, layoutParams);
     }
 
@@ -464,6 +463,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                 if (shouldCountAsNg) {
                     countAsNg++;
                 }
+                ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 if (mIsScreenOn) {
                     // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
