@@ -6,4 +6,12 @@
     <dimen name="toast_margin_top_bottom">56dp</dimen>
     <dimen name="app_bar_height">180dp</dimen>
     <dimen name="text_margin">16dp</dimen>
+    <dimen name="basic_margin_48dp">48dp</dimen>
+    <dimen name="basic_margin">16dp</dimen>
+    <dimen name="basic_margin_20dp">22dp</dimen>
+    <dimen name="basic_margin_12dp">12dp</dimen>
+    <dimen name="basic_margin_10dp">10dp</dimen>
+    <dimen name="basic_margin_9dp">9dp</dimen>
+    <dimen name="basic_margin_8dp">8dp</dimen>
+    <dimen name="basic_margin_4dp">4dp</dimen>
 </resources>

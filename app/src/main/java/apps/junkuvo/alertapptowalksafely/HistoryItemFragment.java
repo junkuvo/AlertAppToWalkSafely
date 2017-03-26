@@ -15,6 +15,7 @@ import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import io.realm.Realm;
 import io.realm.RealmObject;
 import io.realm.RealmResults;
+import io.realm.Sort;
 
 /**
  * A fragment representing a list of Items.
@@ -67,7 +68,7 @@ public class HistoryItemFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance());
+            RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance(), "id", Sort.DESCENDING);
             recyclerView.setAdapter(new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener));
         }
         return view;

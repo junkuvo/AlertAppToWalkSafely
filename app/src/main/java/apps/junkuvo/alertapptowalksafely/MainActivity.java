@@ -176,8 +176,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
             mAlertService.setOnWalkStepListener(new AlertService.onWalkStepListener() {
                 @Override
-                public void onWalkStep(int stepCount) {
+                public void onAlertWalkStep(int stepCount) {
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
+                }
+
+                @Override
+                public void onWalkStep(int stepCount) {
+                    ((TextView) findViewById(R.id.txtStepNo)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
             mAlertService.setOnActionFromNotificationListener(new AlertService.onActionFromNotificationListener() {
@@ -279,7 +284,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
             int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
             mbtnStart = (ActionButton) findViewById(R.id.fabStart);
-            mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             mbtnStart.setButtonColor(buttonColor);
             mbtnStart.setButtonColorPressed(buttonPressedColor);
 
@@ -317,7 +321,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
             relativeLayout.setOnClickListener(this);
 
-            findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+            findViewById(R.id.llStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
 //        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
 //        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
@@ -586,6 +590,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+                        ((TextView) findViewById(R.id.txtStepNo)).setText("0" + getString(R.string.home_step_count_dimension));
                         start(v);
                     }
                 });
@@ -625,7 +630,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-                Toast.makeText(this, "aaaa", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -761,10 +765,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         mShouldShowPedometer = isChecked;
                         if (isChecked) {
-                            findViewById(R.id.txtStepCount).setVisibility(View.VISIBLE);
+                            findViewById(R.id.llStepCount).setVisibility(View.VISIBLE);
                             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
                         } else {
-                            findViewById(R.id.txtStepCount).setVisibility(View.INVISIBLE);
+                            findViewById(R.id.llStepCount).setVisibility(View.INVISIBLE);
                             if (mAlertService.IsRunningAlertService()) {
                                 findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
                             }
@@ -843,19 +847,19 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     public void changeViewState(boolean isStart, ActionButton button) {
         if (isStart) {
-            button.setImageResource(R.drawable.ic_done_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
+            ((TextView) findViewById(R.id.txtStartButton)).setText(getString(R.string.stop));
             findViewById(R.id.txtWatching).setVisibility(View.VISIBLE);
             findViewById(R.id.txtWatching).startAnimation(mAnimationBlink);
             if (!mShouldShowPedometer) {
                 findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
             }
-            ((TextView) findViewById(R.id.txtExplanation)).setText("歩きスマホ中の歩数を計測中");
+            findViewById(R.id.txtExplanation).setVisibility(View.GONE);//.setText("歩きスマホ中の歩数を計測中");
         } else {
-            button.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorPrimary));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+            ((TextView) findViewById(R.id.txtStartButton)).setText(getString(R.string.start));
             findViewById(R.id.txtWatching).setVisibility(View.GONE);
             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
             ((TextView) findViewById(R.id.txtExplanation)).setText(getString(R.string.app_explanation));

@@ -59,11 +59,11 @@ public class RealmUtil {
         return realmResults;
     }
 
-    public static RealmResults<HistoryItemModel> selectAllHistoryItemAsync(Realm realm) {
+    public static RealmResults<HistoryItemModel> selectAllHistoryItemAsync(Realm realm, String key, Sort sort) {
         RealmResults<HistoryItemModel> realmResults = null;
         try {
             realmResults = realm.where(HistoryItemModel.class).findAllAsync()
-                    .sort("id", Sort.ASCENDING);
+                    .sort(key, sort);
         } catch (Exception e) {
             e.printStackTrace();
         }

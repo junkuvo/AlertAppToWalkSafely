@@ -31,9 +31,10 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:textColor="@android:color/white"
-                android:textSize="24dp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 android:ems="3"
+                android:text="0"
                 tools:text="12345" />
         </LinearLayout>
     </FrameLayout>

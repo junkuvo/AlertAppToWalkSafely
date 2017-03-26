@@ -7,7 +7,7 @@ import android.view.View;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
 
-public class HistoryItemViewHolder extends RecyclerView.ViewHolder {
+class HistoryItemViewHolder extends RecyclerView.ViewHolder {
 
     public final View mView;
     public final AppCompatTextView tvTitle;

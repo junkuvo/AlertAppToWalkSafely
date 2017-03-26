@@ -12,7 +12,7 @@
     android:id="@+id/rtlMain"
     tools:context=".MainActivity">
 
-    <TextView
+    <android.support.v7.widget.AppCompatTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/home_text_watching"
@@ -23,31 +23,71 @@
         android:visibility="gone"
         android:layout_centerHorizontal="true" />
 
-    <EditText
+    <android.support.v7.widget.AppCompatEditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/txtAlertMessage"
         android:text="@string/home_edittext_alert"
-        android:layout_above="@+id/fabStart"
-        android:layout_centerHorizontal="true" />
-
-    <com.software.shell.fab.ActionButton
-        android:id="@+id/fabStart"
-        style="@style/fab_action_button_style"
-        fab:type="BIG"
+        android:layout_above="@+id/flStart"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" />
+        android:inputType="text" />
 
-    <TextView
+    <FrameLayout
+        android:id="@+id/flStart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/home_step_count_initial"
-        android:id="@+id/txtStepCount"
-        android:layout_below="@+id/fabStart"
-        android:layout_marginTop="10dp"
+        android:layout_marginBottom="@dimen/basic_margin"
         android:layout_centerHorizontal="true"
-        android:textSize="40sp" />
+        android:layout_centerVertical="true">
+
+        <com.software.shell.fab.ActionButton
+            android:id="@+id/fabStart"
+            style="@style/fab_action_button_style"
+            android:layout_marginBottom="0dp"
+            android:layout_marginRight="0dp"
+            fab:type="BIG" />
+
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/txtStartButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:text="@string/start"
+            android:textSize="16sp"
+            tools:text="START" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/llStepCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/flStart"
+        android:layout_centerHorizontal="true">
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/home_step_count_initial"
+            android:id="@+id/txtStepNo"
+            android:textColor="@color/colorPrimary"
+            android:textSize="40sp" />
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/home_step_count_initial"
+            android:id="@+id/txtStepCount"
+            android:textColor="@color/colorAccent"
+            android:layout_marginLeft="@dimen/basic_margin_48dp"
+            android:textSize="40sp" />
+
+    </LinearLayout>
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
@@ -72,7 +112,7 @@
         android:text="@string/app_explanation"
         android:id="@+id/txtExplanation"
         android:textSize="16sp"
-        android:layout_above="@+id/txtStepCount"
+        android:layout_above="@+id/llStepCount"
         android:layout_centerHorizontal="true" />
 
     <LinearLayout
@@ -82,7 +122,7 @@
         android:layout_centerHorizontal="true"
         android:gravity="center"
         android:orientation="horizontal"
-        android:layout_below="@+id/txtStepCount">
+        android:layout_below="@+id/llStepCount">
 
         <com.google.android.gms.plus.PlusOneButton xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
             android:id="@+id/plus_one_button"
