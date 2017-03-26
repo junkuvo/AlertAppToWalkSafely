@@ -75,6 +75,7 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
+import static android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
@@ -192,13 +193,22 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     setStartButtonFunction(findViewById(R.id.fabStart));
                 }
             });
+            mAlertService.setOverlayActionListener(new AlertService.OverlayActionListener() {
+                @Override
+                public void onOpenApp() {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+                    startActivity(intent);
+                }
+            });
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
             mAlertService.setToastPosition(mToastPosition);
             mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
             mAlertService.setAlertMessage(mAlertMessage);
             mAlertService.setIsBoundService(true);
-            ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+            String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
+            ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
 
             if (mAlertService.IsRunningAlertService()) {
                 // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
@@ -363,7 +373,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onResume() {
         super.onResume();
         FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
-        FlurryAgent.logEvent("onStart");
+        FlurryAgent.logEvent("onResume");
     }
 
     @Override
@@ -589,8 +599,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
-                        ((TextView) findViewById(R.id.txtStepNo)).setText("0" + getString(R.string.home_step_count_dimension));
+                        String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
+                        ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
+                        ((TextView) findViewById(R.id.txtStepNo)).setText(initial);
                         start(v);
                     }
                 });

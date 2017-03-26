@@ -43,7 +43,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
-import com.software.shell.fab.ActionButton;
 
 import java.util.List;
 
@@ -310,8 +309,10 @@ public class AlertService extends IntentService implements SensorEventListener,
             }
 
             // 歩数計用のセンサー登録
-            mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-            mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+                mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
 
             initializeSensingValues();
         } catch (Exception e) {
@@ -365,6 +366,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT
         );
+        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_106dp);
 
         Display display = windowManager.getDefaultDisplay();
         final Point point = new Point(0, 0);
@@ -417,11 +419,10 @@ public class AlertService extends IntentService implements SensorEventListener,
                                         windowManager.removeView(overlay);
                                     }
                                     break;
-                                case R.id.show_alert_step_count:
-                                    break;
+//                                case R.id.show_alert_step_count:
+//                                    break;
                                 case R.id.open_app:
-                                    // TODO : コールバックかなここも
-                                    startActivity(new Intent(mContext, MainActivity.class));
+                                    overlayActionListener.onOpenApp();
                                     break;
                             }
                             Toast.makeText(v.getContext(), "Clicked : " + item.getTitle(), Toast.LENGTH_SHORT).show();
@@ -511,11 +512,13 @@ public class AlertService extends IntentService implements SensorEventListener,
                 mStepCountCurrent++;
                 if (shouldCountAsNg) {
                     countAsNg++;
-                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorAccent);
-                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorAccentDark);
-                } else {
-                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorPrimary);
-                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorPrimaryDark);
+                    // FIXME 色変えたいな
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorAccent);
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorAccentDark);
+//                    overlay.findViewById(R.id.fabStartOverlay).setAlpha(1.0F);
+//                } else {
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorPrimary);
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorPrimaryDark);
                 }
                 ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
                 onWalkStepListener.onWalkStep(mStepCountCurrent);
@@ -726,6 +729,16 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     public void setIsRunningAlertService(boolean mIsRunningAlertService) {
         this.mIsRunningAlertService = mIsRunningAlertService;
+    }
+
+    interface OverlayActionListener {
+        void onOpenApp();
+    }
+
+    private OverlayActionListener overlayActionListener;
+
+    public void setOverlayActionListener(OverlayActionListener overlayActionListener) {
+        this.overlayActionListener = overlayActionListener;
     }
 }
 
