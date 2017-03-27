@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -185,13 +187,16 @@ public class AlertService extends IntentService implements SensorEventListener,
     private IntentFilter intentFilter = new IntentFilter();
     private IntentFilter localIntentFilter = new IntentFilter();
 
+    private Configuration config;
+
     @Override
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
         boolean isTablet = Utility.isTabletNotPhone(mContext);
-        int orientation = Utility.getOrientation(mContext);
-        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, orientation);
+        Resources resources = mContext.getResources();
+        config = resources.getConfiguration();
+        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, config.orientation);
         mWalkCountCalculator = new WalkCountCalculator();
         mWalkCountCalculatorAsNg = new WalkCountCalculator();
 
@@ -366,14 +371,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT
         );
-        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_106dp);
+        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_106dp);// 適当な値
 
-        Display display = windowManager.getDefaultDisplay();
-        final Point point = new Point(0, 0);
-        // Android 4.2~
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            display.getRealSize(point);
-        }
+        final Point point = getDisplaySize();
 
         overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null);
         overlay.findViewById(R.id.fabStartOverlay).setOnTouchListener(new View.OnTouchListener() {
@@ -384,8 +384,11 @@ public class AlertService extends IntentService implements SensorEventListener,
 
                 switch (event.getAction()) {
                     case ACTION_MOVE:
-                        int centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);
-                        int centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_20dp);
+                        windowManager.getDefaultDisplay().getRealSize(point);
+                        int centerX;
+                        int centerY;
+                        centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);// FIXME :ここも縦横で変更
+                        centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_20dp);
                         layoutParams.x = centerX;
                         layoutParams.y = centerY;
                         windowManager.updateViewLayout(overlay, layoutParams);
@@ -434,6 +437,22 @@ public class AlertService extends IntentService implements SensorEventListener,
             }
         });
         windowManager.addView(overlay, layoutParams);
+    }
+
+    private Point getDisplaySize() {
+        Point point = new Point(0, 0);
+        Display display = windowManager.getDefaultDisplay();
+        // Android 4.2~
+        display.getRealSize(point);
+        return point;
+    }
+
+    private void adjustOrientationChange(Point currentPoint) {
+        Point newPoint = getDisplaySize();
+        if (newPoint.equals(currentPoint)) {
+        } else {
+            currentPoint = newPoint;
+        }
     }
 
     private boolean isMoved = false;

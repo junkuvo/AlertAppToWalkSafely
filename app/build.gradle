@@ -31,7 +31,7 @@ android {
     defaultConfig {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"
-        minSdkVersion 16
+        minSdkVersion 17
         targetSdkVersion 25
         versionCode 50
         versionName "4.6.3"
