@@ -539,6 +539,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 //                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorPrimary);
 //                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorPrimaryDark);
                 }
+                // 歩数を渡す
                 ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
                 onWalkStepListener.onWalkStep(mStepCountCurrent);
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -557,6 +558,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                     intent.putExtra("isStepCounter", true);
                     intent.putExtra("stepCount", mStepCountCurrent);
                     LocalBroadcastManager.getInstance(mContext).sendBroadcastSync(intent);
+                    // 歩数を渡す
+                    ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
+                    onWalkStepListener.onWalkStep(mStepCountCurrent);
                 }
             }
         }
