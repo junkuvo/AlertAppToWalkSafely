@@ -76,7 +76,6 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 import static android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
@@ -623,12 +622,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private void start(View v) {
         if (checkOverlayPermission()) {
+            mAlertService.startOverlay();
             startProcesses(v);
         } else {
             /** if not construct intent to request permission */
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
-            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
+//            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
             /** request permission via start activity for result */
             startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
         }
@@ -640,7 +640,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            if (checkOverlayPermission()) {
+                mAlertService.startOverlay();
+                startProcesses(mbtnStart);
+            } else {
+                startProcesses(mbtnStart);
             }
         }
     }

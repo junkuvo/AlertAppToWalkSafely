@@ -38,7 +38,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -52,7 +51,9 @@ import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
 
 public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -296,7 +297,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void startSensors() {
         startServiceForeground();
         try {
-            startOverlay();
             setIsRunningAlertService(true);
 
             LocalBroadcastManager.getInstance(mContext).registerReceiver(localBroadcastReceiver, localIntentFilter);
@@ -359,7 +359,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     private WindowManager.LayoutParams layoutParams;
 
-    private void startOverlay() {
+    public void startOverlay() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         layoutParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -383,6 +383,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                 int y = (int) event.getRawY();
 
                 switch (event.getAction()) {
+                    case ACTION_DOWN:
+                        initialX = x;
+                        initialY = y;
                     case ACTION_MOVE:
                         windowManager.getDefaultDisplay().getRealSize(point);
                         int centerX;
@@ -392,7 +395,9 @@ public class AlertService extends IntentService implements SensorEventListener,
                         layoutParams.x = centerX;
                         layoutParams.y = centerY;
                         windowManager.updateViewLayout(overlay, layoutParams);
-                        isMoved = true;
+                        break;
+                    case ACTION_UP:
+                        isMoved = Math.sqrt(Math.pow(x - initialX, 2) + Math.pow(y - initialY, 2)) > v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);
                         break;
                 }
                 return false;
@@ -402,41 +407,48 @@ public class AlertService extends IntentService implements SensorEventListener,
             @Override
             public void onClick(final View v) {
                 if (!isMoved) {
-                    Context wrapper = new ContextThemeWrapper(v.getContext(), R.style.MyPopupMenu);
-                    // PopupMenuのインスタンスを作成
-                    PopupMenu popup = new PopupMenu(wrapper, v);
-
-                    // popup.xmlで設定したメニュー項目をポップアップメニューに割り当てる
-                    popup.getMenuInflater().inflate(R.menu.menu_popup, popup.getMenu());
-
-                    // ポップアップメニューを表示
-                    popup.show();
-
-                    // ポップアップメニューのメニュー項目のクリック処理
-                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        public boolean onMenuItemClick(MenuItem item) {
-                            // 押されたメニュー項目名をToastで表示
-                            switch (item.getItemId()) {
-                                case R.id.hide:
-                                    if (overlay != null) {
-                                        windowManager.removeView(overlay);
-                                    }
-                                    break;
-//                                case R.id.show_alert_step_count:
-//                                    break;
-                                case R.id.open_app:
-                                    overlayActionListener.onOpenApp();
-                                    break;
-                            }
-                            Toast.makeText(v.getContext(), "Clicked : " + item.getTitle(), Toast.LENGTH_SHORT).show();
-                            return true;
-                        }
-                    });
+                    onShowPopup(v);
                 }
                 isMoved = false;
             }
         });
+
         windowManager.addView(overlay, layoutParams);
+    }
+
+    private int initialX = 0;
+    private int initialY = 0;
+
+    private void onShowPopup(final View v) {
+        Context wrapper = new ContextThemeWrapper(v.getContext(), R.style.MyPopupMenu);
+        // PopupMenuのインスタンスを作成
+        PopupMenu popup = new PopupMenu(wrapper, v);
+
+        // popup.xmlで設定したメニュー項目をポップアップメニューに割り当てる
+        popup.getMenuInflater().inflate(R.menu.menu_popup, popup.getMenu());
+
+        // ポップアップメニューを表示
+        popup.show();
+
+        // ポップアップメニューのメニュー項目のクリック処理
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                // 押されたメニュー項目名をToastで表示
+                switch (item.getItemId()) {
+                    case R.id.hide:
+                        if (overlay != null) {
+                            windowManager.removeView(overlay);
+                        }
+                        break;
+//                                case R.id.show_alert_step_count:
+//                                    break;
+                    case R.id.open_app:
+                        overlayActionListener.onOpenApp();
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     private Point getDisplaySize() {
@@ -445,14 +457,6 @@ public class AlertService extends IntentService implements SensorEventListener,
         // Android 4.2~
         display.getRealSize(point);
         return point;
-    }
-
-    private void adjustOrientationChange(Point currentPoint) {
-        Point newPoint = getDisplaySize();
-        if (newPoint.equals(currentPoint)) {
-        } else {
-            currentPoint = newPoint;
-        }
     }
 
     private boolean isMoved = false;
@@ -540,8 +544,7 @@ public class AlertService extends IntentService implements SensorEventListener,
 //                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorPrimaryDark);
                 }
                 // 歩数を渡す
-                ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
-                onWalkStepListener.onWalkStep(mStepCountCurrent);
+                showStepCount();
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 if (mIsScreenOn) {
                     // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
@@ -559,11 +562,18 @@ public class AlertService extends IntentService implements SensorEventListener,
                     intent.putExtra("stepCount", mStepCountCurrent);
                     LocalBroadcastManager.getInstance(mContext).sendBroadcastSync(intent);
                     // 歩数を渡す
-                    ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
-                    onWalkStepListener.onWalkStep(mStepCountCurrent);
+                    showStepCount();
                 }
             }
         }
+    }
+
+    private void showStepCount() {
+        // 歩数を渡す
+        if (overlay != null) {
+            ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
+        }
+        onWalkStepListener.onWalkStep(mStepCountCurrent);
     }
 
     private int mStepCountBefore = 0;
