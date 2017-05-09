@@ -604,6 +604,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         start(v);
                     }
                 });
+                mAlertDialog.setNeutralButton("続きから", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        shouldContinue = true;
+                        start(v);
+                    }
+                });
                 mAlertDialog.setNegativeButton("いいえ", null);
                 mAlertDialog.show();
             } else {
@@ -611,6 +618,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             }
         }
     }
+
+    private boolean shouldContinue = false;
 
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -652,7 +661,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private void startProcesses(View v) {
         FlurryAgent.logEvent("Service Start!!");
         changeViewState(true, ((ActionButton) v));
-        mAlertService.startSensors();
+        mAlertService.startSensors(shouldContinue);
+        shouldContinue = false;
+
         startDateTime = new Date();
         mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
         mbtnStart.playShowAnimation();

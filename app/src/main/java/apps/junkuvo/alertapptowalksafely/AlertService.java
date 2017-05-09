@@ -294,7 +294,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    public void startSensors() {
+    public void startSensors(boolean shouldContinue) {
         startServiceForeground();
         try {
             setIsRunningAlertService(true);
@@ -319,7 +319,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                 mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
             }
 
-            initializeSensingValues();
+            initializeSensingValues(shouldContinue);
         } catch (Exception e) {
             stopSensors();
             e.printStackTrace();
@@ -461,12 +461,17 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     private boolean isMoved = false;
 
-    public void initializeSensingValues() {
+    public void initializeSensingValues(boolean shouldContinue) {
         mTendencyCheckCount = 0;
         mTendencyOutCount = 0;
         isWalkingStatus = false;
-        mStepCountCurrent = -1;
-        countAsNg = -1;
+        if (shouldContinue) {
+            mStepCountCurrent--;
+            countAsNg--;
+        } else {
+            mStepCountCurrent = -1;
+            countAsNg = -1;
+        }
     }
 
     // 歩きスマホ中として歩数をカウントするかどうかのフラグ
