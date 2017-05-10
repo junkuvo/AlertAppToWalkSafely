@@ -68,4 +68,8 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
     public int getItemCount() {
         return mValues.size();
     }
+
+    public OrderedRealmCollection<HistoryItemModel> getmValues() {
+        return mValues;
+    }
 }

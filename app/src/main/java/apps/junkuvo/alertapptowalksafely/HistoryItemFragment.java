@@ -2,10 +2,13 @@ package apps.junkuvo.alertapptowalksafely;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +57,9 @@ public class HistoryItemFragment extends Fragment {
         }
     }
 
+    private RecyclerView recyclerView;
+    private LinearLayoutManager mLayoutManager;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -62,14 +68,19 @@ public class HistoryItemFragment extends Fragment {
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+            recyclerView = (RecyclerView) view;
+            mLayoutManager = new LinearLayoutManager(getContext());
+            recyclerView.setLayoutManager(mLayoutManager);
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance(), "id", Sort.DESCENDING);
-            recyclerView.setAdapter(new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener));
+            RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance(), "endDateTime", Sort.DESCENDING);
+            mHelper.attachToRecyclerView(recyclerView);
+            HistoryItemRecyclerViewAdapter historyItemRecyclerViewAdapter = new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener);
+            historyItemRecyclerViewAdapter.registerAdapterDataObserver(adapterDataObserver);
+            recyclerView.setAdapter(historyItemRecyclerViewAdapter);
         }
         return view;
     }
@@ -107,4 +118,62 @@ public class HistoryItemFragment extends Fragment {
 
         void onDeleteButtonClick(View view);
     }
+
+    /**
+     * RecyclerViewのSwipe実現用
+     */
+    private ItemTouchHelper mHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+//            final int fromPos = viewHolder.getAdapterPosition();
+//            final int toPos = target.getAdapterPosition();
+//            adapter.notifyItemMoved(fromPos, toPos);
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            int fromPos = viewHolder.getAdapterPosition();
+            RealmResults<HistoryItemModel> realmResults = RealmUtil.selectHistoryItemById(Realm.getDefaultInstance(), (long) ((HistoryItemViewHolder) viewHolder).ivDelete.getTag());
+            RealmUtil.copyToRealmObject(realmResults.get(0), historyItemModel);
+            RealmUtil.deleteHistoryItem(Realm.getDefaultInstance(), (long) ((HistoryItemViewHolder) viewHolder).ivDelete.getTag());
+            recyclerView.getAdapter().notifyItemRemoved(fromPos);
+        }
+    });
+
+    /**
+     * スワイプで削除されたアイテムを元に戻すために一時保持しておく
+     */
+    private HistoryItemModel historyItemModel = new HistoryItemModel();
+
+    private RecyclerView.AdapterDataObserver adapterDataObserver = new RecyclerView.AdapterDataObserver() {
+
+        @Override
+        public void onItemRangeRemoved(final int positionStart, int itemCount) {
+            super.onItemRangeRemoved(positionStart, itemCount);
+            Snackbar snackbar = Snackbar.make(recyclerView, R.string.delete_complete, Snackbar.LENGTH_SHORT);
+            snackbar.setActionTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
+            snackbar.setAction(getString(R.string.delete_undo), new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    RealmUtil.insertHistoryItemAsync(Realm.getDefaultInstance(), historyItemModel, null);
+                    recyclerView.getAdapter().notifyDataSetChanged();
+//                    recyclerView.getAdapter().notifyItemInserted(positionStart);
+                }
+            });
+            snackbar.addCallback(new Snackbar.Callback() {
+                @Override
+                public void onDismissed(Snackbar transientBottomBar, int event) {
+                    super.onDismissed(transientBottomBar, event);
+
+                }
+
+                @Override
+                public void onShown(Snackbar sb) {
+                    super.onShown(sb);
+                }
+            });
+            snackbar.show();
+        }
+    };
 }

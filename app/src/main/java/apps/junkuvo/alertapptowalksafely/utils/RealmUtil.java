@@ -80,7 +80,7 @@ public class RealmUtil {
         return realmResults;
     }
 
-    private static void copyToRealmObject(HistoryItemModel from, HistoryItemModel to) {
+    public static void copyToRealmObject(HistoryItemModel from, HistoryItemModel to) {
         to.setStartDateTime(from.getStartDateTime());
         to.setEndDateTime(from.getEndDateTime());
         to.setStepCount(from.getStepCount());
