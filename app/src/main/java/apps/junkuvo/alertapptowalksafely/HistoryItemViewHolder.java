@@ -4,19 +4,22 @@ import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewGroup;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
 
 class HistoryItemViewHolder extends RecyclerView.ViewHolder {
 
-    public final View mView;
-    public final AppCompatTextView tvTitle;
-    public final AppCompatTextView mStepCountView;
-    public final AppCompatTextView mStepCountAlertView;
-    public final AppCompatTextView mStartDateTimeView;
-    public final AppCompatTextView mEndDateTimeView;
-    public final AppCompatImageButton ivDelete;
-    public HistoryItemModel mItem;
+    final View mView;
+    final AppCompatTextView tvTitle;
+    final AppCompatTextView mStepCountView;
+    final AppCompatTextView mStepCountAlertView;
+    final AppCompatTextView mStartDateTimeView;
+    final AppCompatTextView mEndDateTimeView;
+    final AppCompatImageButton ivDelete;
+    final AppCompatImageButton ivEdit;
+    final ViewGroup editViews;
+    HistoryItemModel mItem;
 
     public HistoryItemViewHolder(View view) {
         super(view);
@@ -27,11 +30,12 @@ class HistoryItemViewHolder extends RecyclerView.ViewHolder {
         mStartDateTimeView = (AppCompatTextView) view.findViewById(R.id.start_time);
         mEndDateTimeView = (AppCompatTextView) view.findViewById(R.id.end_time);
         ivDelete = (AppCompatImageButton) view.findViewById(R.id.ivDelete);
+        editViews = (ViewGroup) view.findViewById(R.id.edit_views);
+        ivEdit = (AppCompatImageButton) view.findViewById(R.id.ivEdit);
     }
 
     @Override
     public String toString() {
         return super.toString() + " '" + mStartDateTimeView.getText() + "'";
     }
-
 }

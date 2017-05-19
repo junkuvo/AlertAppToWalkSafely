@@ -3,6 +3,7 @@ package apps.junkuvo.alertapptowalksafely;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,16 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
         super(context, data, autoUpdate);
         this.mValues = data;
         this.mListener = listener;
+        setHasStableIds(true);
+    }
+
+    private RecyclerView mRecyclerView;
+
+
+    @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        mRecyclerView = recyclerView;
     }
 
     @Override
@@ -35,7 +46,7 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
     }
 
     @Override
-    public void onBindViewHolder(final HistoryItemViewHolder holder, int position) {
+    public void onBindViewHolder(final HistoryItemViewHolder holder, final int position) {
         holder.mItem = mValues.get(position);
         holder.mStepCountView.setText(mValues.get(position).getStepCount());
         holder.mStepCountAlertView.setText(mValues.get(position).getStepCountAlert());
@@ -62,11 +73,33 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
                 mListener.onDeleteButtonClick(v);
             }
         });
+
+//        http://stackoverflow.com/questions/27203817/recyclerview-expand-collapse-items
+        final boolean isExpanded = position == mExpandedPosition;
+        holder.editViews.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+        holder.itemView.setActivated(isExpanded);
+        holder.ivEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mExpandedPosition = isExpanded ? INITIAL_VALUE : position;
+//                TransitionManager.beginDelayedTransition(mRecyclerView);
+                notifyDataSetChanged();
+            }
+        });
+
     }
+
+    private static final int INITIAL_VALUE = -1;
+    private int mExpandedPosition = INITIAL_VALUE;
 
     @Override
     public int getItemCount() {
         return mValues.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return mValues.get(position).getId();
     }
 
     public OrderedRealmCollection<HistoryItemModel> getmValues() {

@@ -27,7 +27,7 @@ android {
         }
     }
     compileSdkVersion 25
-    buildToolsVersion "24.0.3"
+    buildToolsVersion '25.0.2'
     defaultConfig {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"
@@ -57,6 +57,20 @@ android {
         //最大ヒープサイズを4Gに設定
         javaMaxHeapSize "4g"
         dexInProcess true
+    }
+}
+
+// RecyclerViewのViewHolderをexpandするロジックを入れたら
+//java.lang.NoClassDefFoundError : Failed resolution of:Landroid/support/v4/animation/AnimatorCompatHelper
+//こういうエラーが出たので下記を追加
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '25.1.0'
+            }
+        }
     }
 }
 

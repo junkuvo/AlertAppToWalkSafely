@@ -31,6 +31,7 @@ public class HistoryItemFragment extends Fragment {
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
+    private HistoryItemViewHolder tappedHistoryItem;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -82,6 +83,7 @@ public class HistoryItemFragment extends Fragment {
             historyItemRecyclerViewAdapter.registerAdapterDataObserver(adapterDataObserver);
             recyclerView.setAdapter(historyItemRecyclerViewAdapter);
         }
+
         return view;
     }
 
