@@ -1,5 +1,7 @@
 package apps.junkuvo.alertapptowalksafely;
 
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +22,9 @@ class HistoryItemViewHolder extends RecyclerView.ViewHolder {
     final AppCompatImageButton ivEdit;
     final ViewGroup editViews;
     HistoryItemModel mItem;
+    AppCompatButton btSave;
+    AppCompatButton btCancel;
+    AppCompatEditText etMemo;
 
     public HistoryItemViewHolder(View view) {
         super(view);
@@ -32,6 +37,9 @@ class HistoryItemViewHolder extends RecyclerView.ViewHolder {
         ivDelete = (AppCompatImageButton) view.findViewById(R.id.ivDelete);
         editViews = (ViewGroup) view.findViewById(R.id.edit_views);
         ivEdit = (AppCompatImageButton) view.findViewById(R.id.ivEdit);
+        btSave = (AppCompatButton) view.findViewById(R.id.bt_save);
+        btCancel = (AppCompatButton) view.findViewById(R.id.bt_cancel);
+        etMemo = (AppCompatEditText) view.findViewById(R.id.et_memo);
     }
 
     @Override

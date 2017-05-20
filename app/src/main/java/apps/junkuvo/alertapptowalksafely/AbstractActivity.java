@@ -33,7 +33,9 @@ public abstract class AbstractActivity extends AppCompatActivity {
         if (!isRunningJunit) {
             // realmの初期化
             Realm.init(this);
-            RealmConfiguration config = new RealmConfiguration.Builder().build();
+            RealmConfiguration config = new RealmConfiguration.Builder()
+                    .schemaVersion(1)
+                    .migration(realmMigration).build();
             Realm.setDefaultConfiguration(config);
             realm = Realm.getDefaultInstance();
         }
@@ -85,4 +87,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
             shareDialog.show(shareLinkContent);
         }
     }
+
+    private AlertAppRealmMigration realmMigration = new AlertAppRealmMigration();
+
 }

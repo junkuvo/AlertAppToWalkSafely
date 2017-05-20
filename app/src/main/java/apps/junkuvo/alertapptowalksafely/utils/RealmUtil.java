@@ -80,6 +80,58 @@ public class RealmUtil {
         return realmResults;
     }
 
+    // FIXME MEMOに依存している、こういうのDIで解決できる？
+    public static void updateHistoryMemo(Realm realm, final RealmResults realmResults, final String body) {
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                // This will create a new object in Realm or throw an exception if the
+                // object already exists (same primary key)
+                // realm.copyToRealm(obj);
+                ((HistoryItemModel) realmResults.get(0)).setMemo(body);
+
+                // This will update an existing object with the same primary key
+                // or create a new object if an object with no primary key = 42
+                realm.copyToRealmOrUpdate(realmResults);
+            }
+        });
+    }
+
+    // FIXME MEMOに依存している、こういうのDIで解決できる？
+    public static void updateHistoryMemoAsync(Realm realm, final long id, final String body, final realmTransactionCallbackListener realmTransactionCallbackListener) {
+        realm.executeTransactionAsync(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                // This will create a new object in Realm or throw an exception if the
+                // object already exists (same primary key)
+                // realm.copyToRealm(obj);
+                RealmResults realmResults = RealmUtil.selectHistoryItemById(Realm.getDefaultInstance(), id);
+                if (realmResults.size() == 1) {
+                    ((HistoryItemModel) realmResults.get(0)).setMemo(body);
+
+                    // This will update an existing object with the same primary key
+                    // or create a new object if an object with no primary key = 42
+                    realm.copyToRealmOrUpdate(realmResults);
+                }
+            }
+        }, new Realm.Transaction.OnSuccess() {
+            @Override
+            public void onSuccess() {
+                if (realmTransactionCallbackListener != null) {
+                    realmTransactionCallbackListener.OnSuccess();
+                }
+            }
+        }, new Realm.Transaction.OnError() {
+            @Override
+            public void onError(Throwable error) {
+                error.printStackTrace();
+                if (realmTransactionCallbackListener != null) {
+                    realmTransactionCallbackListener.OnError();
+                }
+            }
+        });
+    }
+
     public static void copyToRealmObject(HistoryItemModel from, HistoryItemModel to) {
         to.setStartDateTime(from.getStartDateTime());
         to.setEndDateTime(from.getEndDateTime());

@@ -21,6 +21,8 @@ public class HistoryItemModel extends RealmObject {
     @Required
     private String stepCount;
 
+    private String memo;
+
     public long getId() {
         return id;
     }
@@ -59,5 +61,13 @@ public class HistoryItemModel extends RealmObject {
 
     public void setStepCountAlert(String stepCountAlert) {
         this.stepCountAlert = stepCountAlert;
+    }
+
+    public String getMemo() {
+        return memo;
+    }
+
+    public void setMemo(String memo) {
+        this.memo = memo;
     }
 }
