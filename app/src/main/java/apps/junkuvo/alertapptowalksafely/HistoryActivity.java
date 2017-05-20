@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.ImageView;
 
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import io.realm.RealmObject;
@@ -17,6 +18,8 @@ public class HistoryActivity extends AbstractActivity implements HistoryItemFrag
         setContentView(R.layout.activity_history);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        // FIXME ランダムにサーバから取ってこれるようにしたい
+        ((ImageView) findViewById(R.id.iv_header)).setImageResource(R.drawable.header1);
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
