@@ -114,12 +114,12 @@ public class HistoryItemRecyclerViewAdapter extends RealmRecyclerViewAdapter<His
                             @Override
                             public void OnSuccess() {
                                 updateEditMode(isExpanded, position);
-                                Snackbar.make(v, "保存しました", Snackbar.LENGTH_SHORT).show();
+                                Snackbar.make(v, "保存しました", Snackbar.LENGTH_LONG).show();
                             }
 
                             @Override
                             public void OnError() {
-                                Snackbar.make(v, "エラーが発生しました", Snackbar.LENGTH_SHORT).show();
+                                Snackbar.make(v, "エラーが発生しました", Snackbar.LENGTH_LONG).show();
                             }
                         });
             }

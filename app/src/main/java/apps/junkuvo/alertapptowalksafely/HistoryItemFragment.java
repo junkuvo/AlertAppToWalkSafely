@@ -153,7 +153,7 @@ public class HistoryItemFragment extends Fragment {
         @Override
         public void onItemRangeRemoved(final int positionStart, int itemCount) {
             super.onItemRangeRemoved(positionStart, itemCount);
-            Snackbar snackbar = Snackbar.make(recyclerView, R.string.delete_complete, Snackbar.LENGTH_SHORT);
+            Snackbar snackbar = Snackbar.make(recyclerView, R.string.delete_complete, Snackbar.LENGTH_LONG);
             snackbar.setActionTextColor(ContextCompat.getColor(getContext(), R.color.colorAccent));
             snackbar.setAction(getString(R.string.delete_undo), new View.OnClickListener() {
                 @Override

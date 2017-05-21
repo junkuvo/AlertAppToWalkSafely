@@ -98,6 +98,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-plus:10.0.1'
     compile 'com.google.android.gms:play-services-location:10.0.1'
     compile 'com.google.firebase:firebase-config:10.0.1'
+    compile 'com.google.firebase:firebase-storage:10.0.1'
     compile 'com.android.support:support-v4:25.1.0'
     compile 'com.android.support:recyclerview-v7:25.1.0'
     compile 'io.realm:android-adapters:1.4.0'
@@ -115,6 +116,10 @@ dependencies {
     compile('com.mikepenz:aboutlibraries:5.9.4@aar') {
         transitive = true
     }
+
+//    compile 'com.firebaseui:firebase-ui-storage:0.6.0'
+    compile 'com.github.bumptech.glide:glide:4.0.0-RC0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.0.0-RC0'
 }
 
 apply plugin: 'com.google.gms.google-services'
