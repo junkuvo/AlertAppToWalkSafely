@@ -12,7 +12,9 @@ import com.facebook.FacebookSdk;
 import com.facebook.share.Sharer;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
+import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
@@ -24,9 +26,16 @@ public abstract class AbstractActivity extends AppCompatActivity {
     @VisibleForTesting
     boolean isRunningJunit = false;
 
+    protected FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        Bundle bundle = new Bundle();
+        bundle.putString("activity_name", getLocalClassName());
+        bundle.putString(FirebaseAnalytics.Param.START_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+        mFirebaseAnalytics.logEvent("activity_create", bundle);
 
         isRunningJunit = getIntent().getBooleanExtra(IS_RUNNING_JUNIT, false);
 
@@ -74,6 +83,11 @@ public abstract class AbstractActivity extends AppCompatActivity {
         if (!isRunningJunit) {
             realm.close();
         }
+        Bundle bundle = new Bundle();
+        bundle.putString("activity_name", getLocalClassName());
+        bundle.putString(FirebaseAnalytics.Param.END_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+        mFirebaseAnalytics.logEvent("activity_destroy", bundle);
+
     }
 
     protected void showShareDialog() {

@@ -53,7 +53,7 @@ public class HistoryActivity extends AbstractActivity implements HistoryItemFrag
 //            }
 //        });
     }
-
+    
     @Override
     public void onListFragmentInteraction(RealmObject item) {
 

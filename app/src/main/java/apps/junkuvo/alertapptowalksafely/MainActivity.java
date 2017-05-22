@@ -51,6 +51,7 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.mikepenz.aboutlibraries.Libs;
@@ -61,8 +62,10 @@ import com.webianks.easy_feedback.EasyFeedback;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import co.mobiwise.materialintro.shape.Focus;
@@ -473,7 +476,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     startAuthorize();
                 } else {
                     layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                    String timeStamp = new SimpleDateFormat(DateUtil.DATE_FORMAT.YYYYMMDD_HHmmss.getFormat(), Locale.JAPAN).format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
                     mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
                     mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
@@ -543,6 +546,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         if (mAlertService.IsRunningAlertService()) {
             FlurryAgent.logEvent("Service Stop!!");
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.END_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+            mFirebaseAnalytics.logEvent("service_stop", bundle);
+
             mStepCount = mAlertService.getStepCountCurrent();
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
@@ -660,6 +667,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private void startProcesses(View v) {
         FlurryAgent.logEvent("Service Start!!");
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.START_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+        mFirebaseAnalytics.logEvent("service_stop", bundle);
+
         changeViewState(true, ((ActionButton) v));
         mAlertService.startSensors(shouldContinue);
         shouldContinue = false;
