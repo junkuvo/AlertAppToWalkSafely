@@ -391,7 +391,7 @@ public class AlertService extends IntentService implements SensorEventListener,
                         int centerX;
                         int centerY;
                         centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);// FIXME :ここも縦横で変更
-                        centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_20dp);
+                        centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_22dp);
                         layoutParams.x = centerX;
                         layoutParams.y = centerY;
                         windowManager.updateViewLayout(overlay, layoutParams);

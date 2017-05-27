@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_root_ad"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/tvMessage"
+        android:layout_marginTop="@dimen/basic_margin_22dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="機能追加後は\n広告は表示されなくなります"
+        android:textColor="@color/colorAccent"
+        android:textSize="16sp"
+        android:gravity="center" />
+
+</LinearLayout>

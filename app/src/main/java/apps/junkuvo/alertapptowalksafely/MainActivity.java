@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -40,6 +41,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
@@ -47,6 +50,7 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
@@ -85,6 +89,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private boolean mPasscodeOn = false;
     private int mStepCount = 0;
     public static final String SETTING_SHAREDPREF_NAME = "setting";
+    public static final String AD_STATUS_SHAREDPREF_NAME = "AD_STATUS_SHAREDPREF_NAME";
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -229,6 +234,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
     };
 
+    private boolean isAdTapped = false;
+
+    private AdRequest adRequest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -258,7 +267,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
 
             // Create ad request.
-            AdRequest adRequest = new AdRequest.Builder()
+            final AdRequest adRequest = new AdRequest.Builder()
                     .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
                     .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
                     .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
@@ -267,9 +276,28 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             // Begin loading your interstitial.
             mInterstitialAd.loadAd(adRequest);
 
+            mInterstitialAd.setAdListener(new AdListener() {
+                @Override
+                public void onAdLeftApplication() {
+                    super.onAdLeftApplication();
+                    isAdTapped = true;
+                    supportInvalidateOptionsMenu();
+                }
+
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+                    // 広告開いてない場合は再度ロードしておいて広告出す
+                    if (!isAdTapped) {
+                        // Begin loading your interstitial.
+                        mInterstitialAd.loadAd(adRequest);
+                    }
+                }
+            });
+
             // FIXME : クリック率悪いので消します。
             AdView mAdView = (AdView) findViewById(R.id.adView);
-            mAdView.loadAd(adRequest);
+//            mAdView.loadAd(adRequest);
 
             DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
@@ -353,6 +381,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
         mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
+        isAdTapped = SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
 
     }
 
@@ -423,10 +452,12 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.FACEBOOK.getDrawableResId());
 
-        // HISTORY
-        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
-        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+        if (isAdTapped) {
+            // HISTORY
+            actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+            actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+        }
 
         // LINE
         actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
@@ -568,12 +599,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 });
             }
 
-            if (TwitterUtility.hasAccessToken(getApplicationContext())) {
+            // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
+            if (TwitterUtility.hasAccessToken(getApplicationContext()) && isAdTapped) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
                 mAlertDialog = new AlertDialog.Builder(context);
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                String timeStamp = new SimpleDateFormat(DateUtil.DATE_FORMAT.YYYYMMDD_HHmmss.getFormat()).format(Calendar.getInstance().getTime());
                 mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
                 mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                 mAlertDialog.setView(layout);
@@ -590,9 +622,28 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
                 mAlertDialog.show();
             }
+
             mAlertService.stopSensors();
-//            mAlertService.setIsBoundService(false);
-            displayInterstitial();
+
+            // 機能追加訴求ダイアログ
+            if (!isAdTapped) {
+                LayoutInflater inflater = LayoutInflater.from(this);
+                final View layout = inflater.inflate(R.layout.ad_dialog, (ViewGroup) findViewById(R.id.layout_root_ad));
+                new MaterialStyledDialog(this)
+                        .setTitle("隠し機能が追加できます！")
+                        .setDescription("この後の広告を開くだけで隠れた機能が追加されます")
+                        .setCustomView(layout)
+                        .setIcon(R.drawable.ic_power_settings_new_white_48dp)
+                        .setHeaderDrawable(R.drawable.pattern_bg_blue)
+                        .setCancelable(false)
+                        .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                displayInterstitial();
+                            }
+                        })
+                        .show();
+            }
 
             mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
             mbtnStart.playShowAnimation();
@@ -825,6 +876,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
+        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", isAdTapped);
         FlurryAgent.onEndSession(this);
     }
 
@@ -1016,7 +1068,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     // Invoke displayInterstitial() when you are ready to display an interstitial.
     public void displayInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
+        if (mInterstitialAd.isLoaded() && !isAdTapped) {
             mInterstitialAd.show();
         }
     }

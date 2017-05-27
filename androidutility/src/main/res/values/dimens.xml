@@ -6,7 +6,8 @@
     <dimen name="toast_margin">16dp</dimen>
     <dimen name="basic_margin_48dp">48dp</dimen>
     <dimen name="basic_margin">16dp</dimen>
-    <dimen name="basic_margin_20dp">22dp</dimen>
+    <dimen name="basic_margin_22dp">22dp</dimen>
+    <dimen name="basic_margin_24dp">24dp</dimen>
     <dimen name="basic_margin_12dp">12dp</dimen>
     <dimen name="basic_margin_10dp">10dp</dimen>
     <dimen name="basic_margin_9dp">9dp</dimen>
