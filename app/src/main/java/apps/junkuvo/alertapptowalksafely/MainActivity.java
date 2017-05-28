@@ -90,6 +90,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private int mStepCount = 0;
     public static final String SETTING_SHAREDPREF_NAME = "setting";
     public static final String AD_STATUS_SHAREDPREF_NAME = "AD_STATUS_SHAREDPREF_NAME";
+    private static final String TUTORIAL_ID = "TUTORIAL_ID";
+    private static final String NEW_FUNCTION_ID = "NEW_FUNCTION_ID";
+
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -234,9 +237,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
     };
 
-    private boolean isAdTapped = false;
-
-    private AdRequest adRequest;
+    private boolean enableNewFunction = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -275,12 +276,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             // Begin loading your interstitial.
             mInterstitialAd.loadAd(adRequest);
-
             mInterstitialAd.setAdListener(new AdListener() {
                 @Override
                 public void onAdLeftApplication() {
                     super.onAdLeftApplication();
-                    isAdTapped = true;
+                    enableNewFunction = true;
                     supportInvalidateOptionsMenu();
                 }
 
@@ -288,9 +288,32 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 public void onAdClosed() {
                     super.onAdClosed();
                     // 広告開いてない場合は再度ロードしておいて広告出す
-                    if (!isAdTapped) {
+                    if (!enableNewFunction) {
                         // Begin loading your interstitial.
                         mInterstitialAd.loadAd(adRequest);
+                    } else {
+                        LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+                        final View layout = inflater.inflate(R.layout.new_function_dialog, (ViewGroup) findViewById(R.id.layout_root_new));
+                        new MaterialStyledDialog(MainActivity.this)
+                                .setTitle("新機能！")
+                                .setDescription("新しい機能が追加されました！\n今後ともよろしくお願いします！")
+                                .setCustomView(layout)
+                                .setIcon(R.drawable.ic_fiber_new_white_48dp)
+                                .setHeaderDrawable(R.drawable.pattern_bg_blue)
+                                .setPositive(getString(R.string.ok), null)
+                                .show();
+
+                        RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
+                            @Override
+                            public void OnSuccess() {
+
+                            }
+
+                            @Override
+                            public void OnError() {
+
+                            }
+                        });
                     }
                 }
             });
@@ -327,6 +350,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mbtnStart.setButtonColor(buttonColor);
             mbtnStart.setButtonColorPressed(buttonPressedColor);
 
+            // チュートリアル
             new MaterialIntroView.Builder(this)
                     .enableDotAnimation(false)
                     .enableIcon(true)
@@ -337,10 +361,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     .performClick(true)
                     .setInfoText(getString(R.string.intro_description))
                     .setTarget(mbtnStart)
-                    .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                    .setUsageId(TUTORIAL_ID) //THIS SHOULD BE UNIQUE ID
                     .dismissOnTouch(true)
                     .show();
-
 
             mbtnStart.setOnClickListener(this);
 
@@ -381,7 +404,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
         mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
-        isAdTapped = SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
+
+        // 履歴データがすでにある(updateの場合) or 広告をタップした場合
+        enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
 
     }
 
@@ -452,11 +477,12 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.FACEBOOK.getDrawableResId());
 
-        if (isAdTapped) {
+        if (enableNewFunction) {
             // HISTORY
             actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
             actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+
         }
 
         // LINE
@@ -475,6 +501,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -585,7 +616,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
-            if (mStepCount > 0) {
+            // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
+            if (mStepCount > 0 && enableNewFunction) {
                 RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
                     @Override
                     public void OnSuccess() {
@@ -600,7 +632,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             }
 
             // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
-            if (TwitterUtility.hasAccessToken(getApplicationContext()) && isAdTapped) {
+            if (TwitterUtility.hasAccessToken(getApplicationContext()) && enableNewFunction) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
@@ -626,14 +658,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService.stopSensors();
 
             // 機能追加訴求ダイアログ
-            if (!isAdTapped) {
+            if (!enableNewFunction) {
                 LayoutInflater inflater = LayoutInflater.from(this);
                 final View layout = inflater.inflate(R.layout.ad_dialog, (ViewGroup) findViewById(R.id.layout_root_ad));
                 new MaterialStyledDialog(this)
                         .setTitle("隠し機能が追加できます！")
                         .setDescription("この後の広告を開くだけで隠れた機能が追加されます")
                         .setCustomView(layout)
-                        .setIcon(R.drawable.ic_power_settings_new_white_48dp)
+                        .setIcon(R.drawable.ic_new_releases_white_48dp)
                         .setHeaderDrawable(R.drawable.pattern_bg_blue)
                         .setCancelable(false)
                         .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
@@ -876,7 +908,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
-        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", isAdTapped);
+        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }
 
@@ -1068,7 +1100,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     // Invoke displayInterstitial() when you are ready to display an interstitial.
     public void displayInterstitial() {
-        if (mInterstitialAd.isLoaded() && !isAdTapped) {
+        if (mInterstitialAd.isLoaded() && !enableNewFunction) {
             mInterstitialAd.show();
         }
     }

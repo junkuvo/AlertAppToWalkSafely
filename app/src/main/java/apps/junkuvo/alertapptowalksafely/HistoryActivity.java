@@ -35,12 +35,16 @@ public class HistoryActivity extends AbstractActivity implements HistoryItemFrag
         storageReference.child(String.valueOf(a) + ".png").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
-                Glide.with(HistoryActivity.this).load(uri).into((ImageView) findViewById(R.id.iv_header));
+                if (!isFinishing()) {
+                    Glide.with(HistoryActivity.this).load(uri).into((ImageView) findViewById(R.id.iv_header));
+                }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Glide.with(HistoryActivity.this).load(R.drawable.header1).into((ImageView) findViewById(R.id.iv_header));
+                if (!isFinishing()) {
+                    Glide.with(HistoryActivity.this).load(R.drawable.header1).into((ImageView) findViewById(R.id.iv_header));
+                }
             }
         });
 
@@ -53,7 +57,7 @@ public class HistoryActivity extends AbstractActivity implements HistoryItemFrag
 //            }
 //        });
     }
-    
+
     @Override
     public void onListFragmentInteraction(RealmObject item) {
 

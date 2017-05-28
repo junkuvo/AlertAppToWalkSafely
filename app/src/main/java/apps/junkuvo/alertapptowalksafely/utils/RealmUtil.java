@@ -151,6 +151,11 @@ public class RealmUtil {
         });
     }
 
+    public static boolean hasHistoryItem(Realm realm) {
+        RealmResults<HistoryItemModel> realmResults = RealmUtil.selectAllHistoryItem(realm);
+        return realmResults != null && !realmResults.isEmpty();
+    }
+
     public interface realmTransactionCallbackListener {
         void OnSuccess();
 
