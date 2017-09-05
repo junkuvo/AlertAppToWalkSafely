@@ -1,10 +1,19 @@
 package apps.junkuvo.alertapptowalksafely;
 
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import io.realm.RealmObject;
@@ -17,6 +26,27 @@ public class HistoryActivity extends AbstractActivity implements HistoryItemFrag
         setContentView(R.layout.activity_history);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // FIXME ランダムにサーバから取ってこれるようにしたい
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageReference = storage.getReferenceFromUrl("gs://alert-while-walking.appspot.com");
+        int a = (int) (Math.random() + 0.5) + 1;
+
+        storageReference.child(String.valueOf(a) + ".png").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                if (!isFinishing()) {
+                    Glide.with(HistoryActivity.this).load(uri).into((ImageView) findViewById(R.id.iv_header));
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                if (!isFinishing()) {
+                    Glide.with(HistoryActivity.this).load(R.drawable.header1).into((ImageView) findViewById(R.id.iv_header));
+                }
+            }
+        });
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {

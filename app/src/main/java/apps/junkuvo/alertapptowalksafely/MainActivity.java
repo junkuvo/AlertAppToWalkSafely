@@ -8,9 +8,12 @@ import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -38,6 +41,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
@@ -45,10 +50,12 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.mikepenz.aboutlibraries.Libs;
@@ -59,8 +66,10 @@ import com.webianks.easy_feedback.EasyFeedback;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import co.mobiwise.materialintro.shape.Focus;
@@ -73,11 +82,17 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
+import static android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT;
+
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
     private boolean mPasscodeOn = false;
     private int mStepCount = 0;
     public static final String SETTING_SHAREDPREF_NAME = "setting";
+    public static final String AD_STATUS_SHAREDPREF_NAME = "AD_STATUS_SHAREDPREF_NAME";
+    private static final String TUTORIAL_ID = "TUTORIAL_ID";
+    private static final String NEW_FUNCTION_ID = "NEW_FUNCTION_ID";
+
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -172,8 +187,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
             mAlertService.setOnWalkStepListener(new AlertService.onWalkStepListener() {
                 @Override
-                public void onWalkStep(int stepCount) {
+                public void onAlertWalkStep(int stepCount) {
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
+                }
+
+                @Override
+                public void onWalkStep(int stepCount) {
+                    ((TextView) findViewById(R.id.txtStepNo)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
             mAlertService.setOnActionFromNotificationListener(new AlertService.onActionFromNotificationListener() {
@@ -183,13 +203,22 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     setStartButtonFunction(findViewById(R.id.fabStart));
                 }
             });
+            mAlertService.setOverlayActionListener(new AlertService.OverlayActionListener() {
+                @Override
+                public void onOpenApp() {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+                    startActivity(intent);
+                }
+            });
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
             mAlertService.setToastPosition(mToastPosition);
             mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
             mAlertService.setAlertMessage(mAlertMessage);
             mAlertService.setIsBoundService(true);
-            ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
+            String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
+            ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
 
             if (mAlertService.IsRunningAlertService()) {
                 // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
@@ -207,6 +236,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService = null;
         }
     };
+
+    private boolean enableNewFunction = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -237,7 +268,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
 
             // Create ad request.
-            AdRequest adRequest = new AdRequest.Builder()
+            final AdRequest adRequest = new AdRequest.Builder()
                     .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
                     .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
                     .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
@@ -245,10 +276,51 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             // Begin loading your interstitial.
             mInterstitialAd.loadAd(adRequest);
+            mInterstitialAd.setAdListener(new AdListener() {
+                @Override
+                public void onAdLeftApplication() {
+                    super.onAdLeftApplication();
+                    enableNewFunction = true;
+                    supportInvalidateOptionsMenu();
+                }
+
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+                    // 広告開いてない場合は再度ロードしておいて広告出す
+                    if (!enableNewFunction) {
+                        // Begin loading your interstitial.
+                        mInterstitialAd.loadAd(adRequest);
+                    } else {
+                        LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+                        final View layout = inflater.inflate(R.layout.new_function_dialog, (ViewGroup) findViewById(R.id.layout_root_new));
+                        new MaterialStyledDialog(MainActivity.this)
+                                .setTitle("新機能！")
+                                .setDescription("新しい機能が追加されました！\n今後ともよろしくお願いします！")
+                                .setCustomView(layout)
+                                .setIcon(R.drawable.ic_fiber_new_white_48dp)
+                                .setHeaderDrawable(R.drawable.pattern_bg_blue)
+                                .setPositive(getString(R.string.ok), null)
+                                .show();
+
+                        RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
+                            @Override
+                            public void OnSuccess() {
+
+                            }
+
+                            @Override
+                            public void OnError() {
+
+                            }
+                        });
+                    }
+                }
+            });
 
             // FIXME : クリック率悪いので消します。
             AdView mAdView = (AdView) findViewById(R.id.adView);
-            mAdView.loadAd(adRequest);
+//            mAdView.loadAd(adRequest);
 
             DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
 
@@ -275,10 +347,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
             int buttonPressedColor = ContextCompat.getColor(this, R.color.colorPrimaryDark);
             mbtnStart = (ActionButton) findViewById(R.id.fabStart);
-            mbtnStart.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             mbtnStart.setButtonColor(buttonColor);
             mbtnStart.setButtonColorPressed(buttonPressedColor);
 
+            // チュートリアル
             new MaterialIntroView.Builder(this)
                     .enableDotAnimation(false)
                     .enableIcon(true)
@@ -289,10 +361,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     .performClick(true)
                     .setInfoText(getString(R.string.intro_description))
                     .setTarget(mbtnStart)
-                    .setUsageId(String.valueOf(mUtility.getVersionCode(this))) //THIS SHOULD BE UNIQUE ID
+                    .setUsageId(TUTORIAL_ID) //THIS SHOULD BE UNIQUE ID
                     .dismissOnTouch(true)
                     .show();
-
 
             mbtnStart.setOnClickListener(this);
 
@@ -313,7 +384,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
             relativeLayout.setOnClickListener(this);
 
-            findViewById(R.id.txtStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+            findViewById(R.id.llStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
 
 //        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
 //        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
@@ -323,7 +394,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //            setStartButtonFunction(findViewById(R.id.fabStart));
 //        }
             // サービスを開始
-//        startService(mAlertServiceIntent);
+//            startService(mAlertServiceIntent);
             bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
         }
@@ -333,6 +404,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
         mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
+
+        // 履歴データがすでにある(updateの場合) or 広告をタップした場合
+        enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
 
     }
 
@@ -355,7 +429,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onResume() {
         super.onResume();
         FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
-        FlurryAgent.logEvent("onStart");
+        FlurryAgent.logEvent("onResume");
     }
 
     @Override
@@ -403,10 +477,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         actionItem.setIcon(MENU_ID.FACEBOOK.getDrawableResId());
 
-        // HISTORY
-        actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
-        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+        if (enableNewFunction) {
+            // HISTORY
+            actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
+            actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
+
+        }
 
         // LINE
         actionItem = menu.add(Menu.NONE, MENU_ID.LINE.ordinal(), MENU_ID.LINE.ordinal(), this.getString(R.string.menu_title_line));
@@ -424,6 +501,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -456,7 +538,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     startAuthorize();
                 } else {
                     layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                    String timeStamp = new SimpleDateFormat(DateUtil.DATE_FORMAT.YYYYMMDD_HHmmss.getFormat(), Locale.JAPAN).format(Calendar.getInstance().getTime());
                     mAlertDialog = new AlertDialog.Builder(this);
                     mAlertDialog.setTitle(this.getString(R.string.dialog_title_tweet));
                     mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
@@ -526,11 +608,16 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         if (mAlertService.IsRunningAlertService()) {
             FlurryAgent.logEvent("Service Stop!!");
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.END_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+            mFirebaseAnalytics.logEvent("service_stop", bundle);
+
             mStepCount = mAlertService.getStepCountCurrent();
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
-            if (mStepCount > 0) {
+            // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
+            if (mStepCount > 0 && enableNewFunction) {
                 RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
                     @Override
                     public void OnSuccess() {
@@ -544,12 +631,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 });
             }
 
-            if (TwitterUtility.hasAccessToken(getApplicationContext())) {
+            // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
+            if (TwitterUtility.hasAccessToken(getApplicationContext()) && enableNewFunction) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
                 mAlertDialog = new AlertDialog.Builder(context);
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                String timeStamp = new SimpleDateFormat(DateUtil.DATE_FORMAT.YYYYMMDD_HHmmss.getFormat()).format(Calendar.getInstance().getTime());
                 mAlertDialog.setTitle(context.getString(R.string.dialog_tweet));
                 mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                 mAlertDialog.setView(layout);
@@ -566,9 +654,28 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setNegativeButton(context.getString(R.string.dialog_button_cancel), null);
                 mAlertDialog.show();
             }
+
             mAlertService.stopSensors();
-//            mAlertService.setIsBoundService(false);
-            displayInterstitial();
+
+            // 機能追加訴求ダイアログ
+            if (!enableNewFunction) {
+                LayoutInflater inflater = LayoutInflater.from(this);
+                final View layout = inflater.inflate(R.layout.ad_dialog, (ViewGroup) findViewById(R.id.layout_root_ad));
+                new MaterialStyledDialog(this)
+                        .setTitle("隠し機能が追加できます！")
+                        .setDescription("この後の広告を開くだけで隠れた機能が追加されます")
+                        .setCustomView(layout)
+                        .setIcon(R.drawable.ic_new_releases_white_48dp)
+                        .setHeaderDrawable(R.drawable.pattern_bg_blue)
+                        .setCancelable(false)
+                        .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                displayInterstitial();
+                            }
+                        })
+                        .show();
+            }
 
             mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
             mbtnStart.playShowAnimation();
@@ -581,27 +688,79 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        FlurryAgent.logEvent("Service Start!!");
-                        mAlertService.startSensors();
-                        startDateTime = new Date();
-//                        mStepCount = 0;
-                        ((TextView) findViewById(R.id.txtStepCount)).setText("0" + getString(R.string.home_step_count_dimension));
-                        changeViewState(true, ((ActionButton) v));
-                        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
-                        mbtnStart.playShowAnimation();
+                        String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
+                        ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
+                        ((TextView) findViewById(R.id.txtStepNo)).setText(initial);
+                        start(v);
+                    }
+                });
+                mAlertDialog.setNeutralButton("続きから", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        shouldContinue = true;
+                        start(v);
                     }
                 });
                 mAlertDialog.setNegativeButton("いいえ", null);
                 mAlertDialog.show();
             } else {
-                FlurryAgent.logEvent("Service Start!!");
-                changeViewState(true, ((ActionButton) v));
-                mAlertService.startSensors();
-                startDateTime = new Date();
-                mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
-                mbtnStart.playShowAnimation();
+                start(v);
             }
         }
+    }
+
+    private boolean shouldContinue = false;
+
+    private boolean checkOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            /** check if we already  have permission to draw over other apps */
+            return Settings.canDrawOverlays(this);
+        }
+        return true;
+    }
+
+    private void start(View v) {
+        if (checkOverlayPermission()) {
+            mAlertService.startOverlay();
+            startProcesses(v);
+        } else {
+            /** if not construct intent to request permission */
+            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+//            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
+            /** request permission via start activity for result */
+            startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    public static int CHECK_OVERLAY_PERMISSION_REQUEST_CODE = 1000;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (checkOverlayPermission()) {
+                mAlertService.startOverlay();
+                startProcesses(mbtnStart);
+            } else {
+                startProcesses(mbtnStart);
+            }
+        }
+    }
+
+    private void startProcesses(View v) {
+        FlurryAgent.logEvent("Service Start!!");
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.START_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
+        mFirebaseAnalytics.logEvent("service_stop", bundle);
+
+        changeViewState(true, ((ActionButton) v));
+        mAlertService.startSensors(shouldContinue);
+        shouldContinue = false;
+
+        startDateTime = new Date();
+        mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
+        mbtnStart.playShowAnimation();
     }
 
     public void setSeekBarInLayout(View layout) {
@@ -726,10 +885,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         mShouldShowPedometer = isChecked;
                         if (isChecked) {
-                            findViewById(R.id.txtStepCount).setVisibility(View.VISIBLE);
+                            findViewById(R.id.llStepCount).setVisibility(View.VISIBLE);
                             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
                         } else {
-                            findViewById(R.id.txtStepCount).setVisibility(View.INVISIBLE);
+                            findViewById(R.id.llStepCount).setVisibility(View.INVISIBLE);
                             if (mAlertService.IsRunningAlertService()) {
                                 findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
                             }
@@ -749,6 +908,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
+        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }
 
@@ -808,19 +968,19 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     public void changeViewState(boolean isStart, ActionButton button) {
         if (isStart) {
-            button.setImageResource(R.drawable.ic_done_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorAccent));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorAccentDark));
+            ((TextView) findViewById(R.id.txtStartButton)).setText(getString(R.string.stop));
             findViewById(R.id.txtWatching).setVisibility(View.VISIBLE);
             findViewById(R.id.txtWatching).startAnimation(mAnimationBlink);
             if (!mShouldShowPedometer) {
                 findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
             }
-            ((TextView) findViewById(R.id.txtExplanation)).setText("歩きスマホ中の歩数を計測中");
+            findViewById(R.id.txtExplanation).setVisibility(View.GONE);//.setText("歩きスマホ中の歩数を計測中");
         } else {
-            button.setImageResource(R.drawable.ic_power_settings_new_white_48dp);
             button.setButtonColor(ContextCompat.getColor(this, R.color.colorPrimary));
             button.setButtonColorPressed(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+            ((TextView) findViewById(R.id.txtStartButton)).setText(getString(R.string.start));
             findViewById(R.id.txtWatching).setVisibility(View.GONE);
             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
             ((TextView) findViewById(R.id.txtExplanation)).setText(getString(R.string.app_explanation));
@@ -940,7 +1100,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     // Invoke displayInterstitial() when you are ready to display an interstitial.
     public void displayInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
+        if (mInterstitialAd.isLoaded() && !enableNewFunction) {
             mInterstitialAd.show();
         }
     }

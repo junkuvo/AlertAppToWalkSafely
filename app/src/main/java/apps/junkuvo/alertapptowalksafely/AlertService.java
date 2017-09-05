@@ -8,12 +8,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,7 +28,16 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
+import android.support.v7.view.ContextThemeWrapper;
+import android.support.v7.widget.PopupMenu;
 import android.util.Log;
+import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,6 +51,9 @@ import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
 
 public class AlertService extends IntentService implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -94,7 +111,7 @@ public class AlertService extends IntentService implements SensorEventListener,
             int stepCount = intent.getIntExtra("stepCount", mStepCountCurrent);
             if (intent.getBooleanExtra("isStepCounter", false)) {
 //                mStepCountCurrent = stepCount < 0 ? 0 : stepCount;
-//                onWalkStepListener.onWalkStep(mStepCountCurrent);
+//                onWalkStepListener.onAlertWalkStep(mStepCountCurrent);
             } else {
                 // 歩きスマホの注意
                 if (IsToastOn()) {
@@ -171,13 +188,16 @@ public class AlertService extends IntentService implements SensorEventListener,
     private IntentFilter intentFilter = new IntentFilter();
     private IntentFilter localIntentFilter = new IntentFilter();
 
+    private Configuration config;
+
     @Override
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
         boolean isTablet = Utility.isTabletNotPhone(mContext);
-        int orientation = Utility.getOrientation(mContext);
-        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, orientation);
+        Resources resources = mContext.getResources();
+        config = resources.getConfiguration();
+        mDeviceAttitudeCalculator = new DeviceAttitudeCalculator(isTablet, config.orientation);
         mWalkCountCalculator = new WalkCountCalculator();
         mWalkCountCalculatorAsNg = new WalkCountCalculator();
 
@@ -194,7 +214,12 @@ public class AlertService extends IntentService implements SensorEventListener,
                 .build();
 
         mHasStepFeature = isHasStepFeature();
+
     }
+
+    private View overlay;
+    private WindowManager windowManager;
+
 
     /**
      * これはonStartServiceでしか呼ばれない
@@ -207,7 +232,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-//        super.onStart(intent, startId);
         return START_STICKY;
     }
 
@@ -270,7 +294,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    public void startSensors() {
+    public void startSensors(boolean shouldContinue) {
         startServiceForeground();
         try {
             setIsRunningAlertService(true);
@@ -290,10 +314,12 @@ public class AlertService extends IntentService implements SensorEventListener,
             }
 
             // 歩数計用のセンサー登録
-            mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-            mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+                mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
 
-            initializeSensingValues();
+            initializeSensingValues(shouldContinue);
         } catch (Exception e) {
             stopSensors();
             e.printStackTrace();
@@ -302,6 +328,9 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     public void stopSensors() {
         try {
+            if (overlay != null) {
+                windowManager.removeView(overlay);
+            }
             // Notificationを消す
             stopForeground(true);
 
@@ -328,12 +357,121 @@ public class AlertService extends IntentService implements SensorEventListener,
         }
     }
 
-    public void initializeSensingValues() {
+    private WindowManager.LayoutParams layoutParams;
+
+    public void startOverlay() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        layoutParams = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_106dp);// 適当な値
+
+        final Point point = getDisplaySize();
+
+        overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null);
+        overlay.findViewById(R.id.fabStartOverlay).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int x = (int) event.getRawX();
+                int y = (int) event.getRawY();
+
+                switch (event.getAction()) {
+                    case ACTION_DOWN:
+                        initialX = x;
+                        initialY = y;
+                    case ACTION_MOVE:
+                        windowManager.getDefaultDisplay().getRealSize(point);
+                        int centerX;
+                        int centerY;
+                        centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);// FIXME :ここも縦横で変更
+                        centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_22dp);
+                        layoutParams.x = centerX;
+                        layoutParams.y = centerY;
+                        windowManager.updateViewLayout(overlay, layoutParams);
+                        break;
+                    case ACTION_UP:
+                        isMoved = Math.sqrt(Math.pow(x - initialX, 2) + Math.pow(y - initialY, 2)) > v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);
+                        break;
+                }
+                return false;
+            }
+        });
+        overlay.findViewById(R.id.fabStartOverlay).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (!isMoved) {
+                    onShowPopup(v);
+                }
+                isMoved = false;
+            }
+        });
+
+        windowManager.addView(overlay, layoutParams);
+    }
+
+    private int initialX = 0;
+    private int initialY = 0;
+
+    private void onShowPopup(final View v) {
+        Context wrapper = new ContextThemeWrapper(v.getContext(), R.style.MyPopupMenu);
+        // PopupMenuのインスタンスを作成
+        PopupMenu popup = new PopupMenu(wrapper, v);
+
+        // popup.xmlで設定したメニュー項目をポップアップメニューに割り当てる
+        popup.getMenuInflater().inflate(R.menu.menu_popup, popup.getMenu());
+
+        // ポップアップメニューを表示
+        popup.show();
+
+        // ポップアップメニューのメニュー項目のクリック処理
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            public boolean onMenuItemClick(MenuItem item) {
+                // 押されたメニュー項目名をToastで表示
+                switch (item.getItemId()) {
+                    case R.id.hide:
+                        if (overlay != null) {
+                            windowManager.removeView(overlay);
+                        }
+                        break;
+//                                case R.id.show_alert_step_count:
+//                                    break;
+                    case R.id.open_app:
+                        overlayActionListener.onOpenApp();
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+    private Point getDisplaySize() {
+        Point point = new Point(0, 0);
+        Display display = windowManager.getDefaultDisplay();
+        // Android 4.2~
+        display.getRealSize(point);
+        return point;
+    }
+
+    private boolean isMoved = false;
+
+    public void initializeSensingValues(boolean shouldContinue) {
         mTendencyCheckCount = 0;
         mTendencyOutCount = 0;
         isWalkingStatus = false;
-        mStepCountCurrent = -1;
-        countAsNg = -1;
+        if (shouldContinue) {
+            mStepCountCurrent--;
+            countAsNg--;
+        } else {
+            mStepCountCurrent = -1;
+            countAsNg = -1;
+        }
     }
 
     // 歩きスマホ中として歩数をカウントするかどうかのフラグ
@@ -341,6 +479,7 @@ public class AlertService extends IntentService implements SensorEventListener,
     // 歩きスマホ中の歩数。画面に表示される
     private int countAsNg = -1;
 
+    // FIXME ここの計算ロジックはワーカースレッドで実行すべき
     // センサーの値が変化すると呼ばれる(加速度・ステップディテクター・ステップカウンター)
     @Override
     public void onSensorChanged(final SensorEvent event) {
@@ -349,7 +488,8 @@ public class AlertService extends IntentService implements SensorEventListener,
         if (mIsRunningAlertService) {
             if (mIsScreenOn) {
                 int stepCount = countAsNg < 0 ? 0 : countAsNg;
-                onWalkStepListener.onWalkStep(stepCount);
+                // 歩きスマホ数のコールバック
+                onWalkStepListener.onAlertWalkStep(stepCount);
 
                 if (mStepCountBefore == 0) {
                     mStepCountBefore = mStepCountCurrent;
@@ -400,7 +540,16 @@ public class AlertService extends IntentService implements SensorEventListener,
                 mStepCountCurrent++;
                 if (shouldCountAsNg) {
                     countAsNg++;
+                    // FIXME 色変えたいな
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorAccent);
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorAccentDark);
+//                    overlay.findViewById(R.id.fabStartOverlay).setAlpha(1.0F);
+//                } else {
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorPrimary);
+//                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorPrimaryDark);
                 }
+                // 歩数を渡す
+                showStepCount();
             } else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 if (mIsScreenOn) {
                     // センサーモードSENSOR_DELAY_NORMALは200msごとに呼ばれるので
@@ -417,19 +566,28 @@ public class AlertService extends IntentService implements SensorEventListener,
                     intent.putExtra("isStepCounter", true);
                     intent.putExtra("stepCount", mStepCountCurrent);
                     LocalBroadcastManager.getInstance(mContext).sendBroadcastSync(intent);
+                    // 歩数を渡す
+                    showStepCount();
                 }
             }
         }
     }
 
+    private void showStepCount() {
+        // 歩数を渡す
+        if (overlay != null) {
+            ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
+        }
+        onWalkStepListener.onWalkStep(mStepCountCurrent);
+    }
+
     private int mStepCountBefore = 0;
-    private int mStepCountAfter = 0;
     // onSensorChanged の TYPE_STEP_DETECT が最初に1回よばれるのでその分-1
     private int mStepCountCurrent = -1;
 
     // 歩数の変化を計算して、変化があれば歩行中と判定
     private boolean isWalking() {
-        mStepCountAfter = mStepCountCurrent;
+        int mStepCountAfter = mStepCountCurrent;
         if (mStepCountBefore == mStepCountAfter) {
             return false;
         } else {
@@ -512,6 +670,8 @@ public class AlertService extends IntentService implements SensorEventListener,
     }
 
     public interface onWalkStepListener {
+        void onAlertWalkStep(int stepCount);
+
         void onWalkStep(int stepCount);
     }
 
@@ -607,6 +767,16 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     public void setIsRunningAlertService(boolean mIsRunningAlertService) {
         this.mIsRunningAlertService = mIsRunningAlertService;
+    }
+
+    interface OverlayActionListener {
+        void onOpenApp();
+    }
+
+    private OverlayActionListener overlayActionListener;
+
+    public void setOverlayActionListener(OverlayActionListener overlayActionListener) {
+        this.overlayActionListener = overlayActionListener;
     }
 }
 

@@ -63,7 +63,9 @@ public class AlertApplication extends MultiDexApplication {
                 .setLastCrashTimeCooldownDays(3) // Prompt not shown within input days of most recent crash.
                 .addTotalEventCountRule(PromptInteractionEvent.USER_GAVE_POSITIVE_FEEDBACK,
                         new MaximumCountRule(1)); // Never ask the user for feedback again if they already responded positively.
+
     }
+
 
     @Override
     protected void attachBaseContext(Context base) {

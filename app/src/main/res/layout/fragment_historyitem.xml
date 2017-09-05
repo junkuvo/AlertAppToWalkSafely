@@ -14,9 +14,11 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="4dp"
+        android:foreground="?android:attr/selectableItemBackground"
         card_view:cardCornerRadius="4dp">
 
         <RelativeLayout
+            android:id="@+id/rlInformationLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingBottom="@dimen/basic_margin"
@@ -76,6 +78,7 @@
                 android:textColor="@android:color/black" />
 
             <LinearLayout
+                android:id="@+id/llStepInformation"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_alignLeft="@+id/ivClock"
@@ -119,15 +122,70 @@
             </LinearLayout>
 
             <android.support.v7.widget.AppCompatImageButton
-                android:id="@+id/ivDelete"
+                android:id="@+id/ivEdit"
+                android:foreground="?android:attr/selectableItemBackground"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
+                android:layout_toStartOf="@+id/ivDelete"
+                android:layout_alignBottom="@+id/llStepInformation"
+                android:layout_marginEnd="@dimen/basic_margin_8dp"
+                android:background="@android:color/transparent"
+                app:srcCompat="@drawable/ic_note_add_black_24dp" />
+
+            <android.support.v7.widget.AppCompatImageButton
+                android:id="@+id/ivDelete"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/llStepInformation"
                 android:layout_alignParentRight="true"
                 android:background="@android:color/transparent"
                 app:srcCompat="@drawable/ic_delete_deep_455a64_24dp" />
 
+            <LinearLayout
+                android:id="@+id/edit_views"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/ivDelete"
+                android:visibility="gone"
+                android:orientation="vertical">
+
+                <android.support.v7.widget.AppCompatEditText
+                    android:id="@+id/et_memo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="メモを入力してください"
+                    android:layout_margin="@dimen/basic_margin_8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="right"
+                    android:orientation="horizontal">
+
+                    <android.support.v7.widget.AppCompatButton
+                        android:id="@+id/bt_cancel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:textColor="@color/colorAccent"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:text="@string/dialog_button_cancel" />
+
+                    <android.support.v7.widget.AppCompatButton
+                        android:id="@+id/bt_save"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:textColor="@color/colorAccent"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:text="保存" />
+                </LinearLayout>
+
+            </LinearLayout>
+
         </RelativeLayout>
+
     </android.support.v7.widget.CardView>
 
 </LinearLayout>

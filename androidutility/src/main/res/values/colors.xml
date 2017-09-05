@@ -4,8 +4,10 @@
     <!--<color name="colorPrimaryDark">#303F9F</color>-->
     <!--<color name="colorAccent">#FF4081</color>-->
     <color name="colorAccentDark">#B71C1C</color>
-    <color name="colorPrimary">#607D8B</color>
+    <color name="colorPrimaryDark_a70">#B3455A64</color>
+    <color name="colorPrimary_a70">#B3607D8B</color>
     <color name="colorPrimaryDark">#455A64</color>
+    <color name="colorPrimary">#607D8B</color>
     <color name="colorAccent">#D32F2F</color>
 
     <color name="shadow">#BB000000</color>

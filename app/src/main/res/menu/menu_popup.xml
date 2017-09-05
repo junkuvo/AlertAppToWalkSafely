@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/open_app"
+        android:title="@string/open_app" />
+    <!--FIXME 歩数表示の変更-->
+    <!--<item-->
+    <!--android:id="@+id/show_alert_step_count"-->
+    <!--android:title="@string/show_alert_step_count" />-->
+    <item
+        android:id="@+id/hide"
+        android:title="@string/hide" />
+</menu>
