@@ -19,18 +19,14 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -38,12 +34,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.ActivityRecognitionResult;
-import com.google.android.gms.location.DetectedActivity;
 
 import java.util.List;
 
@@ -55,8 +45,7 @@ import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
 
-public class AlertService extends IntentService implements SensorEventListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class AlertService extends IntentService implements SensorEventListener {
 
     public static final String ACTION = "AlertService";
     private static final float TOAST_TEXT_SIZE = 24; // sp
@@ -75,14 +64,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     private int mTendencyOutCount = 0;
 
     public Context mContext;
-    // Recognition API用
-    private GoogleApiClient mApiClient;
-    private PendingIntent mReceiveRecognitionIntent;
-    private final int ACTIVITY_RECOGNITION_CONFIDENCE = 15;
-    private boolean isWalkingStatus = false;
-
-    private boolean mShouldShowAlert = false;
-    private boolean mShouldShowPedometer = true;
     private boolean mIsToastOn = true;
     private boolean mIsVibrationOn = true;
     private int mToastPosition;
@@ -207,12 +188,6 @@ public class AlertService extends IntentService implements SensorEventListener,
         intentFilter.addAction(DELETE_NOTIFICATION);
         localIntentFilter.addAction(ACTION);
 
-        mApiClient = new GoogleApiClient.Builder(this)
-                .addApi(ActivityRecognition.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-
         mHasStepFeature = isHasStepFeature();
 
     }
@@ -260,33 +235,8 @@ public class AlertService extends IntentService implements SensorEventListener,
         return true; // 再度クライアントから接続された際に onRebind を呼び出させる場合は true を返す
     }
 
-    // GoogleApiClient
-    // mApiClient.connect()のcallback
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        Intent intent = new Intent(this, AlertService.class);
-        mReceiveRecognitionIntent = PendingIntent.getService(this, 0, intent, FLAG_UPDATE_CURRENT);
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mReceiveRecognitionIntent);
-    }
-
-    // GoogleApiClient
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    // GoogleApiClient
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (ActivityRecognitionResult.hasResult(intent)) {
-            ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-            detectWalkingStatusByGcm(result.getProbableActivities());
-        }
     }
 
     // センサーの精度が変更されると呼ばれる
@@ -301,9 +251,6 @@ public class AlertService extends IntentService implements SensorEventListener,
 
             LocalBroadcastManager.getInstance(mContext).registerReceiver(localBroadcastReceiver, localIntentFilter);
             registerReceiver(broadcastReceiver, intentFilter);
-
-            // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
-//        mApiClient.connect();
 
             mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
             // センサーのオブジェクトリストを取得する
@@ -344,11 +291,6 @@ public class AlertService extends IntentService implements SensorEventListener,
 
             if (broadcastReceiver != null) {
                 unregisterReceiver(broadcastReceiver);
-            }
-
-            if (mApiClient != null && mApiClient.isConnected()) {
-                ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mReceiveRecognitionIntent);
-                mApiClient.disconnect();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -464,7 +406,6 @@ public class AlertService extends IntentService implements SensorEventListener,
     public void initializeSensingValues(boolean shouldContinue) {
         mTendencyCheckCount = 0;
         mTendencyOutCount = 0;
-        isWalkingStatus = false;
         if (shouldContinue) {
             mStepCountCurrent--;
             countAsNg--;
@@ -516,7 +457,6 @@ public class AlertService extends IntentService implements SensorEventListener,
                                 LocalBroadcastManager.getInstance(mContext).sendBroadcastSync(intent);
 
                                 mTendencyOutCount = 0;
-                                isWalkingStatus = false;
                                 mStepCountBefore = mStepCountCurrent;
                             }
                         } else {
@@ -598,41 +538,6 @@ public class AlertService extends IntentService implements SensorEventListener,
 
     private boolean isEveryOneSecond() {
         return mTendencyCheckCount == 5;
-    }
-
-    private void detectWalkingStatusByGcm(List<DetectedActivity> probableActivities) {
-        int confidence = 0;
-        int confidenceOthers = 0;
-        for (DetectedActivity activity : probableActivities) {
-            switch (activity.getType()) {
-                case DetectedActivity.ON_FOOT: {
-                    confidence = confidence + activity.getConfidence();
-                    Log.e("ActivityRecognition", "On Foot: " + activity.getConfidence());
-                    break;
-                }
-                case DetectedActivity.RUNNING: {
-                    confidence = confidence + activity.getConfidence();
-                    Log.e("ActivityRecognition", "Running: " + activity.getConfidence());
-                    break;
-                }
-                case DetectedActivity.WALKING: {
-                    confidence = confidence + activity.getConfidence();
-                    Log.e("ActivityRecognition", "Walking: " + activity.getConfidence());
-                    break;
-                }
-                case DetectedActivity.STILL:
-                case DetectedActivity.IN_VEHICLE:
-                case DetectedActivity.ON_BICYCLE:
-                case DetectedActivity.TILTING:
-                    confidenceOthers = confidenceOthers + activity.getConfidence();
-                case DetectedActivity.UNKNOWN:
-                    Log.e("ActivityRecognition", "others: " + activity.getConfidence());
-                    isWalkingStatus = false;
-                    break;
-            }
-            isWalkingStatus = (confidence >= ACTIVITY_RECOGNITION_CONFIDENCE
-                    && confidenceOthers <= ACTIVITY_RECOGNITION_CONFIDENCE);
-        }
     }
 
     public void startServiceForeground() {

@@ -103,7 +103,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     /**
      * メニュー表示順に並べること
      */
-    enum MENU_ID {
+    private enum MENU_ID {
         HISTORY(R.drawable.ic_history_white_24dp),
         FACEBOOK(R.drawable.ic_action_fb_f_logo__white_1024),
         TWITTER(R.drawable.ic_action_twitter_logo_white_on_image),
@@ -188,11 +188,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mAlertService.setOnWalkStepListener(new AlertService.onWalkStepListener() {
                 @Override
                 public void onAlertWalkStep(int stepCount) {
+                    // TODO Broadcastに変更
                     ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
 
                 @Override
                 public void onWalkStep(int stepCount) {
+                    // TODO Broadcastに変更
                     ((TextView) findViewById(R.id.txtStepNo)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
                 }
             });
@@ -203,6 +205,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     setStartButtonFunction(findViewById(R.id.fabStart));
                 }
             });
+
+            // TODO serviceに実装しちゃえばOK
             mAlertService.setOverlayActionListener(new AlertService.OverlayActionListener() {
                 @Override
                 public void onOpenApp() {
@@ -211,12 +215,16 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     startActivity(intent);
                 }
             });
+
+            // TODO service側で読み込めばOK
             mAlertService.setIsToastOn(mIsToastOn);
             mAlertService.setIsVibrationOn(mIsVibrationOn);
             mAlertService.setToastPosition(mToastPosition);
             mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
             mAlertService.setAlertMessage(mAlertMessage);
             mAlertService.setIsBoundService(true);
+
+
             String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
             ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
 
@@ -341,7 +349,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             promptView.applyBaseConfig(basePromptViewConfig);
             Amplify.getSharedInstance().promptIfReady(promptView);
 
-            Utility mUtility = new Utility(this);
             mAnimationBlink = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
 
             int buttonColor = ContextCompat.getColor(this, R.color.colorPrimary);
