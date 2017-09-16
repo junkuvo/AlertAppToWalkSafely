@@ -19,6 +19,12 @@ import com.growthpush.model.Environment;
 
 public class AlertApplication extends MultiDexApplication {
 
+    private WalkServiceAdapter walkServiceAdapter = new WalkServiceAdapter();
+
+    public WalkServiceAdapter getWalkServiceAdapter() {
+        return walkServiceAdapter;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

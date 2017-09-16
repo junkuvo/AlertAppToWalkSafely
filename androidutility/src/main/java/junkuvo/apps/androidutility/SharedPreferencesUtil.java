@@ -6,8 +6,18 @@ import android.content.SharedPreferences;
 import static android.content.Context.MODE_PRIVATE;
 
 public class SharedPreferencesUtil {
-    private static final String TAG = SharedPreferencesUtil.class.getSimpleName();
-    private final SharedPreferencesUtil self = this;
+    public enum PrefKeys{
+        NOTIFICATION_SHOW_IN_BAR("NOTIFICATION_SHOW_IN_BAR");
+
+        private String key;
+        PrefKeys(String key) {
+            this.key = key;
+        }
+
+        public String getKey() {
+            return key;
+        }
+    }
 
     public static void saveString(Context context, String prefName, String key, String value) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(prefName, MODE_PRIVATE);

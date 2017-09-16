@@ -1,8 +1,8 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,7 +17,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -37,6 +36,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
 import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
@@ -44,8 +44,12 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
+import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG;
+import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG;
+import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.CLICK_NOTIFICATION;
+import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.DELETE_NOTIFICATION;
 
-public class AlertService extends IntentService implements SensorEventListener {
+public class AlertService extends Service implements SensorEventListener {
 
     public static final String ACTION = "AlertService";
     private static final float TOAST_TEXT_SIZE = 24; // sp
@@ -59,29 +63,13 @@ public class AlertService extends IntentService implements SensorEventListener {
     private WalkCountCalculator mWalkCountCalculator;
     private WalkCountCalculator mWalkCountCalculatorAsNg;
 
-    private int mAlertStartAngle;
     private int mTendencyCheckCount = 0;
     private int mTendencyOutCount = 0;
 
     public Context mContext;
-    private boolean mIsToastOn = true;
-    private boolean mIsVibrationOn = true;
-    private int mToastPosition;
     private boolean mHasStepFeature = false;
-    private String mAlertMessage;
 
-    // サービスがバインドされているかどうかのフラグ
-    private boolean mIsBoundService = false;
-
-    // 歩きスマホ検知を開始しているかどうかのフラグ
-    private boolean mIsRunningAlertService = false;
-
-    // 歩数計
-    private Sensor mStepDetectorSensor;
-    private Sensor mStepCounterSensor;
-
-    public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
-    public static final String DELETE_NOTIFICATION = "walk_safe_delete_notification";
+    private WalkServiceAdapter walkServiceAdapter;
 
     // 画面のON/OFFを検知する
     private boolean mIsScreenOn = true;
@@ -95,17 +83,20 @@ public class AlertService extends IntentService implements SensorEventListener {
 //                onWalkStepListener.onAlertWalkStep(mStepCountCurrent);
             } else {
                 // 歩きスマホの注意
-                if (IsToastOn()) {
+                if (WalkServiceData.getInstance().IsToastOn()) {
                     Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            ToastUtil.showCustomToastWithImage(getApplicationContext(), mAlertMessage, R.color.fab_material_white, TOAST_TEXT_SIZE, mToastPosition);
+                            ToastUtil.showCustomToastWithImage(getApplicationContext(),
+                                    WalkServiceData.getInstance().getAlertMessage(),
+                                    R.color.fab_material_white, TOAST_TEXT_SIZE,
+                                    WalkServiceData.getInstance().getToastPosition());
                         }
                     });
                 }
 
-                if (IsVibrationOn()) {
+                if (WalkServiceData.getInstance().IsVibrationOn()) {
                     Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
                     long[] pattern = {100, 100, 100, 100, 100, 100};
                     vibrator.vibrate(pattern, -1);
@@ -132,39 +123,11 @@ public class AlertService extends IntentService implements SensorEventListener {
             }
 
             if (intent.getAction().equals(DELETE_NOTIFICATION)) {
-                // service から unbindする方法がないので、Notification から停止させる機能は一旦なくす
-                // stopSelf();
                 stopSensors();
-                onActionFromNotificationListener.onStopFromNotification(DELETE_NOTIFICATION);
-                return;
+                walkServiceAdapter.notifyActionFromNotification(DELETE_NOTIFICATION);
             }
         }
     };
-
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     *
-     * @param name Used to name the worker thread, important only for debugging.
-     */
-    public AlertService(String name) {
-        super(name);
-    }
-
-    public AlertService() {
-        super("AlertService");
-//        getSettingsInPreferences();
-    }
-
-    //サービスに接続するためのBinder
-    public class AlertServiceBinder extends Binder {
-        //サービスの取得
-        AlertService getService() {
-            return AlertService.this;
-        }
-    }
-
-    //Binderの生成
-    private final IBinder mAlertServiceBinder = new AlertServiceBinder();
 
     private IntentFilter intentFilter = new IntentFilter();
     private IntentFilter localIntentFilter = new IntentFilter();
@@ -175,6 +138,7 @@ public class AlertService extends IntentService implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
+        walkServiceAdapter = ((AlertApplication) getApplication()).getWalkServiceAdapter();
         boolean isTablet = Utility.isTabletNotPhone(mContext);
         Resources resources = mContext.getResources();
         config = resources.getConfiguration();
@@ -207,6 +171,12 @@ public class AlertService extends IntentService implements SensorEventListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+        boolean shouldContinue = intent.getBooleanExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, true);
+        startSensors(shouldContinue);
+        boolean canShowOverlay = intent.getBooleanExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, false);
+        if (canShowOverlay) {
+            startOverlay();
+        }
         return START_STICKY;
     }
 
@@ -223,7 +193,7 @@ public class AlertService extends IntentService implements SensorEventListener {
     // BindしたServiceをActivityに返す
     @Override
     public IBinder onBind(Intent intent) {
-        return mAlertServiceBinder;
+        return null;
     }
 
     @Override
@@ -235,19 +205,20 @@ public class AlertService extends IntentService implements SensorEventListener {
         return true; // 再度クライアントから接続された際に onRebind を呼び出させる場合は true を返す
     }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-    }
-
     // センサーの精度が変更されると呼ばれる
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
+    /**
+     * センサーをスタートさせる。これで監視が始まる。
+     *
+     * @param shouldContinue 歩数を継続して利用するかどうかのフラグ true 継続利用
+     */
     public void startSensors(boolean shouldContinue) {
         startServiceForeground();
         try {
-            setIsRunningAlertService(true);
+            WalkServiceData.getInstance().setRunningService(true);
 
             LocalBroadcastManager.getInstance(mContext).registerReceiver(localBroadcastReceiver, localIntentFilter);
             registerReceiver(broadcastReceiver, intentFilter);
@@ -262,7 +233,7 @@ public class AlertService extends IntentService implements SensorEventListener {
 
             // 歩数計用のセンサー登録
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+                Sensor mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
                 mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
             }
 
@@ -295,7 +266,7 @@ public class AlertService extends IntentService implements SensorEventListener {
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
-            setIsRunningAlertService(false);
+            WalkServiceData.getInstance().setRunningService(false);
         }
     }
 
@@ -385,7 +356,7 @@ public class AlertService extends IntentService implements SensorEventListener {
 //                                case R.id.show_alert_step_count:
 //                                    break;
                     case R.id.open_app:
-                        overlayActionListener.onOpenApp();
+                        walkServiceAdapter.getOverlayActionListener().onOpenApp();
                         break;
                 }
                 return true;
@@ -407,18 +378,14 @@ public class AlertService extends IntentService implements SensorEventListener {
         mTendencyCheckCount = 0;
         mTendencyOutCount = 0;
         if (shouldContinue) {
-            mStepCountCurrent--;
-            countAsNg--;
+            mStepCountCurrent = WalkServiceData.getInstance().getWalkCountAllInt() - 1;
+            countAsNg = WalkServiceData.getInstance().getWalkCountAlertInt() - 1;
         } else {
             mStepCountCurrent = -1;
             countAsNg = -1;
         }
+        showStepCount();
     }
-
-    // 歩きスマホ中として歩数をカウントするかどうかのフラグ
-    private boolean shouldCountAsNg = false;
-    // 歩きスマホ中の歩数。画面に表示される
-    private int countAsNg = -1;
 
     // FIXME ここの計算ロジックはワーカースレッドで実行すべき
     // センサーの値が変化すると呼ばれる(加速度・ステップディテクター・ステップカウンター)
@@ -426,11 +393,11 @@ public class AlertService extends IntentService implements SensorEventListener {
     public void onSensorChanged(final SensorEvent event) {
         // 画面がONの場合、歩きスマホを検知する
         final Sensor sensor = event.sensor;
-        if (mIsRunningAlertService) {
+        if (walkServiceAdapter.isWalkServiceRunning()) {
             if (mIsScreenOn) {
                 int stepCount = countAsNg < 0 ? 0 : countAsNg;
                 // 歩きスマホ数のコールバック
-                onWalkStepListener.onAlertWalkStep(stepCount);
+                walkServiceAdapter.notifyWalkDataAlertChanged(stepCount);
 
                 if (mStepCountBefore == 0) {
                     mStepCountBefore = mStepCountCurrent;
@@ -438,15 +405,15 @@ public class AlertService extends IntentService implements SensorEventListener {
 
                 if (isEveryOneSecond()) {
                     // 歩行中であることを判定
-                    // FIXME : RecognitionAPIの精度・更新頻度がよくわからない。connectしたタイミングでも謎の値が入ってくるので一旦利用をやめる。
-                    if (isWalking()) {// || isWalkingStatus) {
+                    if (isWalking()) {
 
                         // 歩いている状態で下記にてデバイス角度計算
                         int tendency = mDeviceAttitudeCalculator.calculateDeviceAttitude(event);
+                        int startAngle = WalkServiceData.getInstance().getAlertStartAngle();
                         // 下向きかどうかの判定
                         // 激しく動かすなどするとマイナスの値が出力されることがあるので tendency > 0 とする
                         // さらにテーブルに置いたときなど、水平状態があり得るため tendency > (適当) とする
-                        if ((tendency > 180 - getAlertStartAngle() || tendency < getAlertStartAngle()) && tendency > 8) {
+                        if ((tendency > 180 - startAngle || tendency < startAngle) && tendency > 8) {
                             mTendencyOutCount++;
                             shouldCountAsNg = true;
                             //  下向きと判定されるのが連続 n 回(= n 秒)の場合、Alertを表示させる
@@ -513,17 +480,25 @@ public class AlertService extends IntentService implements SensorEventListener {
         }
     }
 
+    /**
+     * 通常の歩行
+     */
     private void showStepCount() {
         // 歩数を渡す
         if (overlay != null) {
             ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
         }
-        onWalkStepListener.onWalkStep(mStepCountCurrent);
+
+        walkServiceAdapter.notifyWalkDataNormalChanged(mStepCountCurrent);
     }
 
     private int mStepCountBefore = 0;
     // onSensorChanged の TYPE_STEP_DETECT が最初に1回よばれるのでその分-1
     private int mStepCountCurrent = -1;
+    // 歩きスマホ中として歩数をカウントするかどうかのフラグ
+    private boolean shouldCountAsNg = false;
+    // 歩きスマホ中の歩数。画面に表示される
+    private int countAsNg = -1;
 
     // 歩数の変化を計算して、変化があれば歩行中と判定
     private boolean isWalking() {
@@ -561,10 +536,9 @@ public class AlertService extends IntentService implements SensorEventListener {
                 getPendingIntentWithBroadcast(DELETE_NOTIFICATION)
         );
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            NotificationCompat.BigTextStyle notificationBigTextStyle = new NotificationCompat.BigTextStyle(builder);
-            builder.setStyle(notificationBigTextStyle);
-        }
+        NotificationCompat.BigTextStyle notificationBigTextStyle = new NotificationCompat.BigTextStyle(builder);
+        builder.setStyle(notificationBigTextStyle);
+
         // ロックスクリーン上でどう見えるか
         builder.setVisibility(Notification.VISIBILITY_SECRET);
 
@@ -574,114 +548,11 @@ public class AlertService extends IntentService implements SensorEventListener {
         startForeground(R.string.app_name, builder.build());
     }
 
-    public interface onWalkStepListener {
-        void onAlertWalkStep(int stepCount);
-
-        void onWalkStep(int stepCount);
-    }
-
-    public void setOnWalkStepListener(onWalkStepListener onWalkStepListener) {
-        this.onWalkStepListener = onWalkStepListener;
-    }
-
-    public void removeOnWalkStepListener() {
-        this.onWalkStepListener = null;
-    }
-
-    public interface onActionFromNotificationListener {
-        void onStopFromNotification(String action);
-    }
-
-    public void setOnActionFromNotificationListener(onActionFromNotificationListener onActionromNotificationListener) {
-        this.onActionFromNotificationListener = onActionromNotificationListener;
-    }
-
-    public void removeOnActionFromNotificationListener() {
-        this.onActionFromNotificationListener = null;
-    }
-
-    private onWalkStepListener onWalkStepListener;
-    private onActionFromNotificationListener onActionFromNotificationListener;
-
-    public boolean IsToastOn() {
-        return mIsToastOn;
-    }
-
-    public void setIsToastOn(boolean mIsToastOn) {
-        this.mIsToastOn = mIsToastOn;
-    }
-
-    public boolean IsVibrationOn() {
-        return mIsVibrationOn;
-    }
-
-    public void setIsVibrationOn(boolean mIsVibrationOn) {
-        this.mIsVibrationOn = mIsVibrationOn;
-    }
-
-    public int getToastPosition() {
-        return mToastPosition;
-    }
-
-    public void setToastPosition(int mToastPosition) {
-        this.mToastPosition = mToastPosition;
-    }
-
-    public int getAlertStartAngle() {
-        return mAlertStartAngle;
-    }
-
-    public void setAlertStartAngle(int mAlertStartAngle) {
-        this.mAlertStartAngle = mAlertStartAngle;
-    }
-
-    public String getAlertMessage() {
-        return mAlertMessage;
-    }
-
-    public void setAlertMessage(String mAlertMessage) {
-        this.mAlertMessage = mAlertMessage;
-    }
-
     public boolean isHasStepFeature() {
         PackageManager packageManager = this.getPackageManager();
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
                 && packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
     }
 
-    // TODO : ここTrueしか帰らないからMainActivityに移動した方がいい
-    public boolean isBoundService() {
-        return mIsBoundService;
-    }
-
-    public void setIsBoundService(boolean isBoundService) {
-        this.mIsBoundService = isBoundService;
-    }
-
-    public int getStepCountCurrent() {
-        return mStepCountCurrent;
-    }
-
-    public void setStepCountCurrent(int mStepCountCurrent) {
-        this.mStepCountCurrent = mStepCountCurrent;
-    }
-
-    public boolean IsRunningAlertService() {
-        return mIsRunningAlertService;
-    }
-
-    public void setIsRunningAlertService(boolean mIsRunningAlertService) {
-        this.mIsRunningAlertService = mIsRunningAlertService;
-    }
-
-    interface OverlayActionListener {
-        void onOpenApp();
-    }
-
-    private OverlayActionListener overlayActionListener;
-
-    public void setOverlayActionListener(OverlayActionListener overlayActionListener) {
-        this.overlayActionListener = overlayActionListener;
-    }
 }
 

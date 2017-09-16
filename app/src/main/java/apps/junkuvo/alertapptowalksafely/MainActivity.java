@@ -1,16 +1,13 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
@@ -50,6 +47,7 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
+import com.github.stkent.amplify.utils.StringUtils;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -69,6 +67,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
 import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
 import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
@@ -83,22 +82,25 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 import static android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT;
+import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.DELETE_NOTIFICATION;
 
 public class MainActivity extends AbstractActivity implements View.OnClickListener {
 
     private boolean mPasscodeOn = false;
-    private int mStepCount = 0;
+    private String mStepCount = "";
     public static final String SETTING_SHAREDPREF_NAME = "setting";
     public static final String AD_STATUS_SHAREDPREF_NAME = "AD_STATUS_SHAREDPREF_NAME";
     private static final String TUTORIAL_ID = "TUTORIAL_ID";
     private static final String NEW_FUNCTION_ID = "NEW_FUNCTION_ID";
-
+    public static final String EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG = "EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG";
+    public static final String EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG = "EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG";
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
     private final int ALERT_ANGLE_INITIAL_OFFSET = 15;
 
     private static final float TOAST_TEXT_SIZE = 32; // sp
+    private Intent mAlertServiceIntent;
 
     /**
      * メニュー表示順に並べること
@@ -158,6 +160,37 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     int mAlertStartAngle;
 
     private String mAlertMessage;
+    private WalkServiceAdapter walkServiceAdapter;
+
+    private WalkServiceAdapter.OnWalkDataChangedListener onWalkDataChangedListener = new WalkServiceAdapter.OnWalkDataChangedListener() {
+        @Override
+        public void onWalkDataAlertChanged(String stepCount) {
+            ((TextView) findViewById(R.id.txtStepCount)).setText(String.format("%s%s", stepCount, getString(R.string.home_step_count_dimension)));
+        }
+
+        @Override
+        public void onWalkDataNormalChanged(String walkCountNormal) {
+            ((TextView) findViewById(R.id.txtStepNo)).setText(String.format("%s%s", walkCountNormal, getString(R.string.home_step_count_dimension)));
+        }
+    };
+
+    private WalkServiceAdapter.OnActionFromNotificationListener onActionFromNotificationListener = new WalkServiceAdapter.OnActionFromNotificationListener() {
+        @Override
+        public void onStopFromNotification(String action) {
+            if (action.equals(DELETE_NOTIFICATION)) {
+                setStartButtonFunction(findViewById(R.id.fabStart), false);
+            }
+        }
+    };
+
+    private WalkServiceAdapter.OverlayActionListener overlayActionListener = new WalkServiceAdapter.OverlayActionListener() {
+        @Override
+        public void onOpenApp() {
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.setFlags(FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+            startActivity(intent);
+        }
+    };
 
     public TextWatcher mTextWatcher = new TextWatcher() {
         @Override
@@ -168,80 +201,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             mAlertMessage = s.toString();
-            if (mAlertService != null && mAlertService.isBoundService()) {
-                mAlertService.setAlertMessage(s.toString());
+            if (walkServiceAdapter.isWalkServiceRunning()) {
+                WalkServiceData.getInstance().setAlertMessage(mAlertMessage);
             }
         }
 
         @Override
         public void afterTextChanged(Editable s) {
 
-        }
-    };
-
-    // ActivityがonDestroyしたあと、ここでBindされるServiceは同一（Rebindされる）
-    private AlertService mAlertService;
-    private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-            // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
-            mAlertService = ((AlertService.AlertServiceBinder) binder).getService();
-            mAlertService.setOnWalkStepListener(new AlertService.onWalkStepListener() {
-                @Override
-                public void onAlertWalkStep(int stepCount) {
-                    // TODO Broadcastに変更
-                    ((TextView) findViewById(R.id.txtStepCount)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
-                }
-
-                @Override
-                public void onWalkStep(int stepCount) {
-                    // TODO Broadcastに変更
-                    ((TextView) findViewById(R.id.txtStepNo)).setText(String.valueOf(stepCount) + getString(R.string.home_step_count_dimension));
-                }
-            });
-            mAlertService.setOnActionFromNotificationListener(new AlertService.onActionFromNotificationListener() {
-                @Override
-                public void onStopFromNotification(String action) {
-                    mAlertService.setIsRunningAlertService(true);
-                    setStartButtonFunction(findViewById(R.id.fabStart));
-                }
-            });
-
-            // TODO serviceに実装しちゃえばOK
-            mAlertService.setOverlayActionListener(new AlertService.OverlayActionListener() {
-                @Override
-                public void onOpenApp() {
-                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    intent.setFlags(FLAG_ACTIVITY_BROUGHT_TO_FRONT);
-                    startActivity(intent);
-                }
-            });
-
-            // TODO service側で読み込めばOK
-            mAlertService.setIsToastOn(mIsToastOn);
-            mAlertService.setIsVibrationOn(mIsVibrationOn);
-            mAlertService.setToastPosition(mToastPosition);
-            mAlertService.setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
-            mAlertService.setAlertMessage(mAlertMessage);
-            mAlertService.setIsBoundService(true);
-
-
-            String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
-            ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
-
-            if (mAlertService.IsRunningAlertService()) {
-                // ボタン等の状態を合わせるため、falseにしてsetStartButtonFunctionを呼ぶ
-                mAlertService.setIsRunningAlertService(false);
-                setStartButtonFunction(findViewById(R.id.fabStart));
-            } else {
-                mAlertService.setStepCountCurrent(0);
-            }
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            // サービスとの切断(異常系処理)
-            // プロセスのクラッシュなど意図しないサービスの切断が発生した場合に呼ばれる。
-            // Unbindのタイミングでは呼ばれません（別物）
-            mAlertService = null;
         }
     };
 
@@ -258,10 +225,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
         // 署名付きAPKではなぜか初期起動後、BGから起動される度にonCreateしてActivityを生み続ける
         // →Intentのフラグの値がおかしいらしいので、下記のコードで対応
-        if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
+        if ((getIntent().getFlags() & FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
             finish();
             return;
         }
+        walkServiceAdapter = ((AlertApplication) getApplication()).getWalkServiceAdapter();
+        walkServiceAdapter.setOnWalkDataChangedListener(onWalkDataChangedListener);
+        walkServiceAdapter.setOnActionFromNotificationListener(onActionFromNotificationListener);
+        walkServiceAdapter.setOverlayActionListener(overlayActionListener);
 
         if (!isRunningJunit) {
             setContentView(R.layout.activity_main);
@@ -374,7 +345,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             mbtnStart.setOnClickListener(this);
 
-            Intent mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
+            mAlertServiceIntent = new Intent(MainActivity.this, AlertService.class);
 
             // スマホの場合はホーム画面自体は横にならないので縦に固定する(裏のロジックは横にも対応している)
             // タブレットはホームも縦横変化するのでこのアプリ画面も横に対応
@@ -392,25 +363,28 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             relativeLayout.setOnClickListener(this);
 
             findViewById(R.id.llStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
-
-//        // Serviceが動いていてもActivityがDestroyされた場合にActivityを再起動するとき、
-//        // UIとServiceの状況を合わせるためにServiceの動きを把握する必要があるが、Bindができないので
-//        // Application変数を参照している
-//        if (((AlertApplication) getApplication()).IsRunningService()) {
-//            btnIsStarted = false;
-//            setStartButtonFunction(findViewById(R.id.fabStart));
-//        }
-            // サービスを開始
-//            startService(mAlertServiceIntent);
-            bindService(mAlertServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-
         }
 
+        // 各種設定値を読み込んでおく
         mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
         mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
         mToastPosition = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", Gravity.CENTER);
         mAlertStartAngle = SharedPreferencesUtil.getInt(this, SETTING_SHAREDPREF_NAME, "progress", ALERT_ANGLE_INITIAL_VALUE) + ALERT_ANGLE_INITIAL_OFFSET;
         mShouldShowPedometer = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", true);
+        if (!isRunningJunit) {
+            // カーソルを最後尾に移動
+            mAlertMessage = SharedPreferencesUtil.getString(this, SETTING_SHAREDPREF_NAME, "alert_message");
+            mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
+            mAlertEditText.setText(mAlertMessage);
+            mAlertEditText.setSelection(mAlertEditText.getText().length());
+            mAlertEditText.addTextChangedListener(mTextWatcher);
+        }
+
+        WalkServiceData.getInstance().setIsToastOn(mIsToastOn);
+        WalkServiceData.getInstance().setIsVibrationOn(mIsVibrationOn);
+        WalkServiceData.getInstance().setToastPosition(mToastPosition);
+        WalkServiceData.getInstance().setAlertStartAngle(mAlertStartAngle + ALERT_ANGLE_INITIAL_OFFSET);
+        WalkServiceData.getInstance().setAlertMessage(mAlertMessage);
 
         // 履歴データがすでにある(updateの場合) or 広告をタップした場合
         enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
@@ -420,14 +394,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     @Override
     protected void onStart() {
         super.onStart();
-
-        if (!isRunningJunit) {
-            // カーソルを最後尾に移動
-            mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
-            mAlertEditText.setSelection(mAlertEditText.getText().length());
-            mAlertEditText.addTextChangedListener(mTextWatcher);
-            mAlertMessage = mAlertEditText.getText().toString();
-        }
     }
 
     private static final int PLUS_ONE_REQUEST_CODE = 0;
@@ -454,7 +420,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
-                if (!mAlertService.IsRunningAlertService()) {
+                if (!walkServiceAdapter.isWalkServiceRunning()) {
                     createToastShort(getString(R.string.toast_instruction)).show();
                     mbtnStart.startAnimation(mAnimationBlink);
                 }
@@ -609,22 +575,22 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         return historyItemModel;
     }
 
-    public void setStartButtonFunction(final View v) {
+    public void setStartButtonFunction(final View v, boolean isToStart) {
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
 
-        if (mAlertService.IsRunningAlertService()) {
+        if (!isToStart) {
             FlurryAgent.logEvent("Service Stop!!");
             Bundle bundle = new Bundle();
             bundle.putString(FirebaseAnalytics.Param.END_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
             mFirebaseAnalytics.logEvent("service_stop", bundle);
 
-            mStepCount = mAlertService.getStepCountCurrent();
+            mStepCount = WalkServiceData.getInstance().getWalkCountAll();
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
             // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
-            if (mStepCount > 0 && enableNewFunction) {
+            if (StringUtils.isNotBlank(mStepCount) && enableNewFunction) {
                 RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
                     @Override
                     public void OnSuccess() {
@@ -662,7 +628,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.show();
             }
 
-            mAlertService.stopSensors();
+            stopService(mAlertServiceIntent);
 
             // 機能追加訴求ダイアログ
             if (!enableNewFunction) {
@@ -688,7 +654,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mbtnStart.playShowAnimation();
 
         } else {
-            if (mStepCount > 0) {
+            if (StringUtils.isNotBlank(mStepCount)) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
                 mAlertDialog.setIcon(R.drawable.ic_stat_small);
                 mAlertDialog.setMessage("歩数を0に戻してよろしいですか？");
@@ -698,13 +664,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
                         ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
                         ((TextView) findViewById(R.id.txtStepNo)).setText(initial);
+                        mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, false);
                         start(v);
                     }
                 });
                 mAlertDialog.setNeutralButton("続きから", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        shouldContinue = true;
+                        mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, true);
                         start(v);
                     }
                 });
@@ -716,8 +683,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
     }
 
-    private boolean shouldContinue = false;
-
     private boolean checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             /** check if we already  have permission to draw over other apps */
@@ -728,8 +693,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private void start(View v) {
         if (checkOverlayPermission()) {
-            mAlertService.startOverlay();
-            startProcesses(v);
+            startProcesses(v, true);
         } else {
             /** if not construct intent to request permission */
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -746,24 +710,20 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
-            if (checkOverlayPermission()) {
-                mAlertService.startOverlay();
-                startProcesses(mbtnStart);
-            } else {
-                startProcesses(mbtnStart);
-            }
+            startProcesses(mbtnStart, checkOverlayPermission());
         }
     }
 
-    private void startProcesses(View v) {
+    private void startProcesses(View v, boolean canShowOverlay) {
         FlurryAgent.logEvent("Service Start!!");
         Bundle bundle = new Bundle();
         bundle.putString(FirebaseAnalytics.Param.START_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
         mFirebaseAnalytics.logEvent("service_stop", bundle);
 
         changeViewState(true, ((ActionButton) v));
-        mAlertService.startSensors(shouldContinue);
-        shouldContinue = false;
+        mAlertServiceIntent.putExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, canShowOverlay);
+        startService(mAlertServiceIntent);
+        mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, false);
 
         startDateTime = new Date();
         mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
@@ -779,8 +739,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         // ツマミをドラッグしたときに呼ばれる
                         FlurryAgent.logEvent("Setting SeekBar");
                         mAlertStartAngle = progress + ALERT_ANGLE_INITIAL_OFFSET;
-                        if (mAlertService != null && mAlertService.isBoundService()) {
-                            mAlertService.setAlertStartAngle(mAlertStartAngle);
+                        if (walkServiceAdapter.isWalkServiceRunning()) {
+                            WalkServiceData.getInstance().setAlertStartAngle(mAlertStartAngle);
                         }
                     }
 
@@ -805,8 +765,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         mIsToastOn = isChecked;
-                        if (mAlertService != null && mAlertService.isBoundService()) {
-                            mAlertService.setIsToastOn(mIsToastOn);
+                        if (walkServiceAdapter.isWalkServiceRunning()) {
+                            WalkServiceData.getInstance().setIsToastOn(mIsToastOn);
                         }
                         radioButtonBottom.setEnabled(isChecked);
                         radioButtonTop.setEnabled(isChecked);
@@ -820,8 +780,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 new Switch.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         mIsVibrationOn = isChecked;
-                        if (mAlertService != null && mAlertService.isBoundService()) {
-                            mAlertService.setIsVibrationOn(mIsVibrationOn);
+                        if (walkServiceAdapter.isWalkServiceRunning()) {
+                            WalkServiceData.getInstance().setIsVibrationOn(mIsVibrationOn);
                         }
                     }
                 }
@@ -836,11 +796,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 }
         );
 
-        if (mAlertService != null) {
-            swh.setEnabled(!mAlertService.IsRunningAlertService());
-        } else {
-            swh.setEnabled(true);
-        }
+        // サービスが起動している場合はパスコードロックのスイッチだけは非活性
+        swh.setEnabled(!walkServiceAdapter.isWalkServiceRunning());
     }
 
     public void setRadioGroupInLayout(View layout) {
@@ -869,16 +826,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         break;
                     case R.id.radiobutton_center:
                         mToastPosition = Gravity.CENTER;
-                        if (mAlertService != null) {
-                            mAlertService.setToastPosition(Gravity.CENTER);
-                        }
                         break;
                     case R.id.radiobutton_bottom:
                         mToastPosition = Gravity.BOTTOM;
                         break;
                 }
-                if (mAlertService != null && mAlertService.isBoundService()) {
-                    mAlertService.setToastPosition(mToastPosition);
+                if (walkServiceAdapter.isWalkServiceRunning()) {
+                    WalkServiceData.getInstance().setToastPosition(mToastPosition);
                 }
             }
         });
@@ -896,7 +850,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
                         } else {
                             findViewById(R.id.llStepCount).setVisibility(View.INVISIBLE);
-                            if (mAlertService.IsRunningAlertService()) {
+                            if (walkServiceAdapter.isWalkServiceRunning()) {
                                 findViewById(R.id.txtExplanation).setVisibility(View.INVISIBLE);
                             }
                         }
@@ -915,6 +869,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "progress", mAlertStartAngle - ALERT_ANGLE_INITIAL_OFFSET);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
+        SharedPreferencesUtil.saveString(this, SETTING_SHAREDPREF_NAME, "alert_message", mAlertMessage);
         SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }
@@ -929,48 +884,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         super.onDestroy();
         // FIXME : これどこで呼ぶのが一番いいのか
         Growthbeat.getInstance().stop();
-    }
-
-
-    /**
-     * bindServiceでは bind だけでserviceはstartされる
-     * serviceは存在していてActivity再起動後、bindServiceすると
-     * →こうするとRebindしてonServiceConnectedが呼ばれる
-     */
-    public void killAlertService() {
-        unbindService(mConnection);
-        mAlertService.setIsBoundService(false);
-        mConnection = null;
-        mAlertService.removeOnActionFromNotificationListener();
-        mAlertService.removeOnWalkStepListener();
-        mAlertService.stopSensors();
-        mAlertService = null;
-
-//        stopService(mAlertServiceIntent);
-    }
-
-    @Override
-    public void onBackPressed() {
-        // これをコメントアウトしないとバックキー押してすぐアプリがBackgroundに回ってしまう
-//        super.onBackPressed();
-//        // 端末のホーム画面に戻る
-//        moveTaskToBack(true);
-        mAlertDialog = new AlertDialog.Builder(MainActivity.this);
-        mAlertDialog.setMessage(getString(R.string.dialog_back_key_message));
-        mAlertDialog.setPositiveButton(getString(R.string.dialog_back_key_positive), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                killAlertService();
-                finish();
-            }
-        });
-        mAlertDialog.setNegativeButton(getString(R.string.dialog_back_key_negative), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                return;
-            }
-        });
-        mAlertDialog.show();
     }
 
     public void changeViewState(boolean isStart, ActionButton button) {
@@ -991,8 +904,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             findViewById(R.id.txtWatching).setVisibility(View.GONE);
             findViewById(R.id.txtExplanation).setVisibility(View.VISIBLE);
             ((TextView) findViewById(R.id.txtExplanation)).setText(getString(R.string.app_explanation));
-
-//            setShouldShowAlert(false);
         }
 
     }
@@ -1130,11 +1041,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             passcodeView.setPasscodeEntryListener(new PasscodeView.PasscodeEntryListener() {
                 @Override
                 public void onPasscodeEntered(String passcode) {
-                    if (mAlertService != null && mAlertService.IsRunningAlertService()) {
+                    if (walkServiceAdapter.isWalkServiceRunning()) {
                         if (passcode.equals(mPasscodeConfirm)) {
                             FlurryAgent.logEvent("Passcode Unlocked");
 
-                            setStartButtonFunction(v);
+                            setStartButtonFunction(v, false);
                             materialStyledDialog.dismiss();
                         } else {
                             passcodeView.clearText();
@@ -1156,7 +1067,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     if (mPasscode.equals(mPasscodeConfirm)) {
                         FlurryAgent.logEvent("Passcode Lock");
 
-                        setStartButtonFunction(v);
+                        setStartButtonFunction(v, true);
                         materialStyledDialog.dismiss();
                     } else {
                         passcodeView.clearText();
@@ -1169,7 +1080,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             });
 
         } else {
-            setStartButtonFunction(v);
+            setStartButtonFunction(v, !walkServiceAdapter.isWalkServiceRunning());
         }
     }
 }

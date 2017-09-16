@@ -247,3 +247,10 @@ PryynToU/
 AlertAppToWalkSafely/.idea/*
 
 AlertAppToWalkSafely/.idea/gradle.xml
+.idea/.name
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+androidutility/androidutility.iml
+app/app.iml
+projectFilesBackup/.idea/workspace.xml
