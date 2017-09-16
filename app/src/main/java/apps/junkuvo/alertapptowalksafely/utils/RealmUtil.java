@@ -1,11 +1,26 @@
 package apps.junkuvo.alertapptowalksafely.utils;
 
+import android.content.Context;
+
+import java.util.Date;
+
+import apps.junkuvo.alertapptowalksafely.R;
 import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
+import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
 import io.realm.Realm;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
 public class RealmUtil {
+
+    public static HistoryItemModel createHistoryItemData(Context context, String stepCountNormal, String stepCountAlert) {
+        HistoryItemModel historyItemModel = new HistoryItemModel();
+        historyItemModel.setStartDateTime(WalkServiceData.getInstance().getStartDate());
+        historyItemModel.setEndDateTime(new Date());
+        historyItemModel.setStepCount(stepCountNormal + context.getString(R.string.home_step_count_dimension));
+        historyItemModel.setStepCountAlert(stepCountAlert);
+        return historyItemModel;
+    }
 
     public static void insertHistoryItem(Realm realm, final HistoryItemModel historyItemModel) {
         realm.executeTransaction(new Realm.Transaction() {

@@ -40,6 +40,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
         isRunningJunit = getIntent().getBooleanExtra(IS_RUNNING_JUNIT, false);
 
         if (!isRunningJunit) {
+            // FIXME やっぱりAppに持たせれば良かったな
             // realmの初期化
             Realm.init(this);
             RealmConfiguration config = new RealmConfiguration.Builder()

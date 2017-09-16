@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -38,8 +37,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.afollestad.materialdialogs.DialogAction;
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
@@ -94,6 +91,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private static final String NEW_FUNCTION_ID = "NEW_FUNCTION_ID";
     public static final String EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG = "EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG";
     public static final String EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG = "EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG";
+    public static final String EXTRA_KEY_START_DATE = "EXTRA_KEY_START_DATE";
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -183,14 +181,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
     };
 
-    private WalkServiceAdapter.OverlayActionListener overlayActionListener = new WalkServiceAdapter.OverlayActionListener() {
-        @Override
-        public void onOpenApp() {
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            intent.setFlags(FLAG_ACTIVITY_BROUGHT_TO_FRONT);
-            startActivity(intent);
-        }
-    };
+//    private WalkServiceAdapter.OverlayActionListener overlayActionListener = new WalkServiceAdapter.OverlayActionListener() {
+//        @Override
+//        public void onOpenApp() {
+////            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+////            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
+////            startActivity(intent);
+//        }
+//    };
 
     public TextWatcher mTextWatcher = new TextWatcher() {
         @Override
@@ -232,7 +230,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         walkServiceAdapter = ((AlertApplication) getApplication()).getWalkServiceAdapter();
         walkServiceAdapter.setOnWalkDataChangedListener(onWalkDataChangedListener);
         walkServiceAdapter.setOnActionFromNotificationListener(onActionFromNotificationListener);
-        walkServiceAdapter.setOverlayActionListener(overlayActionListener);
+//        walkServiceAdapter.setOverlayActionListener(overlayActionListener);
 
         if (!isRunningJunit) {
             setContentView(R.layout.activity_main);
@@ -266,7 +264,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 @Override
                 public void onAdClosed() {
                     super.onAdClosed();
-                    // 広告開いてない場合は再度ロードしておいて広告出す
+                    // 広告開いてない場合は再度ロードしておいて次も広告出す
                     if (!enableNewFunction) {
                         // Begin loading your interstitial.
                         mInterstitialAd.loadAd(adRequest);
@@ -374,12 +372,14 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         if (!isRunningJunit) {
             // カーソルを最後尾に移動
             mAlertMessage = SharedPreferencesUtil.getString(this, SETTING_SHAREDPREF_NAME, "alert_message");
+            if (StringUtils.isBlank(mAlertMessage)) {
+                mAlertMessage = getString(R.string.home_edittext_alert);
+            }
             mAlertEditText = (EditText) findViewById(R.id.txtAlertMessage);
             mAlertEditText.setText(mAlertMessage);
             mAlertEditText.setSelection(mAlertEditText.getText().length());
             mAlertEditText.addTextChangedListener(mTextWatcher);
         }
-
         WalkServiceData.getInstance().setIsToastOn(mIsToastOn);
         WalkServiceData.getInstance().setIsVibrationOn(mIsVibrationOn);
         WalkServiceData.getInstance().setToastPosition(mToastPosition);
@@ -389,6 +389,17 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         // 履歴データがすでにある(updateの場合) or 広告をタップした場合
         enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
 
+        // サービス起動中に通知から起動する場合ある
+        changeViewState(walkServiceAdapter.isWalkServiceRunning(), mbtnStart);
+        setInitialWalkCount();
+    }
+
+    private void setInitialWalkCount() {
+        String count = WalkServiceData.getInstance().getWalkCountAll();
+        if (StringUtils.isBlank(count)) {
+            count = getString(R.string.zero);
+        }
+        ((TextView) findViewById(R.id.txtStepNo)).setText(String.format("%s%s", count, getString(R.string.home_step_count_dimension)));
     }
 
     @Override
@@ -455,7 +466,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             actionItem = menu.add(Menu.NONE, MENU_ID.HISTORY.ordinal(), MENU_ID.HISTORY.ordinal(), this.getString(R.string.menu_title_history));
             actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             actionItem.setIcon(MENU_ID.HISTORY.getDrawableResId());
-
         }
 
         // LINE
@@ -563,11 +573,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         return true;
     }
 
-    private Date startDateTime;
-
     private HistoryItemModel createHistoryItemData() {
         HistoryItemModel historyItemModel = new HistoryItemModel();
-        historyItemModel.setStartDateTime(startDateTime);
+        historyItemModel.setStartDateTime(WalkServiceData.getInstance().getStartDate());
         historyItemModel.setEndDateTime(new Date());
         historyItemModel.setStepCount(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
         String stepCount = ((TextView) findViewById(R.id.txtStepCount)).getText().toString();
@@ -589,6 +597,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
+            // TODO ここはサービスにする　enableNewFunctionはintentで渡す
             // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
             if (StringUtils.isNotBlank(mStepCount) && enableNewFunction) {
                 RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
@@ -604,8 +613,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 });
             }
 
+            // FIXME 規約違反により訴求は出さないので、広告も毎回出すことにする
             // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
-            if (TwitterUtility.hasAccessToken(getApplicationContext()) && enableNewFunction) {
+            if (TwitterUtility.hasAccessToken(getApplicationContext())){// && enableNewFunction) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
@@ -615,8 +625,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 mAlertDialog.setIcon(R.drawable.ic_share_black_48dp);
                 mAlertDialog.setView(layout);
                 mTweetText = (EditText) layout.findViewById(R.id.edtTweet);
-                mTweetText.setText(String.valueOf(mStepCount) + getString(R.string.twitter_tweet_step) + "\n" + getString(R.string.twitter_tweetText) + "\n" +
-                        String.format(getString(R.string.app_googlePlay_url), getPackageName()) + "\n" + timeStamp);
+                mTweetText.setText(String.format("%s%s\n%s\n%s\n%s", String.valueOf(mStepCount), getString(R.string.twitter_tweet_step), getString(R.string.twitter_tweetText), String.format(getString(R.string.app_googlePlay_url), getPackageName()), timeStamp));
                 mAlertDialog.setPositiveButton(context.getString(R.string.dialog_button_send), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -630,25 +639,26 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             stopService(mAlertServiceIntent);
 
-            // 機能追加訴求ダイアログ
-            if (!enableNewFunction) {
-                LayoutInflater inflater = LayoutInflater.from(this);
-                final View layout = inflater.inflate(R.layout.ad_dialog, (ViewGroup) findViewById(R.id.layout_root_ad));
-                new MaterialStyledDialog(this)
-                        .setTitle("隠し機能が追加できます！")
-                        .setDescription("この後の広告を開くだけで隠れた機能が追加されます")
-                        .setCustomView(layout)
-                        .setIcon(R.drawable.ic_new_releases_white_48dp)
-                        .setHeaderDrawable(R.drawable.pattern_bg_blue)
-                        .setCancelable(false)
-                        .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
-                            @Override
-                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                displayInterstitial();
-                            }
-                        })
-                        .show();
-            }
+            // FIXME 規約違反あので訴求は出さない
+//            // 機能追加訴求ダイアログ
+//            if (!enableNewFunction) {
+//                LayoutInflater inflater = LayoutInflater.from(this);
+//                final View layout = inflater.inflate(R.layout.ad_dialog, (ViewGroup) findViewById(R.id.layout_root_ad));
+//                new MaterialStyledDialog(this)
+//                        .setTitle("隠し機能が追加できます！")
+//                        .setDescription("この後の広告を開くだけで隠れた機能が追加されます")
+//                        .setCustomView(layout)
+//                        .setIcon(R.drawable.ic_new_releases_white_48dp)
+//                        .setHeaderDrawable(R.drawable.pattern_bg_blue)
+//                        .setCancelable(false)
+//                        .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
+//                            @Override
+//                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            displayInterstitial();
+//                            }
+//                        })
+//                        .show();
+//            }
 
             mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
             mbtnStart.playShowAnimation();
@@ -721,11 +731,12 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         mFirebaseAnalytics.logEvent("service_stop", bundle);
 
         changeViewState(true, ((ActionButton) v));
+        Date startDateTime = new Date();
         mAlertServiceIntent.putExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, canShowOverlay);
+        mAlertServiceIntent.putExtra(EXTRA_KEY_START_DATE, startDateTime);
         startService(mAlertServiceIntent);
         mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, false);
 
-        startDateTime = new Date();
         mbtnStart.setShowAnimation(ActionButton.Animations.SCALE_UP);
         mbtnStart.playShowAnimation();
     }
@@ -884,6 +895,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         super.onDestroy();
         // FIXME : これどこで呼ぶのが一番いいのか
         Growthbeat.getInstance().stop();
+
+        walkServiceAdapter.setOnActionFromNotificationListener(null);
+        onActionFromNotificationListener = null;
+        walkServiceAdapter.setOnWalkDataChangedListener(null);
+        onWalkDataChangedListener = null;
     }
 
     public void changeViewState(boolean isStart, ActionButton button) {
@@ -999,7 +1015,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         task.execute(tweetString);
     }
 
-    // TODO : ToastUtilを利用しよう
     private Toast createToastShort(String text) {
         Toast toast = new Toast(this);
         TextView tv = new TextView(this);

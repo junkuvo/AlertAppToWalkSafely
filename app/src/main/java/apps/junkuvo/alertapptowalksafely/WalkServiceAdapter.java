@@ -9,17 +9,23 @@ public class WalkServiceAdapter {
 
     public void notifyWalkDataAlertChanged(int walkAlertCount){
         WalkServiceData.getInstance().setWalkCountAlert(String.valueOf(walkAlertCount));
-        onWalkDataChangedListener.onWalkDataAlertChanged(String.valueOf(walkAlertCount));
+        if(onWalkDataChangedListener != null) {
+            onWalkDataChangedListener.onWalkDataAlertChanged(String.valueOf(walkAlertCount));
+        }
     }
     public void notifyWalkDataNormalChanged(int walkNormalCount){
         WalkServiceData.getInstance().setWalkCountAll(String.valueOf(walkNormalCount));
-        onWalkDataChangedListener.onWalkDataNormalChanged(String.valueOf(walkNormalCount));
+        if(onWalkDataChangedListener != null) {
+            onWalkDataChangedListener.onWalkDataNormalChanged(String.valueOf(walkNormalCount));
+        }
     }
 
     public void notifyActionFromNotification(String action){
         if(action.equals(DELETE_NOTIFICATION)) {
             WalkServiceData.getInstance().setRunningService(false);
-            OnActionFromNotificationListener.onStopFromNotification(action);
+            if(OnActionFromNotificationListener != null) {
+                OnActionFromNotificationListener.onStopFromNotification(action);
+            }
         }
     }
 
@@ -51,20 +57,4 @@ public class WalkServiceAdapter {
         this.OnActionFromNotificationListener = onActionromNotificationListener;
     }
 
-    public void removeOnActionFromNotificationListener() {
-        this.OnActionFromNotificationListener = null;
-    }
-
-    private OverlayActionListener overlayActionListener;
-    interface OverlayActionListener {
-        void onOpenApp();
-    }
-
-    public void setOverlayActionListener(OverlayActionListener overlayActionListener) {
-        this.overlayActionListener = overlayActionListener;
-    }
-
-    public OverlayActionListener getOverlayActionListener() {
-        return overlayActionListener;
-    }
 }

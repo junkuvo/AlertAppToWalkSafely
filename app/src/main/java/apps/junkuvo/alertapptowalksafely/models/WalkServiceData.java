@@ -2,6 +2,8 @@ package apps.junkuvo.alertapptowalksafely.models;
 
 import com.github.stkent.amplify.utils.StringUtils;
 
+import java.util.Date;
+
 public class WalkServiceData {
 
     public static final String CLICK_NOTIFICATION = "walk_safe_click_notification";
@@ -17,6 +19,16 @@ public class WalkServiceData {
     private int mToastPosition;
     private int mAlertStartAngle;
     private String mAlertMessage;
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    private Date startDate;
 
 
     private WalkServiceData() {

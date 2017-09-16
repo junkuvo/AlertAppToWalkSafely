@@ -34,6 +34,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import java.util.Date;
 import java.util.List;
 
 import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
@@ -46,6 +47,7 @@ import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
 import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG;
 import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG;
+import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_START_DATE;
 import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.CLICK_NOTIFICATION;
 import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.DELETE_NOTIFICATION;
 
@@ -177,6 +179,15 @@ public class AlertService extends Service implements SensorEventListener {
         if (canShowOverlay) {
             startOverlay();
         }
+
+        Date startDate;
+        try {
+            startDate = (Date) intent.getSerializableExtra(EXTRA_KEY_START_DATE);
+        }catch (Exception e){
+            startDate = new Date();
+        }
+        WalkServiceData.getInstance().setStartDate(startDate);
+
         return START_STICKY;
     }
 
@@ -356,7 +367,10 @@ public class AlertService extends Service implements SensorEventListener {
 //                                case R.id.show_alert_step_count:
 //                                    break;
                     case R.id.open_app:
-                        walkServiceAdapter.getOverlayActionListener().onOpenApp();
+//                        walkServiceAdapter.getOverlayActionListener().onOpenApp();
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
                         break;
                 }
                 return true;
@@ -379,7 +393,7 @@ public class AlertService extends Service implements SensorEventListener {
         mTendencyOutCount = 0;
         if (shouldContinue) {
             mStepCountCurrent = WalkServiceData.getInstance().getWalkCountAllInt() - 1;
-            countAsNg = WalkServiceData.getInstance().getWalkCountAlertInt() - 1;
+            countAsNg = WalkServiceData.getInstance().getWalkCountAlertInt();
         } else {
             mStepCountCurrent = -1;
             countAsNg = -1;
@@ -532,9 +546,9 @@ public class AlertService extends Service implements SensorEventListener {
         builder.setContentIntent( //通知タップ時のPendingIntent
                 getPendingIntentWithBroadcast(CLICK_NOTIFICATION)
         );
-        builder.setDeleteIntent(  //通知の削除時のPendingIntent
-                getPendingIntentWithBroadcast(DELETE_NOTIFICATION)
-        );
+//        builder.setDeleteIntent(  //通知の削除時のPendingIntent
+//                getPendingIntentWithBroadcast(DELETE_NOTIFICATION)
+//        );
 
         NotificationCompat.BigTextStyle notificationBigTextStyle = new NotificationCompat.BigTextStyle(builder);
         builder.setStyle(notificationBigTextStyle);
