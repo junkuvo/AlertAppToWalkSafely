@@ -646,14 +646,17 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mbtnStart.playShowAnimation();
 
         } else {
-            if (StringUtils.isNotBlank(mStepCount) && !mStepCount.equals("0")) {
+
+            String stepNo = (String) ((TextView) findViewById(R.id.txtStepNo)).getText();
+
+            final String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
+            if (!stepNo.equals(initial)) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
                 mAlertDialog.setIcon(R.drawable.ic_stat_small);
                 mAlertDialog.setMessage("歩数を0に戻してよろしいですか？");
                 mAlertDialog.setPositiveButton("0に戻す", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String initial = getString(R.string.zero) + getString(R.string.home_step_count_dimension);
                         ((TextView) findViewById(R.id.txtStepCount)).setText(initial);
                         ((TextView) findViewById(R.id.txtStepNo)).setText(initial);
                         mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, false);
