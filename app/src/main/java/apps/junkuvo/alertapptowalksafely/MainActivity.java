@@ -110,7 +110,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         LINE(R.drawable.ic_action_fb_f_logo__white_1024),
         FEEDBACK(0),
         SETTING(R.drawable.ic_settings_white_24dp),
-        LICENSE(0);
+        LICENSE(0),
+        BOOT_RUN(0)
+        ;
 
         private int drawableResId;
 
@@ -221,7 +223,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         walkServiceAdapter = ((AlertApplication) getApplication()).getWalkServiceAdapter();
         walkServiceAdapter.setOnWalkDataChangedListener(onWalkDataChangedListener);
         walkServiceAdapter.setOnActionFromNotificationListener(onActionFromNotificationListener);
-//        walkServiceAdapter.setOverlayActionListener(overlayActionListener);
 
         if (!isRunningJunit) {
             setContentView(R.layout.activity_main);
@@ -483,14 +484,22 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
+        // BOOT起動
+        canBootRun = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.BOOT_RUN.getKey(), true);
+        actionItem = menu.add(Menu.NONE, MENU_ID.BOOT_RUN.ordinal(), MENU_ID.BOOT_RUN.ordinal(), this.getString(R.string.menu_title_boot));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setCheckable(true);
+        actionItem.setChecked(canBootRun);
+        actionItem.setIcon(MENU_ID.BOOT_RUN.getDrawableResId());
+
         return true;
     }
 
+    private boolean canBootRun = true;
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         return super.onPrepareOptionsMenu(menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
@@ -567,6 +576,10 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //                        .withAboutDescription("T")
                         //start the activity
                         .start(this);
+                break;
+            case BOOT_RUN:
+                canBootRun = !canBootRun;
+                item.setChecked(canBootRun);
                 break;
 
         }
@@ -859,6 +872,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
         SharedPreferencesUtil.saveString(this, SETTING_SHAREDPREF_NAME, "alert_message", mAlertMessage);
+        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.BOOT_RUN.getKey(), canBootRun);
         SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "enableNewFunction", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }

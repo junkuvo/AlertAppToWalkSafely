@@ -7,7 +7,7 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class SharedPreferencesUtil {
     public enum PrefKeys{
-        NOTIFICATION_SHOW_IN_BAR("NOTIFICATION_SHOW_IN_BAR");
+        BOOT_RUN("BOOT_RUN");
 
         private String key;
         PrefKeys(String key) {

@@ -1,6 +1,5 @@
 package apps.junkuvo.alertapptowalksafely;
 
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -529,7 +528,7 @@ public class AlertService extends Service implements SensorEventListener {
             ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
         }
 
-        walkServiceAdapter.notifyWalkDataNormalChanged(mStepCountCurrent);
+        walkServiceAdapter.notifyWalkDataNormalChanged(mStepCountCurrent < 0 ? 0 : mStepCountCurrent );
     }
 
     private int mStepCountBefore = 0;
@@ -580,10 +579,10 @@ public class AlertService extends Service implements SensorEventListener {
         builder.setStyle(notificationBigTextStyle);
 
         // ロックスクリーン上でどう見えるか
-        builder.setVisibility(Notification.VISIBILITY_SECRET);
+        builder.setVisibility(NotificationCompat.VISIBILITY_SECRET);
 
         // PRIORITY_MINだとどこにも表示されなくなる
-        builder.setPriority(Notification.PRIORITY_MIN);
+        builder.setPriority(NotificationCompat.PRIORITY_MIN);
         // サービス永続化
         startForeground(R.string.app_name, builder.build());
     }
