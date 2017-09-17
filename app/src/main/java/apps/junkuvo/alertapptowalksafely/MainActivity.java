@@ -695,6 +695,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         if (checkOverlayPermission()) {
             startProcesses(v, true);
         } else {
+            // SDK version < 23 の場合は checkOverlayPermissionはtrue を返す
             /** if not construct intent to request permission */
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
