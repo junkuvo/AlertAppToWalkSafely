@@ -16,6 +16,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -143,8 +144,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
     private EditText mAlertEditText;
-
-    private PlusOneButton mPlusOneButton;
 
     private InterstitialAd mInterstitialAd;
 
@@ -347,10 +346,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mTwitter = TwitterUtility.getTwitterInstance(this);
             mCallbackURL = getString(R.string.twitter_callback_url);
 
-            mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
-            // Refresh the state of the +1 button each time the activity receives focus.
-            mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
-
             RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.rtlMain);
             relativeLayout.setOnClickListener(this);
 
@@ -408,13 +403,18 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         super.onStart();
     }
 
-    private static final int PLUS_ONE_REQUEST_CODE = 0;
+    private static final int PLUS_ONE_REQUEST_CODE = 1;
 
     @Override
     protected void onResume() {
         super.onResume();
         FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
         FlurryAgent.logEvent("onResume");
+
+        PlusOneButton mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
+        // Refresh the state of the +1 button each time the activity receives focus.
+        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url), getPackageName()), PLUS_ONE_REQUEST_CODE);
+
     }
 
     @Override
