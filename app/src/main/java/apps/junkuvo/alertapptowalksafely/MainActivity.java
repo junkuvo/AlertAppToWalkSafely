@@ -662,7 +662,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         start(v);
                     }
                 });
-                mAlertDialog.setNegativeButton("いいえ", null);
+                mAlertDialog.setNegativeButton("キャンセル", null);
                 mAlertDialog.show();
             } else {
                 start(v);

@@ -435,10 +435,6 @@ public class AlertService extends Service implements SensorEventListener {
         final Sensor sensor = event.sensor;
         if (walkServiceAdapter.isWalkServiceRunning()) {
             if (mIsScreenOn) {
-                int stepCount = countAsNg < 0 ? 0 : countAsNg;
-                // 歩きスマホ数のコールバック
-                walkServiceAdapter.notifyWalkDataAlertChanged(stepCount);
-
                 if (mStepCountBefore == 0) {
                     mStepCountBefore = mStepCountCurrent;
                 }
@@ -487,6 +483,8 @@ public class AlertService extends Service implements SensorEventListener {
                 mStepCountCurrent++;
                 if (shouldCountAsNg) {
                     countAsNg++;
+                    // 歩きスマホ数のコールバック
+                    walkServiceAdapter.notifyWalkDataAlertChanged(countAsNg);
                     // FIXME 色変えたいな
 //                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColor(R.color.colorAccent);
 //                    ((ActionButton) overlay.findViewById(R.id.fabStartOverlay)).setButtonColorPressed(R.color.colorAccentDark);
@@ -508,6 +506,8 @@ public class AlertService extends Service implements SensorEventListener {
                     mStepCountCurrent = mWalkCountCalculator.walkCountCalculate(event);
                     if (shouldCountAsNg) {
                         countAsNg = mWalkCountCalculatorAsNg.walkCountCalculate(event);
+                        // 歩きスマホ数のコールバック
+                        walkServiceAdapter.notifyWalkDataAlertChanged(countAsNg < 0 ? 0 : countAsNg);
                     }
                     Intent intent = new Intent(ACTION);
                     intent.putExtra("isStepCounter", true);
