@@ -183,15 +183,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         }
     };
 
-//    private WalkServiceAdapter.OverlayActionListener overlayActionListener = new WalkServiceAdapter.OverlayActionListener() {
-//        @Override
-//        public void onOpenApp() {
-////            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-////            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
-////            startActivity(intent);
-//        }
-//    };
-
     public TextWatcher mTextWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -365,6 +356,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             findViewById(R.id.llStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
         }
 
+        // TODO ここら辺をBootでやらないとだめ
         // 各種設定値を読み込んでおく
         mIsToastOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "message", true);
         mIsVibrationOn = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, "vibrate", true);
