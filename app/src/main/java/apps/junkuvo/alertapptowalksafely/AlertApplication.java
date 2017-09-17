@@ -16,8 +16,18 @@ import com.growthpush.GrowthPush;
 import com.growthpush.handler.DefaultReceiveHandler;
 import com.growthpush.model.Environment;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+
 
 public class AlertApplication extends MultiDexApplication {
+
+    private Realm realm;
+    private AlertAppRealmMigration realmMigration = new AlertAppRealmMigration();
+
+    public Realm getRealm(){
+        return realm;
+    }
 
     private WalkServiceAdapter walkServiceAdapter = new WalkServiceAdapter();
 
@@ -70,8 +80,14 @@ public class AlertApplication extends MultiDexApplication {
                 .addTotalEventCountRule(PromptInteractionEvent.USER_GAVE_POSITIVE_FEEDBACK,
                         new MaximumCountRule(1)); // Never ask the user for feedback again if they already responded positively.
 
+        // realmの初期化
+        Realm.init(this);
+        RealmConfiguration config = new RealmConfiguration.Builder()
+                .schemaVersion(1)
+                .migration(realmMigration).build();
+        Realm.setDefaultConfiguration(config);
+        realm = Realm.getDefaultInstance();
     }
-
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -84,5 +100,9 @@ public class AlertApplication extends MultiDexApplication {
 //        MultiDex.install(this);
     }
 
-
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        realm.close();
+    }
 }

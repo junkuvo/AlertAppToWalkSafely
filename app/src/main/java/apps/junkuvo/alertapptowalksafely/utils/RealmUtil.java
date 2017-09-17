@@ -18,7 +18,7 @@ public class RealmUtil {
         historyItemModel.setStartDateTime(WalkServiceData.getInstance().getStartDate());
         historyItemModel.setEndDateTime(new Date());
         historyItemModel.setStepCount(stepCountNormal + context.getString(R.string.home_step_count_dimension));
-        historyItemModel.setStepCountAlert(stepCountAlert);
+        historyItemModel.setStepCountAlert(stepCountAlert + context.getString(R.string.home_step_count_dimension));
         return historyItemModel;
     }
 

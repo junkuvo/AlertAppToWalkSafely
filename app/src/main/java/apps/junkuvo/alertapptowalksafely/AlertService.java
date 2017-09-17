@@ -34,10 +34,13 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.github.stkent.amplify.utils.StringUtils;
+
 import java.util.Date;
 import java.util.List;
 
 import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
+import apps.junkuvo.alertapptowalksafely.utils.RealmUtil;
 import junkuvo.apps.androidutility.ToastUtil;
 
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
@@ -46,6 +49,7 @@ import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
 import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG;
+import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_NEW_FUNCTION;
 import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG;
 import static apps.junkuvo.alertapptowalksafely.MainActivity.EXTRA_KEY_START_DATE;
 import static apps.junkuvo.alertapptowalksafely.models.WalkServiceData.CLICK_NOTIFICATION;
@@ -160,7 +164,7 @@ public class AlertService extends Service implements SensorEventListener {
 
     private View overlay;
     private WindowManager windowManager;
-
+    private boolean enableNewFunction = false;
 
     /**
      * これはonStartServiceでしか呼ばれない
@@ -180,10 +184,12 @@ public class AlertService extends Service implements SensorEventListener {
             startOverlay();
         }
 
+        enableNewFunction = intent.getBooleanExtra(EXTRA_KEY_NEW_FUNCTION, false);
+
         Date startDate;
         try {
             startDate = (Date) intent.getSerializableExtra(EXTRA_KEY_START_DATE);
-        }catch (Exception e){
+        } catch (Exception e) {
             startDate = new Date();
         }
         WalkServiceData.getInstance().setStartDate(startDate);
@@ -274,6 +280,26 @@ public class AlertService extends Service implements SensorEventListener {
             if (broadcastReceiver != null) {
                 unregisterReceiver(broadcastReceiver);
             }
+
+            // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
+            if (StringUtils.isNotBlank(WalkServiceData.getInstance().getWalkCountAll())
+                    && !WalkServiceData.getInstance().getWalkCountAll().equals("0")
+                    && enableNewFunction) {
+                RealmUtil.insertHistoryItemAsync(((AlertApplication) getApplication()).getRealm()
+                        , RealmUtil.createHistoryItemData(this, WalkServiceData.getInstance().getWalkCountAll(), WalkServiceData.getInstance().getWalkCountAlert())
+                        , new RealmUtil.realmTransactionCallbackListener() {
+                            @Override
+                            public void OnSuccess() {
+
+                            }
+
+                            @Override
+                            public void OnError() {
+
+                            }
+                        });
+            }
+
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
@@ -369,7 +395,7 @@ public class AlertService extends Service implements SensorEventListener {
                     case R.id.open_app:
 //                        walkServiceAdapter.getOverlayActionListener().onOpenApp();
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         break;
                 }
@@ -396,7 +422,7 @@ public class AlertService extends Service implements SensorEventListener {
             countAsNg = WalkServiceData.getInstance().getWalkCountAlertInt();
         } else {
             mStepCountCurrent = -1;
-            countAsNg = -1;
+            countAsNg = 0;
         }
         showStepCount();
     }

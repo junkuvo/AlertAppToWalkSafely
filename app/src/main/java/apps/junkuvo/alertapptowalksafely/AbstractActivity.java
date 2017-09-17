@@ -16,7 +16,6 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import io.realm.Realm;
-import io.realm.RealmConfiguration;
 
 public abstract class AbstractActivity extends AppCompatActivity {
 
@@ -39,16 +38,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
 
         isRunningJunit = getIntent().getBooleanExtra(IS_RUNNING_JUNIT, false);
 
-        if (!isRunningJunit) {
-            // FIXME やっぱりAppに持たせれば良かったな
-            // realmの初期化
-            Realm.init(this);
-            RealmConfiguration config = new RealmConfiguration.Builder()
-                    .schemaVersion(1)
-                    .migration(realmMigration).build();
-            Realm.setDefaultConfiguration(config);
-            realm = Realm.getDefaultInstance();
-        }
+        realm = ((AlertApplication) getApplication()).getRealm();
 
 
         FacebookSdk.sdkInitialize(getApplicationContext());
@@ -82,7 +72,7 @@ public abstract class AbstractActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (!isRunningJunit) {
-            realm.close();
+            realm = null;
         }
         Bundle bundle = new Bundle();
         bundle.putString("activity_name", getLocalClassName());
@@ -102,7 +92,4 @@ public abstract class AbstractActivity extends AppCompatActivity {
             shareDialog.show(shareLinkContent);
         }
     }
-
-    private AlertAppRealmMigration realmMigration = new AlertAppRealmMigration();
-
 }

@@ -63,7 +63,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import apps.junkuvo.alertapptowalksafely.models.HistoryItemModel;
 import apps.junkuvo.alertapptowalksafely.models.WalkServiceData;
 import apps.junkuvo.alertapptowalksafely.utils.DateUtil;
 import apps.junkuvo.alertapptowalksafely.utils.LINEUtil;
@@ -92,6 +91,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     public static final String EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG = "EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG";
     public static final String EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG = "EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG";
     public static final String EXTRA_KEY_START_DATE = "EXTRA_KEY_START_DATE";
+    public static final String EXTRA_KEY_NEW_FUNCTION = "EXTRA_KEY_NEW_FUNCTION";
 
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
@@ -157,6 +157,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     @VisibleForTesting
     int mAlertStartAngle;
 
+    private boolean enableNewFunction = false;
+
     private String mAlertMessage;
     private WalkServiceAdapter walkServiceAdapter;
 
@@ -209,8 +211,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         }
     };
-
-    private boolean enableNewFunction = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -280,17 +280,19 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                                 .setPositive(getString(R.string.ok), null)
                                 .show();
 
-                        RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
-                            @Override
-                            public void OnSuccess() {
+                        RealmUtil.insertHistoryItemAsync(realm,
+                                RealmUtil.createHistoryItemData(MainActivity.this, WalkServiceData.getInstance().getWalkCountAll(), WalkServiceData.getInstance().getWalkCountAlert()),
+                                new RealmUtil.realmTransactionCallbackListener() {
+                                    @Override
+                                    public void OnSuccess() {
 
-                            }
+                                    }
 
-                            @Override
-                            public void OnError() {
+                                    @Override
+                                    public void OnError() {
 
-                            }
-                        });
+                                    }
+                                });
                     }
                 }
             });
@@ -387,7 +389,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         WalkServiceData.getInstance().setAlertMessage(mAlertMessage);
 
         // 履歴データがすでにある(updateの場合) or 広告をタップした場合
-        enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", false);
+        enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "enableNewFunction", false);
 
         // サービス起動中に通知から起動する場合ある
         changeViewState(walkServiceAdapter.isWalkServiceRunning(), mbtnStart);
@@ -400,6 +402,12 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             count = getString(R.string.zero);
         }
         ((TextView) findViewById(R.id.txtStepNo)).setText(String.format("%s%s", count, getString(R.string.home_step_count_dimension)));
+
+        count = WalkServiceData.getInstance().getWalkCountAlert();
+        if (StringUtils.isBlank(count)) {
+            count = getString(R.string.zero);
+        }
+        ((TextView) findViewById(R.id.txtStepCount)).setText(String.format("%s%s", count, getString(R.string.home_step_count_dimension)));
     }
 
     @Override
@@ -573,16 +581,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         return true;
     }
 
-    private HistoryItemModel createHistoryItemData() {
-        HistoryItemModel historyItemModel = new HistoryItemModel();
-        historyItemModel.setStartDateTime(WalkServiceData.getInstance().getStartDate());
-        historyItemModel.setEndDateTime(new Date());
-        historyItemModel.setStepCount(String.valueOf(mStepCount) + getString(R.string.home_step_count_dimension));
-        String stepCount = ((TextView) findViewById(R.id.txtStepCount)).getText().toString();
-        historyItemModel.setStepCountAlert(stepCount);
-        return historyItemModel;
-    }
-
     public void setStartButtonFunction(final View v, boolean isToStart) {
         DefaultLayoutPromptView promptView = (DefaultLayoutPromptView) findViewById(R.id.prompt_view);
         promptView.setVisibility(View.GONE);
@@ -597,25 +595,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
-            // TODO ここはサービスにする　enableNewFunctionはintentで渡す
-            // 0以上で、広告タップ済みかすでに履歴機能を利用している場合にはInsert実行
-            if (StringUtils.isNotBlank(mStepCount) && enableNewFunction) {
-                RealmUtil.insertHistoryItemAsync(realm, createHistoryItemData(), new RealmUtil.realmTransactionCallbackListener() {
-                    @Override
-                    public void OnSuccess() {
-
-                    }
-
-                    @Override
-                    public void OnError() {
-
-                    }
-                });
-            }
-
             // FIXME 規約違反により訴求は出さないので、広告も毎回出すことにする
             // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
-            if (TwitterUtility.hasAccessToken(getApplicationContext())){// && enableNewFunction) {
+            if (TwitterUtility.hasAccessToken(getApplicationContext())) {// && enableNewFunction) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 View layout = inflater.inflate(R.layout.sharetotwitter, (ViewGroup) findViewById(R.id.layout_root_twitter));
@@ -664,7 +646,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             mbtnStart.playShowAnimation();
 
         } else {
-            if (StringUtils.isNotBlank(mStepCount)) {
+            if (StringUtils.isNotBlank(mStepCount) && !mStepCount.equals("0")) {
                 mAlertDialog = new AlertDialog.Builder(MainActivity.this);
                 mAlertDialog.setIcon(R.drawable.ic_stat_small);
                 mAlertDialog.setMessage("歩数を0に戻してよろしいですか？");
@@ -734,6 +716,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         Date startDateTime = new Date();
         mAlertServiceIntent.putExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, canShowOverlay);
         mAlertServiceIntent.putExtra(EXTRA_KEY_START_DATE, startDateTime);
+        mAlertServiceIntent.putExtra(EXTRA_KEY_NEW_FUNCTION, enableNewFunction);
         startService(mAlertServiceIntent);
         mAlertServiceIntent.putExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, false);
 
@@ -881,7 +864,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, "pedometer", mShouldShowPedometer);
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
         SharedPreferencesUtil.saveString(this, SETTING_SHAREDPREF_NAME, "alert_message", mAlertMessage);
-        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "AD_STATUS_SHAREDPREF_NAME", enableNewFunction);
+        SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "enableNewFunction", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }
 
