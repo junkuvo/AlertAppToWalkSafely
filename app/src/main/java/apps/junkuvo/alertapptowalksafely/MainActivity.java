@@ -16,7 +16,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -112,8 +111,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         FEEDBACK(0),
         SETTING(R.drawable.ic_settings_white_24dp),
         LICENSE(0),
-        BOOT_RUN(0)
-        ;
+        BOOT_RUN(0),
+        OVERLAY(0);
 
         private int drawableResId;
 
@@ -144,6 +143,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     private ActionButton mbtnStart;
     private Animation mAnimationBlink;
     private EditText mAlertEditText;
+    private PlusOneButton mPlusOneButton;
 
     private InterstitialAd mInterstitialAd;
 
@@ -382,6 +382,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         // サービス起動中に通知から起動する場合ある
         changeViewState(walkServiceAdapter.isWalkServiceRunning(), mbtnStart);
         setInitialWalkCount();
+
+        mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
     }
 
     private void setInitialWalkCount() {
@@ -411,9 +413,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         FlurryAgent.onStartSession(this, getString(R.string.flurry_session_id));
         FlurryAgent.logEvent("onResume");
 
-        PlusOneButton mPlusOneButton = (PlusOneButton) findViewById(R.id.plus_one_button);
         // Refresh the state of the +1 button each time the activity receives focus.
-        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url), getPackageName()), PLUS_ONE_REQUEST_CODE);
+        mPlusOneButton.initialize(String.format(getString(R.string.app_googlePlay_url_plusOne), getPackageName()), PLUS_ONE_REQUEST_CODE);
 
     }
 
@@ -492,14 +493,25 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setChecked(canBootRun);
         actionItem.setIcon(MENU_ID.BOOT_RUN.getDrawableResId());
 
+        // OVERLAY
+        canOverlay = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.OVERLAY.getKey(), true);
+        actionItem = menu.add(Menu.NONE, MENU_ID.OVERLAY.ordinal(), MENU_ID.OVERLAY.ordinal(), this.getString(R.string.menu_title_overlay));
+        actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        actionItem.setCheckable(true);
+        actionItem.setChecked(canOverlay);
+        actionItem.setIcon(MENU_ID.OVERLAY.getDrawableResId());
+
         return true;
     }
 
     private boolean canBootRun = true;
+    private boolean canOverlay = true;
+
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         return super.onPrepareOptionsMenu(menu);
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
@@ -581,6 +593,9 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 canBootRun = !canBootRun;
                 item.setChecked(canBootRun);
                 break;
+            case OVERLAY:
+                canOverlay = !canOverlay;
+                item.setChecked(canOverlay);
 
         }
         return true;
@@ -693,15 +708,19 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private void start(View v) {
         if (checkOverlayPermission()) {
-            startProcesses(v, true);
+            startProcesses(v, canOverlay);
         } else {
-            // SDK version < 23 の場合は checkOverlayPermissionはtrue を返す
-            /** if not construct intent to request permission */
-            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
+            if(canOverlay) {
+                // SDK version < 23 の場合は checkOverlayPermissionはtrue を返す
+                /** if not construct intent to request permission */
+                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
 //            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
-            /** request permission via start activity for result */
-            startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
+                /** request permission via start activity for result */
+                startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
+            }else {
+                startProcesses(v, false);
+            }
         }
     }
 
@@ -711,7 +730,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CHECK_OVERLAY_PERMISSION_REQUEST_CODE) {
-            startProcesses(mbtnStart, checkOverlayPermission());
+            startProcesses(mbtnStart, checkOverlayPermission());// ここくるってことは canOverlay == true
         }
     }
 
@@ -874,6 +893,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         SharedPreferencesUtil.saveInt(this, SETTING_SHAREDPREF_NAME, "toastPosition", mToastPosition);
         SharedPreferencesUtil.saveString(this, SETTING_SHAREDPREF_NAME, "alert_message", mAlertMessage);
         SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.BOOT_RUN.getKey(), canBootRun);
+        SharedPreferencesUtil.saveBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.OVERLAY.getKey(), canOverlay);
         SharedPreferencesUtil.saveBoolean(this, AD_STATUS_SHAREDPREF_NAME, "enableNewFunction", enableNewFunction);
         FlurryAgent.onEndSession(this);
     }

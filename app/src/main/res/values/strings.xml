@@ -23,6 +23,7 @@
     <string name="menu_title_feedback">お問い合わせ</string>
     <string name="menu_title_license">ライセンス</string>
     <string name="menu_title_boot">電源ON時にアプリを起動する</string>
+    <string name="menu_title_overlay">他のアプリに重ねて表示する</string>
 
     <string name="dialog_title_setting">各種設定</string>
     <string name="dialog_title_tweet">つぶやく</string>

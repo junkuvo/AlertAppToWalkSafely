@@ -7,7 +7,8 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class SharedPreferencesUtil {
     public enum PrefKeys{
-        BOOT_RUN("BOOT_RUN");
+        BOOT_RUN("BOOT_RUN"),
+        OVERLAY("OVERLAY");
 
         private String key;
         PrefKeys(String key) {

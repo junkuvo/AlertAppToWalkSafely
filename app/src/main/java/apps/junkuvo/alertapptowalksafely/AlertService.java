@@ -176,21 +176,25 @@ public class AlertService extends Service implements SensorEventListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        boolean shouldContinue = intent.getBooleanExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, true);
-        startSensors(shouldContinue);
-        boolean canShowOverlay = intent.getBooleanExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, false);
-        if (canShowOverlay) {
-            startOverlay();
-        }
 
-        enableNewFunction = intent.getBooleanExtra(EXTRA_KEY_NEW_FUNCTION, false);
-
+        boolean shouldContinue = true;
+        boolean canShowOverlay = false;
         Date startDate;
         try {
+            shouldContinue = intent.getBooleanExtra(EXTRA_KEY_SHOULD_CONTINUE_COUNT_FLAG, true);
+            canShowOverlay = intent.getBooleanExtra(EXTRA_KEY_CAN_SHOW_OVERLAY_FLAG, false);
+            enableNewFunction = intent.getBooleanExtra(EXTRA_KEY_NEW_FUNCTION, false);
             startDate = (Date) intent.getSerializableExtra(EXTRA_KEY_START_DATE);
         } catch (Exception e) {
             startDate = new Date();
         }
+
+        startSensors(shouldContinue);
+
+        if (canShowOverlay) {
+            startOverlay();
+        }
+
         WalkServiceData.getInstance().setStartDate(startDate);
 
         return START_STICKY;
@@ -528,7 +532,7 @@ public class AlertService extends Service implements SensorEventListener {
             ((TextView) overlay.findViewById(R.id.overlay_text)).setText(String.valueOf(mStepCountCurrent));
         }
 
-        walkServiceAdapter.notifyWalkDataNormalChanged(mStepCountCurrent < 0 ? 0 : mStepCountCurrent );
+        walkServiceAdapter.notifyWalkDataNormalChanged(mStepCountCurrent < 0 ? 0 : mStepCountCurrent);
     }
 
     private int mStepCountBefore = 0;
