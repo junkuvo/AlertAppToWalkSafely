@@ -270,20 +270,23 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                                 .setHeaderDrawable(R.drawable.pattern_bg_blue)
                                 .setPositive(getString(R.string.ok), null)
                                 .show();
+                        if (StringUtils.isNotBlank(WalkServiceData.getInstance().getWalkCountAll())
+                                && !WalkServiceData.getInstance().getWalkCountAll().equals("0")) {
 
-                        RealmUtil.insertHistoryItemAsync(realm,
-                                RealmUtil.createHistoryItemData(MainActivity.this, WalkServiceData.getInstance().getWalkCountAll(), WalkServiceData.getInstance().getWalkCountAlert()),
-                                new RealmUtil.realmTransactionCallbackListener() {
-                                    @Override
-                                    public void OnSuccess() {
+                            RealmUtil.insertHistoryItemAsync(realm,
+                                    RealmUtil.createHistoryItemData(MainActivity.this, WalkServiceData.getInstance().getWalkCountAll(), WalkServiceData.getInstance().getWalkCountAlert()),
+                                    new RealmUtil.realmTransactionCallbackListener() {
+                                        @Override
+                                        public void OnSuccess() {
 
-                                    }
+                                        }
 
-                                    @Override
-                                    public void OnError() {
+                                        @Override
+                                        public void OnError() {
 
-                                    }
-                                });
+                                        }
+                                    });
+                        }
                     }
                 }
             });
