@@ -37,7 +37,6 @@
         android:id="@+id/flStart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/basic_margin"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true">
 
@@ -56,17 +55,27 @@
             android:textColor="@android:color/white"
             android:textStyle="bold"
             android:text="@string/start"
-            android:textSize="16sp"
-            tools:text="START" />
+            android:textSize="20sp"
+            tools:text="開始" />
 
     </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_explanation"
+        android:id="@+id/txtExplanation"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_below="@+id/flStart"
+        android:layout_centerHorizontal="true" />
 
     <LinearLayout
         android:id="@+id/llStepCount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:layout_below="@+id/flStart"
+        android:layout_below="@+id/txtExplanation"
         android:layout_centerHorizontal="true">
 
         <android.support.v7.widget.AppCompatTextView
@@ -107,15 +116,6 @@
         app:prompt_view_thanks_display_time_ms="2000"
         app:prompt_view_button_corner_radius="5dp" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_explanation"
-        android:id="@+id/txtExplanation"
-        android:textSize="16sp"
-        android:layout_above="@+id/llStepCount"
-        android:layout_centerHorizontal="true" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -125,18 +125,17 @@
         android:orientation="horizontal"
         android:layout_below="@+id/llStepCount">
 
-        <com.google.android.gms.plus.PlusOneButton
-            xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
+        <com.google.android.gms.plus.PlusOneButton xmlns:plus="http://schemas.android.com/apk/lib/com.google.android.gms.plus"
             android:id="@+id/plus_one_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             plus:size="medium"
-            plus:annotation="bubble" />
+            plus:annotation="bubble"
+            android:visibility="gone" />
 
         <com.facebook.share.widget.LikeView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/basic_margin"
             android:id="@+id/like_view" />
     </LinearLayout>
 </RelativeLayout>
