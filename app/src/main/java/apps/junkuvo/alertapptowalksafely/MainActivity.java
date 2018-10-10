@@ -359,7 +359,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             findViewById(R.id.b_privacy).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/apps")));
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://site-1308773-539-4004.strikingly.com/")));
                 }
             });
         }
