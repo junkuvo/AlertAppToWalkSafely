@@ -79,13 +79,15 @@ public class HistoryItemFragment extends Fragment {
             }
             RealmResults<HistoryItemModel> realmObjects = RealmUtil.selectAllHistoryItemAsync(Realm.getDefaultInstance(), "endDateTime", Sort.DESCENDING);
             mHelper.attachToRecyclerView(recyclerView);
-            HistoryItemRecyclerViewAdapter historyItemRecyclerViewAdapter = new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener);
+             historyItemRecyclerViewAdapter = new HistoryItemRecyclerViewAdapter(getContext(), realmObjects, true, mListener);
             historyItemRecyclerViewAdapter.registerAdapterDataObserver(adapterDataObserver);
             recyclerView.setAdapter(historyItemRecyclerViewAdapter);
         }
 
         return view;
     }
+
+    HistoryItemRecyclerViewAdapter historyItemRecyclerViewAdapter;
 
 
     @Override
@@ -124,12 +126,13 @@ public class HistoryItemFragment extends Fragment {
     /**
      * RecyclerViewのSwipe実現用
      */
-    private ItemTouchHelper mHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
+    private ItemTouchHelper mHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
+            ItemTouchHelper.DOWN, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT) {
         @Override
         public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-//            final int fromPos = viewHolder.getAdapterPosition();
-//            final int toPos = target.getAdapterPosition();
-//            adapter.notifyItemMoved(fromPos, toPos);
+            final int fromPos = viewHolder.getAdapterPosition();
+            final int toPos = target.getAdapterPosition();
+            historyItemRecyclerViewAdapter.notifyItemMoved(fromPos, toPos);
             return false;
         }
 

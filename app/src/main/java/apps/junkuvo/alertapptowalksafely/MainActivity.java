@@ -353,6 +353,13 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             relativeLayout.setOnClickListener(this);
 
             findViewById(R.id.llStepCount).setVisibility(mShouldShowPedometer ? View.VISIBLE : View.INVISIBLE);
+
+            findViewById(R.id.b_privacy).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/apps")));
+                }
+            });
         }
 
         // TODO ここら辺をBootでやらないとだめ

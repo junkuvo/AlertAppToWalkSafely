@@ -13,6 +13,15 @@
     android:foreground="?android:attr/selectableItemBackground"
     tools:context=".MainActivity">
 
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/b_privacy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="プライバシーポリシー"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:background="@null"/>
+
     <android.support.v7.widget.AppCompatTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
