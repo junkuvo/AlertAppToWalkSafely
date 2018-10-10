@@ -78,7 +78,7 @@
     <string name="home_text_watching">歩きスマホを監視中</string>
     <string name="app_used_thankyou">ご利用ありがとうございます！</string>
 
-    <string name="app_explanation">ボタンをタップで歩きスマホ検知開始！</string>
+    <string name="app_explanation">ボタンをタップで\n歩きスマホ検知開始！</string>
 
     <string name="notification_ticker">歩きスマホ防止アプリ起動！</string>
     <string name="notification_content_text">アプリを開く際はタップしてください！</string>
@@ -93,8 +93,8 @@
     <string name="action_settings">設定</string>
     <string name="title_activity_abstract">AbstractActivity</string>
     <string name="tweet_edit_hint">つぶやきを書き込んでみましょう！</string>
-    <string name="start">START</string>
-    <string name="stop">STOP</string>
+    <string name="start">開始</string>
+    <string name="stop">停止</string>
     <string name="open_app">アプリを開く</string>
     <string name="show_alert_step_count">歩きスマホ歩数表示</string>
     <string name="hide">非表示にする</string>

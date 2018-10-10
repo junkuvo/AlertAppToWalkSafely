@@ -25,7 +25,7 @@ public class AlertApplication extends MultiDexApplication {
     private Realm realm;
     private AlertAppRealmMigration realmMigration = new AlertAppRealmMigration();
 
-    public Realm getRealm(){
+    public Realm getRealm() {
         return realm;
     }
 
@@ -75,8 +75,8 @@ public class AlertApplication extends MultiDexApplication {
         Amplify.initSharedInstance(this)
                 .setFeedbackEmailAddress("0825elle@gmail.com")
                 .setInstallTimeCooldownDays(3) // Prompt not shown input days of initial install.
-                .setLastUpdateTimeCooldownDays(3) // Prompt not shown within input days of most recent update.
-                .setLastCrashTimeCooldownDays(3) // Prompt not shown within input days of most recent crash.
+                .setLastUpdateTimeCooldownDays(9999) // Prompt not shown within input days of most recent update.
+                .setLastCrashTimeCooldownDays(9999) // Prompt not shown within input days of most recent crash.
                 .addTotalEventCountRule(PromptInteractionEvent.USER_GAVE_POSITIVE_FEEDBACK,
                         new MaximumCountRule(1)); // Never ask the user for feedback again if they already responded positively.
 

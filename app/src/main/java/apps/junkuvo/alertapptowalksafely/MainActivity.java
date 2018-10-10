@@ -93,6 +93,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
     public static final String EXTRA_KEY_START_DATE = "EXTRA_KEY_START_DATE";
     public static final String EXTRA_KEY_NEW_FUNCTION = "EXTRA_KEY_NEW_FUNCTION";
 
+    private boolean completedShowDialogOnce = false;
     // SeekBarの最小値：0、最大値：60なので、実際の角度に対してはOFFSETが必要
     private final int ALERT_ANGLE_INITIAL_VALUE = 30;
     private final int ALERT_ANGLE_INITIAL_OFFSET = 15;
@@ -239,7 +240,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             final AdRequest adRequest = new AdRequest.Builder()
                     .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
                     .addTestDevice("1BEC3806A9717F2A87F4D1FC2039D5F2")  // An device ID ASUS
-                    .addTestDevice("64D37FCE47B679A7F4639D180EC4C547")
+                    .addTestDevice("8CF38E3707DB85365755618D97BD5375")
+                    .addTestDevice("5708BF2D02203BE3F45CA1C1B1DA3AF4")
                     .build();
 
             // Begin loading your interstitial.
@@ -255,11 +257,11 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                 @Override
                 public void onAdClosed() {
                     super.onAdClosed();
-                    // 広告開いてない場合は再度ロードしておいて次も広告出す
-                    if (!enableNewFunction) {
+                    mInterstitialAd.loadAd(adRequest);
+                    // 広告タップして新機能有効化かつ今までは無効だった
+                    if (enableNewFunction && !completedShowDialogOnce) {
+                        completedShowDialogOnce = true;
                         // Begin loading your interstitial.
-                        mInterstitialAd.loadAd(adRequest);
-                    } else {
                         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
                         final View layout = inflater.inflate(R.layout.new_function_dialog, (ViewGroup) findViewById(R.id.layout_root_new));
                         new MaterialStyledDialog(MainActivity.this)
@@ -388,6 +390,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         // 履歴データがすでにある(updateの場合) or 広告をタップした場合
         enableNewFunction = RealmUtil.hasHistoryItem(realm) || SharedPreferencesUtil.getBoolean(this, AD_STATUS_SHAREDPREF_NAME, "enableNewFunction", false);
+        completedShowDialogOnce = enableNewFunction;
 
         // サービス起動中に通知から起動する場合ある
         changeViewState(walkServiceAdapter.isWalkServiceRunning(), mbtnStart);
@@ -496,7 +499,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         actionItem.setIcon(MENU_ID.LICENSE.getDrawableResId());
 
         // BOOT起動
-        canBootRun = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.BOOT_RUN.getKey(), true);
+        canBootRun = SharedPreferencesUtil.getBoolean(this, SETTING_SHAREDPREF_NAME, SharedPreferencesUtil.PrefKeys.BOOT_RUN.getKey(), false);
         actionItem = menu.add(Menu.NONE, MENU_ID.BOOT_RUN.ordinal(), MENU_ID.BOOT_RUN.ordinal(), this.getString(R.string.menu_title_boot));
         actionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         actionItem.setCheckable(true);
@@ -514,7 +517,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         return true;
     }
 
-    private boolean canBootRun = true;
+    private boolean canBootRun = false;
     private boolean canOverlay = true;
 
     @Override
@@ -625,8 +628,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
             changeViewState(false, ((ActionButton) v));
             Toast.makeText(this, getString(R.string.app_used_thankyou), Toast.LENGTH_SHORT).show();
 
-            // FIXME 規約違反により訴求は出さないので、広告も毎回出すことにする
-            // 広告タップ済み かつ Twitter認証済みの場合ツイートダイアログ表示
+            // Twitter認証済みの場合ツイートダイアログ表示
             if (TwitterUtility.hasAccessToken(getApplicationContext())) {// && enableNewFunction) {
                 Context context = MainActivity.this;
                 LayoutInflater inflater = LayoutInflater.from(context);
@@ -666,6 +668,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //                        .setPositive(getString(R.string.ok), new MaterialDialog.SingleButtonCallback() {
 //                            @Override
 //                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            // FIXME 規約違反により訴求は出さないので、広告も毎回出すことにする
             displayInterstitial();
 //                            }
 //                        })
@@ -720,7 +723,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         if (checkOverlayPermission()) {
             startProcesses(v, canOverlay);
         } else {
-            if(canOverlay) {
+            if (canOverlay) {
                 // SDK version < 23 の場合は checkOverlayPermissionはtrue を返す
                 /** if not construct intent to request permission */
                 Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -728,7 +731,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 //            i.setFlags(FLAG_ACTIVITY_NEW_TASK);
                 /** request permission via start activity for result */
                 startActivityForResult(i, CHECK_OVERLAY_PERMISSION_REQUEST_CODE);
-            }else {
+            } else {
                 startProcesses(v, false);
             }
         }
@@ -1056,7 +1059,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     // Invoke displayInterstitial() when you are ready to display an interstitial.
     public void displayInterstitial() {
-        if (mInterstitialAd.isLoaded() && !enableNewFunction) {
+        if (mInterstitialAd.isLoaded()) {// && !enableNewFunction) {
             mInterstitialAd.show();
         }
     }

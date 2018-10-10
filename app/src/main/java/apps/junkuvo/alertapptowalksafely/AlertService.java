@@ -324,11 +324,12 @@ public class AlertService extends Service implements SensorEventListener {
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT
         );
-        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_106dp);// 適当な値
+        layoutParams.y = getResources().getDimensionPixelSize(R.dimen.overlay_y_offset_300dp);// 適当な値
 
         final Point point = getDisplaySize();
 
         overlay = LayoutInflater.from(this).inflate(R.layout.overlay, null);
+        final int height = mContext.getResources().getDimensionPixelSize(R.dimen.overlay_height);
         overlay.findViewById(R.id.fabStartOverlay).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -343,8 +344,8 @@ public class AlertService extends Service implements SensorEventListener {
                         windowManager.getDefaultDisplay().getRealSize(point);
                         int centerX;
                         int centerY;
-                        centerX = x - (point.x / 2) - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);// FIXME :ここも縦横で変更
-                        centerY = y - (point.y / 2) + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_22dp);
+                        centerX = x - (point.x / 2);// - v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_8dp);// FIXME :ここも縦横で変更
+                        centerY = y - ((point.y - height / 2) / 2);// + v.getContext().getResources().getDimensionPixelSize(R.dimen.basic_margin_22dp);
                         layoutParams.x = centerX;
                         layoutParams.y = centerY;
                         windowManager.updateViewLayout(overlay, layoutParams);
