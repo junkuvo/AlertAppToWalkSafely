@@ -40,7 +40,6 @@ import android.widget.ToggleButton;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
-import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
@@ -50,13 +49,13 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.plus.PlusOneButton;
-import com.google.firebase.analytics.FirebaseAnalytics;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
 import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.software.shell.fab.ActionButton;
 import com.webianks.easy_feedback.EasyFeedback;
+import com.github.javiersantos.materialstyleddialogs.*;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -264,7 +263,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                         // Begin loading your interstitial.
                         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
                         final View layout = inflater.inflate(R.layout.new_function_dialog, (ViewGroup) findViewById(R.id.layout_root_new));
-                        new MaterialStyledDialog(MainActivity.this)
+                        new MaterialStyledDialog.Builder(MainActivity.this)
                                 .setTitle("新機能！")
                                 .setDescription("新しい機能が追加されました！\n今後ともよろしくお願いします！")
                                 .setCustomView(layout)
@@ -620,9 +619,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
         if (!isToStart) {
             FlurryAgent.logEvent("Service Stop!!");
-            Bundle bundle = new Bundle();
-            bundle.putString(FirebaseAnalytics.Param.END_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
-            mFirebaseAnalytics.logEvent("service_stop", bundle);
 
             mStepCount = WalkServiceData.getInstance().getWalkCountAll();
             changeViewState(false, ((ActionButton) v));
@@ -749,9 +745,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
     private void startProcesses(View v, boolean canShowOverlay) {
         FlurryAgent.logEvent("Service Start!!");
-        Bundle bundle = new Bundle();
-        bundle.putString(FirebaseAnalytics.Param.START_DATE, DateUtil.getNowDate(DateUtil.DATE_FORMAT.YYYYMMDDhhmmss));
-        mFirebaseAnalytics.logEvent("service_stop", bundle);
 
         changeViewState(true, ((ActionButton) v));
         Date startDateTime = new Date();
@@ -1068,7 +1061,8 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
         if (mPasscodeOn) {
             LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
             final View layout = inflater.inflate(R.layout.passcode, (ViewGroup) findViewById(R.id.layout_root_passcode));
-            final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog(MainActivity.this)
+
+            final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog.Builder(MainActivity.this)
                     .setTitle(getString(R.string.dialog_passcode_title))
                     .setDescription(getString(R.string.dialog_passcode_description))
                     .setIcon(R.drawable.ic_lock_blue_grey_100_48dp)
@@ -1107,7 +1101,6 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
                     mPasscodeConfirm = passcodeViewConfirm.getText().toString();
                     if (mPasscode.equals(mPasscodeConfirm)) {
                         FlurryAgent.logEvent("Passcode Lock");
-
                         setStartButtonFunction(v, true);
                         materialStyledDialog.dismiss();
                     } else {

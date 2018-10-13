@@ -2,6 +2,7 @@ buildscript {
     repositories {
         maven { url "https://jitpack.io" }
         maven { url 'https://maven.fabric.io/public' }
+        maven { url "https://maven.google.com/"}
     }
 
     dependencies {
@@ -27,7 +28,7 @@ android {
         }
     }
     compileSdkVersion 26
-    buildToolsVersion '25.0.3'
+    buildToolsVersion '28.0.2'
     defaultConfig {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"
@@ -75,51 +76,51 @@ configurations.all {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;
     }
-    compile project(':androidutility')
-    compile('com.optimizely:optimizely:+@aar') {
+    implementation project(':androidutility')
+    implementation('com.optimizely:optimizely:+@aar') {
         transitive = true
     }
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    compile 'com.android.support:design:26.1.0'
-    compile 'com.github.stkent:amplify:1.5.0'
-    compile 'com.github.iammehedi:passcodeview:1.03'
-    compile 'com.github.javiersantos:MaterialStyledDialogs:1.3'
-    compile 'com.github.shell-software:fab:1.1.2'
-    compile 'com.github.iammert:MaterialIntroView:1.5.2'
-    compile 'com.flurry.android:analytics:6.3.1'
-    compile 'com.growthbeat:growthbeat-android:1.2.6@aar'
-    compile 'com.android.support:multidex:1.0.0'
-    compile 'com.google.android.gms:play-services-gcm:10.2.1'
-    compile 'com.google.android.gms:play-services-ads:10.2.1'
-    compile 'com.google.android.gms:play-services-plus:10.2.1'
-    compile 'com.google.android.gms:play-services-location:10.2.1'
-    compile 'com.google.firebase:firebase-config:10.0.1'
-    compile 'com.google.firebase:firebase-storage:10.0.1'
-    compile 'com.android.support:support-v4:26.1.0'
-    compile 'com.android.support:recyclerview-v7:26.1.0'
-    compile 'io.realm:android-adapters:1.4.0'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.robolectric:robolectric:3.2.2'
-    testCompile 'org.khronos:opengl-api:gl1.1-android-2.1_r1'
-    testCompile 'org.mockito:mockito-core:2.5.7'
-    //    testCompile 'org.robolectric:shadows-multidex:3.0'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:design:26.1.0'
+    implementation 'com.github.stkent:amplify:1.5.0'
+    implementation 'com.github.iammehedi:passcodeview:1.03'
+    implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
+    implementation 'com.github.shell-software:fab:1.1.2'
+    implementation 'com.github.iammert:MaterialIntroView:1.5.2'
+    implementation 'com.flurry.android:analytics:6.9.2'
+    implementation 'com.growthbeat:growthbeat-android:1.2.6@aar'
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.google.android.gms:play-services-gcm:16.0.0'
+    implementation 'com.google.android.gms:play-services-ads:17.0.0'
+    implementation 'com.google.android.gms:play-services-plus:16.0.0'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    implementation 'com.google.firebase:firebase-config:16.0.1'
+    implementation 'com.google.firebase:firebase-storage:16.0.3'
+    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation 'io.realm:android-adapters:1.4.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:3.2.2'
+    testImplementation 'org.khronos:opengl-api:gl1.1-android-2.1_r1'
+    testImplementation 'org.mockito:mockito-core:2.5.7'
+    //    testImplementation 'org.robolectric:shadows-multidex:3.0'
 
-    //    testCompile 'org.hamcrest:hamcrest-library:1.3'
-    compile 'com.facebook.android:facebook-android-sdk:4.5.0'
+    //    testImplementation 'org.hamcrest:hamcrest-library:1.3'
+    implementation 'com.facebook.android:facebook-android-sdk:4.5.0'
     // feedback
-    compile 'com.webianks.library:easy-feedback:1.0.0'
+    implementation 'com.webianks.library:easy-feedback:1.0.0'
     // license
-    compile('com.mikepenz:aboutlibraries:5.9.4@aar') {
+    implementation('com.mikepenz:aboutlibraries:5.9.4@aar') {
         transitive = true
     }
 
-//    compile 'com.firebaseui:firebase-ui-storage:0.6.0'
+//    implementation 'com.firebaseui:firebase-ui-storage:0.6.0'
     // Glide
-    compile 'com.github.bumptech.glide:glide:4.0.0-RC0'
+    implementation 'com.github.bumptech.glide:glide:4.0.0-RC0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.0.0-RC0'
 }
 
