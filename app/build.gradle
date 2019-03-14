@@ -28,7 +28,6 @@ android {
         }
     }
     compileSdkVersion 26
-    buildToolsVersion '28.0.2'
     defaultConfig {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"

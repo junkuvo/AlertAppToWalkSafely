@@ -8,19 +8,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     android:id="@+id/rtlMain"
     android:foreground="?android:attr/selectableItemBackground"
     tools:context=".MainActivity">
-
-    <android.support.v7.widget.AppCompatButton
-        android:id="@+id/b_privacy"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="プライバシーポリシー"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:background="@null"/>
 
     <android.support.v7.widget.AppCompatTextView
         android:layout_width="wrap_content"
@@ -108,13 +98,22 @@
 
     </LinearLayout>
 
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/b_privacy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="プライバシーポリシー"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:padding="@dimen/basic_margin_8dp"
+        android:background="@null"/>
+
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:visibility="gone"
         ads:adSize="BANNER"
         ads:adUnitId="ca-app-pub-1630604043812019/9847037818" />
 
@@ -145,6 +144,7 @@
         <com.facebook.share.widget.LikeView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             android:id="@+id/like_view" />
     </LinearLayout>
 </RelativeLayout>

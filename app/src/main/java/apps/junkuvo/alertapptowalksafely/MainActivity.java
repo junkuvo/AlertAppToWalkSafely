@@ -40,6 +40,7 @@ import android.widget.ToggleButton;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.share.widget.LikeView;
 import com.flurry.android.FlurryAgent;
+import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.stkent.amplify.prompt.BasePromptViewConfig;
 import com.github.stkent.amplify.prompt.DefaultLayoutPromptView;
 import com.github.stkent.amplify.tracking.Amplify;
@@ -48,6 +49,7 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.plus.PlusOneButton;
 import com.growthbeat.Growthbeat;
 import com.mhk.android.passcodeview.PasscodeView;
@@ -55,7 +57,6 @@ import com.mikepenz.aboutlibraries.Libs;
 import com.mikepenz.aboutlibraries.LibsBuilder;
 import com.software.shell.fab.ActionButton;
 import com.webianks.easy_feedback.EasyFeedback;
-import com.github.javiersantos.materialstyleddialogs.*;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -230,7 +231,7 @@ public class MainActivity extends AbstractActivity implements View.OnClickListen
 
             LikeView likeView = (LikeView) findViewById(R.id.like_view);
             likeView.setObjectIdAndType(String.format(getString(R.string.app_googlePlay_url), getPackageName()), LikeView.ObjectType.PAGE);
-
+            MobileAds.initialize(this, "ca-app-pub-1630604043812019~8555876214");
             // Create the interstitial.
             mInterstitialAd = new InterstitialAd(this);
             mInterstitialAd.setAdUnitId(getString(R.string.ad_mob_id));
