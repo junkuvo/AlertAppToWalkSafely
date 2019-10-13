@@ -27,14 +27,14 @@ android {
             apply from: releaseSettingGradleFile, to: android
         }
     }
-    compileSdkVersion 26
+    compileSdkVersion 28
     defaultConfig {
         generatedDensities = []
         applicationId "apps.junkuvo.alertapptowalksafely"
         minSdkVersion 17
-        targetSdkVersion 26
-        versionCode 62
-        versionName "4.8"
+        targetSdkVersion 28
+        versionCode 63
+        versionName "4.9"
         multiDexEnabled true
     }
     buildTypes {
